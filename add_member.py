@@ -1,34 +1,29 @@
-import player_request
+import request
 from remove import remove_bnet
+from config import *
 from replit import db
 
-def add_bnet(username, bnet):  
-  # Add battlenet tag to list of tags associated with this username
-  if username not in db:
-    print("adding {0} to database...".format(username))
-    db[username] = {'primary': bnet, 'all': [bnet]}
-  elif bnet not in db[username]['all']:
-    print("adding {0} to {1}'s all...".format(bnet, username))
-    db[username]['all'].append(bnet)
-  
-  # If discord not in list of registered users, add it
-  if username not in db['all_disc']:
-    db['all_disc'].append(username)
-
-  # If user not listed under loaded battlenets, add it
-  if bnet not in db['all_bnet']:
-    db['all_bnet'].append(bnet)
-  
-def add_user(user, bnet):
-  # Load bnet information in table
-  player_request.main(bnet)
-  
-  # If player_request was unable to load time played, then this user is either private or DNE
-  if not db[bnet]['time-played']:
-    # Delete data associated with battletag if it is inaccessible
-    remove_bnet(bnet)
-    raise ValueError(bnet, "is either private or does not exist")
 
 def add(user, bnet):
-  add_bnet(user, bnet)
-  add_user(user, bnet)
+    # If already added as a battlenet, don't do anything
+    if user in db and bnet in db[user][key_all]:
+        return
+
+    # If the account already loaded and not for this user, don't allow them to link
+    if bnet in db and bnet not in db[user][key_all]:
+        raise NameError("{0} linked to another account".format(bnet))
+
+    # Load bnet information in table
+    request.main(bnet)
+
+    # If player_request was unable to load time played, then this user is either private or DNE
+    if not db[bnet][key_t]:
+        # Delete data associated with battletag if it is inaccessible
+        remove_bnet(bnet)
+        raise ValueError(bnet, "is either private or does not exist")
+    elif user in db:
+        db[user][key_all].append(bnet)
+    else:
+        db[user] = {key_pr: bnet, key_all: [bnet]}
+
+    db[key_bn].append(bnet)
