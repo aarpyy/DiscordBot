@@ -57,20 +57,24 @@ def get_user(bnet):
 
 def get_roles(disc):
     if disc not in db:
+        print("Discord not in db")
         return None
     bnet = db[disc][key_pr]
     try:
         user_data = get_user(bnet)
     except NameError:
+        print("Name Error occurred")
         return None
     except ValueError:
+        print("Value Error occurred")
         return None
     else:
         # Get user's highest rank
         max_rank = get_rank(max(user_data[key_r].values()))
         # Get user's most played hero
         most_played = reduce(lambda r, c: c if user_data[key_t][c] > user_data[key_t][r] else r, user_data[key_t])
-        return {max_rank, most_played}
+        print("Rank: {0}; Most played: {1}".format(max_rank, most_played))
+        return {max_rank.capitalize(), most_played}
 
 
 def get_data(bnet, *, _key=None):

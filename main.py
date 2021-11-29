@@ -20,6 +20,20 @@ def main():
     @bot.command()
     async def roles(ctx):
         await ctx.channel.send("Server roles:\n" + '\n'.join(str(e) for e in bot.guilds[0].roles))
+    
+    @bot.command()
+    async def clear_db(ctx):
+        try:
+            constant = (key_ad, key_bn, key_dsc)
+            for key in db:
+                if key not in constant:
+                    del db[key]
+            db[key_bn] = []
+            db[key_dsc] = []
+        except KeyError:
+            await ctx.channel.send("An error occurred")
+        else:
+            await ctx.channel.send("Database cleared!")
 
     @bot.command()
     async def remove(ctx, value, user=None):
@@ -102,7 +116,7 @@ def main():
         to_add = user_roles.difference(set(str(e) for e in guild.roles))
         for role in to_add:
             print("Adding {0} role to server...".format(role))
-            guild.add_roles(name=role)
+            await guild.create_role(name=role)
         for role in user_roles:
             role_obj = get(guild.roles, name=role)
             print("Giving {0} role to {1}...".format(role, str(user)))
@@ -117,8 +131,13 @@ def main():
         except KeyError:
             await ctx.channel.send("{0} is linked with another discord user".format(bnet))
         else:
-            user = bot.get_user(disc or str(ctx.author))
-            await update_roles(ctx.guild, user)
+            if disc is not None:
+                user = bot.get_user(disc)
+            else:
+                user = ctx.author
+            print('User: {0}'.format(str(user)))
+            print('Guild: {0}'.format(str(ctx.guild)))
+            await update_roles(ctx.channel.guild, user)
             if disc is None:
                 await ctx.channel.send("Successfully linked {0} to your Discord!".format(bnet))
             else:
