@@ -18,7 +18,7 @@ def clear():
 
 def get(*keys):
     try:
-        return reduce(lambda r, c: r[c], db, keys)
+        return reduce(lambda r, c: r[c], keys, db)
     except KeyError:
         return "One or more of the keys given does not exist"
 
@@ -27,7 +27,7 @@ def add(value, *keys):
     keys = list(keys)
     final = keys.pop(-1)
     try:
-        _dict = reduce(lambda r, c: r[c], db, keys)
+        _dict = reduce(lambda r, c: r[c], keys, db)
     except KeyError:
         return "One or more of the keys given does not exist"
     else:
@@ -39,7 +39,7 @@ def addint(value, *keys):
     keys = list(keys)
     final = keys.pop(-1)
     try:
-        _dict = reduce(lambda r, c: r[c], db, keys)
+        _dict = reduce(lambda r, c: r[c], keys, db)
     except KeyError:
         return "One or more of the keys given does not exist"
     else:
@@ -49,7 +49,7 @@ def addint(value, *keys):
 
 def remove(key, *keys):
     try:
-        _dict = reduce(lambda r, c: r[c], db, keys)
+        _dict = reduce(lambda r, c: r[c], keys, db)
     except KeyError:
         return "One or more of the keys given does not exist"
     else:
