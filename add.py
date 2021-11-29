@@ -1,10 +1,11 @@
 import request
 from remove import remove_bnet
 from config import KEYS as k
+from discord.utils import get
 from replit import db
 
 
-def add_bnet(user, bnet):
+def battlenet(user, bnet):
     # If already added as a battlenet, don't do anything
     if user in db and bnet in db[user][k.ALL]:
         return
@@ -27,3 +28,10 @@ def add_bnet(user, bnet):
         db[user] = {k.PRM: bnet, k.ALL: [bnet]}
 
     db[k.BNT].append(bnet)
+
+
+async def role(guild, name):
+    if name not in db[k.RLE]:
+        print("Creating {0} as a role...".format(name))
+        await guild.create_role(name=name)
+    return get(guild.roles, name=name)

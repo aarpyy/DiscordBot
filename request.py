@@ -1,6 +1,7 @@
 import os
 import unidecode
-from config import *
+from config import KEYS as k
+from config import N_HEROES
 from replit import db
 
 
@@ -55,4 +56,4 @@ def main(bnet):
     os.system('rm -f temp.txt')
 
     # Update table, regardless of what was there before
-    db[bnet] = {key_r: ranks, key_t: time_played}
+    db[bnet] = {k.RNK: ranks, k.TPL: time_played}
