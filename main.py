@@ -101,16 +101,20 @@ def main():
 
         # Create all new roles
         for role in user_roles:
-            if user_roles[role] not in guild.roles:
-                print("Adding {0} role to server...".format(role))
-                guild.create_role(name=user_roles[role])
+            if not any(user_roles[role] == str(e) for e in guild.roles):
+                print("Adding {0} role to server...".format(user_roles[role]))
+                await guild.create_role(name=user_roles[role])
+            print("Current roles: {0}".format(*guild.roles))
+            print("Getting role object {0}".format(user_roles[role]))
             role_obj = get(guild.roles, name=user_roles[role])
-            print("Giving {0} role to {1}...".format(role, str(user)))
+            print("Giving {0} role to {1}...".format(user_roles[role], str(user)))
             await user.add_roles(role_obj)
 
         curr_nick = user.nick
-        emoji = guild.fetch_emoji(db[key_em][user_roles['rank']])
-        user.edit(nick=curr_nick + emoji)
+        print("Current nickname: {0}".format(curr_nick))
+        emoji = await guild.fetch_emoji(db[key_em][user_roles['rank']])
+        await user.edit(nick=curr_nick + str(emoji))
+        print("New nick: {0}".format(user.nick))
 
     @bot.command(brief="Connects given battlenet to user's Discord")
     async def battlenet(ctx, bnet, disc=None):
