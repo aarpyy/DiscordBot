@@ -14,19 +14,19 @@ def sec_to_t(t):
 
 def get_rank(r):
     if r < 1500:
-        return 'bronze'
+        return 'Bronze'
     elif r < 2000:
-        return 'silver'
+        return 'Silver'
     elif r < 2500:
-        return 'gold'
+        return 'Gold'
     elif r < 3000:
-        return 'platinum'
+        return 'Platinum'
     elif r < 3500:
-        return 'diamond'
+        return 'Diamond'
     elif r < 4000:
-        return 'master'
+        return 'Master'
     elif r < 5000:
-        return 'grandmaster'
+        return 'Grandmaster'
     else:
         raise ValueError("{0} not a valid rank".format(r))
 
@@ -49,7 +49,7 @@ def seconds_to_time(t):
 def get_user(bnet):
     if bnet in db:
         if not db[bnet][key_t]:
-            raise ValueError
+            raise ValueError("PRIVATE|DNE")
         return db[bnet]
     else:
         raise NameError
@@ -63,18 +63,18 @@ def get_roles(disc):
     try:
         user_data = get_user(bnet)
     except NameError:
-        print("Name Error occurred")
         return None
-    except ValueError:
-        print("Value Error occurred")
-        return None
+    except ValueError as exc:
+        if 'PRIVATE|DNE' in str(exc):
+            return None
+        raise ValueError
     else:
         # Get user's highest rank
-        max_rank = get_rank(max(user_data[key_r].values()))
+        max_rank = max(user_data[key_r].values())
         # Get user's most played hero
         most_played = reduce(lambda r, c: c if user_data[key_t][c] > user_data[key_t][r] else r, user_data[key_t])
         print("Rank: {0}; Most played: {1}".format(max_rank, most_played))
-        return {max_rank.capitalize(), most_played}
+        return {'rank-value': str(max_rank), 'rank': get_rank(max_rank), 'most-played': most_played}
 
 
 def get_data(bnet, *, _key=None):

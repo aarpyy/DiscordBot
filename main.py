@@ -29,7 +29,7 @@ def main():
     @bot.command()
     async def clear_db(ctx):
         try:
-            constant = (key_ad, key_bn, key_dsc, 'ranks', 'roles')
+            constant = (key_ad, key_bn, key_dsc, key_r, key_ro, key_em)
             for key in db:
                 if key not in constant:
                     del db[key]
@@ -41,7 +41,7 @@ def main():
             await ctx.channel.send("Database cleared!")
 
     @bot.command()
-    async def remove(ctx, value, user=None):
+    async def remove(ctx, value):
         author = str(ctx.author)
         if value in db[key_bn]:
             if author == SUPERUSER or value in db[author][key_all]:
@@ -98,14 +98,19 @@ def main():
 
     async def update_roles(guild, user):
         user_roles = get_roles(str(user))
-        to_add = user_roles.difference(set(str(e) for e in guild.roles))
-        for role in to_add:
-            print("Adding {0} role to server...".format(role))
-            await guild.create_role(name=role)
+
+        # Create all new roles
         for role in user_roles:
-            role_obj = get(guild.roles, name=role)
+            if user_roles[role] not in guild.roles:
+                print("Adding {0} role to server...".format(role))
+                guild.create_role(name=user_roles[role])
+            role_obj = get(guild.roles, name=user_roles[role])
             print("Giving {0} role to {1}...".format(role, str(user)))
             await user.add_roles(role_obj)
+
+        curr_nick = user.nick
+        emoji = guild.fetch_emoji(db[key_em][user_roles['rank']])
+        user.edit(nick=curr_nick + emoji)
 
     @bot.command(brief="Connects given battlenet to user's Discord")
     async def battlenet(ctx, bnet, disc=None):
@@ -122,7 +127,11 @@ def main():
                 user = ctx.author
             print('User: {0}'.format(str(user)))
             print('Guild: {0}'.format(str(ctx.guild)))
-            await update_roles(ctx.channel.guild, user)
+            try:
+                await update_roles(ctx.channel.guild, user)
+            except ValueError:
+                await ctx.channel.send("An error occurred in assigning you roles. Try /remove battlenet and re-adding"
+                                       " it. If this doesn't fix it, probably message aarpyy")
             if disc is None:
                 await ctx.channel.send("Successfully linked {0} to your Discord!".format(bnet))
             else:
