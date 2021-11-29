@@ -4,7 +4,7 @@ import os
 from add_member import add
 from config import *
 from replit import db
-from retrieve import get_data, get_roles
+from retrieve import get_roles, send_info
 from remove import remove_user, remove_bnet
 
 SUPERUSER = "aarpyy#3360"
@@ -24,7 +24,7 @@ def main():
     @bot.command()
     async def clear_db(ctx):
         try:
-            constant = (key_ad, key_bn, key_dsc)
+            constant = (key_ad, key_bn, key_dsc, 'ranks', 'roles')
             for key in db:
                 if key not in constant:
                     del db[key]
@@ -83,33 +83,17 @@ def main():
         else:
             await ctx.channel.send("Must be database superuser to change add admins")
 
-    # Helper function to retrieve user data and send response message
-    async def get_info(ctx, user, key=None):
-        if user in db[key_dsc]:
-            await ctx.channel.send(get_data(db[user][key_pr], _key=key))
-        elif user is None:
-            author = str(ctx.author)
-            if author in db:
-                bnet = db[author][key_pr]
-                await ctx.channel.send(get_data(bnet, _key=key))
-            else:
-                await ctx.channel.send('{0} does not have any linked battlenet accounts'.format(author))
-        elif user in db[key_bn]:
-            await ctx.channel.send(get_data(user, _key=key))
-        else:
-            await ctx.channel.send('Unable to get info on {0}'.format(user))
-
     @bot.command(brief="Shows player's competitive rank(s) for this season")
     async def rank(ctx, user=None):
-        await get_info(ctx, user, 'rank')
+        await send_info(ctx, user, 'rank')
 
     @bot.command(brief="Shows player's top 10 most player heroes")
     async def time(ctx, user=None):
-        await get_info(ctx, user, 'time')
+        await send_info(ctx, user, 'time')
 
     @bot.command(brief="Shows all player stats")
     async def stats(ctx, user=None):
-        await get_info(ctx, user)
+        await send_info(ctx, user)
 
     async def update_roles(guild, user):
         user_roles = get_roles(str(user))

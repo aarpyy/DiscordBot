@@ -103,3 +103,20 @@ def get_data(bnet, *, _key=None):
             message += '\n-----\n'
             message += '\n'.join(': '.join(e) for e in time_played.items())
         return message
+
+
+# Helper function to retrieve user data and send response message
+async def send_info(ctx, user, key=None):
+    if user in db[key_dsc]:
+        await ctx.channel.send(get_data(db[user][key_pr], _key=key))
+    elif user is None:
+        author = str(ctx.author)
+        if author in db:
+            bnet = db[author][key_pr]
+            await ctx.channel.send(get_data(bnet, _key=key))
+        else:
+            await ctx.channel.send('{0} does not have any linked battlenet accounts'.format(author))
+    elif user in db[key_bn]:
+        await ctx.channel.send(get_data(user, _key=key))
+    else:
+        await ctx.channel.send('Unable to get info on {0}'.format(user))
