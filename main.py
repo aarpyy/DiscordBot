@@ -38,8 +38,6 @@ def main():
             await ctx.channel.send(db_cmd.clear())
         elif cmd == 'add':
             await ctx.channel.send(db_cmd.add(value, *args))
-        elif cmd == 'addint':
-            await ctx.channel.send(db_cmd.addint(value, *args))
         elif cmd == 'get':
             await ctx.channel.send(db_cmd.get(value, *args))
         elif cmd == 'remove':
@@ -47,7 +45,7 @@ def main():
         elif cmd == 'admin':
             await ctx.channel.send(db_cmd.admin(value))
         elif cmd in ('cmds', 'commands'):
-            await ctx.channel.send("Available database commands:\nclear\nadd\naddint\nget\nremove\nadmin")
+            await ctx.channel.send("Available database commands:\nclear\nadd\nget\nremove\nadmin")
         else:
             await ctx.channel.send("Unrecognized database command")
 

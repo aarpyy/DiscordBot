@@ -31,19 +31,7 @@ def add(value, *keys):
     except KeyError:
         return "One or more of the keys given does not exist"
     else:
-        _dict[final] = value
-        return "{0} added to database".format(value)
-
-
-def addint(value, *keys):
-    keys = list(keys)
-    final = keys.pop(-1)
-    try:
-        _dict = reduce(lambda r, c: r[c], keys, db)
-    except KeyError:
-        return "One or more of the keys given does not exist"
-    else:
-        _dict[final] = int(value)
+        _dict[final] = eval(value)
         return "{0} added to database".format(value)
 
 
