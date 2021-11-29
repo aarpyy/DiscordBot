@@ -1,6 +1,4 @@
 from replit import db
-from remove import remove_bnet, remove_user, is_shared
-from add_member import add
 
 def print_db():
   for key in db:
@@ -32,3 +30,5 @@ bnet3 = 'Aaarpyy#1846'
 # print(remove_bnet(user1, bnet3))
 # print(is_shared(bnet1))
 # print_db()
+
+db['emoji'] = {'Grandmaster': 914937356778344488, 'Master': 914937520305893376, 'Diamond': 914937587720921089, 'Platinum': 914937700967153704, 'Gold': 914937774635888681, 'Silver': 914937842088673341, 'Bronze': 914937935093170238}

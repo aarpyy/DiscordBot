@@ -22,6 +22,11 @@ def main():
         await ctx.channel.send("Server roles:\n" + '\n'.join(str(e) for e in bot.guilds[0].roles))
     
     @bot.command()
+    async def emojis(ctx):
+        for emoji in ctx.guild.emojis:
+            await ctx.channel.send("Name: {0}; ID: {1}".format(emoji.name, emoji.id))
+
+    @bot.command()
     async def clear_db(ctx):
         try:
             constant = (key_ad, key_bn, key_dsc, 'ranks', 'roles')
@@ -54,12 +59,8 @@ def main():
             await ctx.channel.send("Invalid remove options.\nUsage: /remove (battlenet or discord username)")
 
     @bot.command(name='add')
-    async def add_entry(ctx, key, value, dtype_key=None, dtype_value=None):
+    async def add_entry(ctx, key, value):
         if str(ctx.author) in db[key_ad]:
-            if dtype_key is not None:
-                key = dtype_key(key)
-            if dtype_value is not None:
-                value = dtype_value(value)
             db[key] = value
             await ctx.channel.send("Successfully added {0}: {1} to the database".format(key, value))
         else:
