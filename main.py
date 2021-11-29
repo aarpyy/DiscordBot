@@ -1,11 +1,13 @@
 from discord.ext import commands
 from discord.utils import get
 import os
-from add_member import add
-from config import *
+import add
+from config import KEYS as k
+import db_commands as db_cmd
 from replit import db
 from retrieve import get_roles, send_info
 from remove import remove_user, remove_bnet
+
 
 SUPERUSER = "aarpyy#3360"
 
@@ -26,30 +28,39 @@ def main():
         for emoji in ctx.guild.emojis:
             await ctx.channel.send("Name: {0}; ID: {1}".format(emoji.name, emoji.id))
 
-    @bot.command()
-    async def clear_db(ctx):
-        try:
-            constant = (key_ad, key_bn, key_dsc, key_r, key_ro, key_em)
-            for key in db:
-                if key not in constant:
-                    del db[key]
-            db[key_bn] = []
-            db[key_dsc] = []
-        except KeyError:
-            await ctx.channel.send("An error occurred")
+    @bot.command(name="db")
+    async def _db(ctx, cmd, value, *args):
+        if str(ctx.author) not in db[k.ADM]:
+            await ctx.channel.send("You must be a database administrator to run a /db command")
+            return
+
+        if cmd == 'clear':
+            await ctx.channel.send(db_cmd.clear())
+        elif cmd == 'add':
+            await ctx.channel.send(db_cmd.add(value, *args))
+        elif cmd == 'addint':
+            await ctx.channel.send(db_cmd.addint(value, *args))
+        elif cmd == 'get':
+            await ctx.channel.send(db_cmd.get(value, *args))
+        elif cmd == 'remove':
+            await ctx.channel.send(db_cmd.remove(value, *args))
+        elif cmd == 'admin':
+            await ctx.channel.send(db_cmd.admin(value))
+        elif cmd in ('cmds', 'commands'):
+            await ctx.channel.send("Available database commands:\nclear\nadd\naddint\nget\nremove\nadmin")
         else:
-            await ctx.channel.send("Database cleared!")
+            await ctx.channel.send("Unrecognized database command")
 
     @bot.command()
     async def remove(ctx, value):
         author = str(ctx.author)
-        if value in db[key_bn]:
-            if author == SUPERUSER or value in db[author][key_all]:
+        if value in db[k.BNT]:
+            if author == SUPERUSER or value in db[author][k.ALL]:
                 message = remove_bnet(value)
                 await ctx.channel.send(message)
             else:
                 await ctx.channel.send("{0} is not linked to your discord so you can't remove it".format(value))
-        elif value in db[key_dsc]:
+        elif value in db[k.DSC]:
             if value == author or author == SUPERUSER:
                 message = remove_user(value)
                 await ctx.channel.send(message)
@@ -57,32 +68,6 @@ def main():
                 await ctx.channel.send("You are not able to remove {0} from the database, sorry!".format(value))
         else:
             await ctx.channel.send("Invalid remove options.\nUsage: /remove (battlenet or discord username)")
-
-    @bot.command(name='add')
-    async def add_entry(ctx, key, value):
-        if str(ctx.author) in db[key_ad]:
-            db[key] = value
-            await ctx.channel.send("Successfully added {0}: {1} to the database".format(key, value))
-        else:
-            await ctx.channel.send("Must be a database admin to add values")
-
-    @bot.command(name='get')
-    async def get_entry(ctx, key):
-        if str(ctx.author) in db[key_ad]:
-            if key in db:
-                await ctx.channel.send(str(db[key]))
-            else:
-                await ctx.channel.send("Invalid database key: {0}".format(key))
-        else:
-            await ctx.channel.send("Must be a database admin to get values from db")
-
-    @bot.command()
-    async def add_admin(ctx, username):
-        if str(ctx.author) == SUPERUSER:
-            db[key_ad].append(username)
-            await ctx.channel.send("Successfully added {0} as a database admin".format(username))
-        else:
-            await ctx.channel.send("Must be database superuser to change add admins")
 
     @bot.command(brief="Shows player's competitive rank(s) for this season")
     async def rank(ctx, user=None):
@@ -112,25 +97,26 @@ def main():
 
         curr_nick = user.nick
         print("Current nickname: {0}".format(curr_nick))
-        emoji = await guild.fetch_emoji(db[key_em][user_roles['rank']])
+        emoji = await guild.fetch_emoji(db[k.EMJ][user_roles['rank']])
         await user.edit(nick=curr_nick + str(emoji))
         print("New nick: {0}".format(user.nick))
 
     @bot.command(brief="Connects given battlenet to user's Discord")
     async def battlenet(ctx, bnet, disc=None):
         try:
-            add(disc or str(ctx.author), bnet)
+            if disc is not None:
+                user = disc
+                if str(ctx.author) != SUPERUSER:
+                    await ctx.channel.send("You don't have permission for this. Nice try!")
+                    return
+            else:
+                user = str(ctx.author)
+            add.add_bnet(user, bnet)
         except ValueError:
             await ctx.channel.send("{0} either private or does not exist".format(bnet))
         except KeyError:
             await ctx.channel.send("{0} is linked with another discord user".format(bnet))
         else:
-            if disc is not None:
-                user = bot.get_user(disc)
-            else:
-                user = ctx.author
-            print('User: {0}'.format(str(user)))
-            print('Guild: {0}'.format(str(ctx.guild)))
             try:
                 await update_roles(ctx.channel.guild, user)
             except ValueError:
