@@ -1,5 +1,5 @@
 from replit import db
-from config import *
+from config import KEYS as k
 from functools import reduce
 
 
@@ -48,7 +48,7 @@ def seconds_to_time(t):
 # ValueError if user has no valid data.
 def get_user(bnet):
     if bnet in db:
-        if not db[bnet][key_t]:
+        if not db[bnet][k.TPL]:
             raise ValueError("PRIVATE|DNE")
         return db[bnet]
     else:
@@ -57,9 +57,9 @@ def get_user(bnet):
 
 def get_roles(disc):
     if disc not in db:
-        print("Discord not in db")
+        print(f"{disc} not in db")
         return None
-    bnet = db[disc][key_pr]
+    bnet = db[disc][k.PRM]
     try:
         user_data = get_user(bnet)
     except NameError:
@@ -70,9 +70,9 @@ def get_roles(disc):
         raise ValueError
     else:
         # Get user's highest rank
-        max_rank = max(user_data[key_r].values())
+        max_rank = max(user_data[k.RNK].values())
         # Get user's most played hero
-        most_played = reduce(lambda r, c: c if user_data[key_t][c] > user_data[key_t][r] else r, user_data[key_t])
+        most_played = reduce(lambda r, c: c if user_data[k.TPL][c] > user_data[k.TPL][r] else r, user_data[k.TPL])
         print("Rank: {0}; Most played: {1}".format(max_rank, most_played))
         return {'rank-value': str(max_rank), 'rank': get_rank(max_rank), 'most-played': most_played}
 
@@ -82,8 +82,8 @@ def get_data(bnet, *, _key=None):
         user_data = get_user(bnet)
 
         # Prepare data for easy printing
-        ranks = {key.capitalize(): str(value) for key, value in user_data[key_r].items()}
-        time_played = {key: seconds_to_time(value) for key, value in user_data[key_t].items()}
+        ranks = {key.capitalize(): str(value) for key, value in user_data[k.RNK].items()}
+        time_played = {key: seconds_to_time(value) for key, value in user_data[k.TPL].items()}
     except NameError:
         # If NameError raised from get_user(), then username does not have linked battlenet
         return 'No Battle.net accounts are linked to your Discord yet!'
@@ -107,16 +107,16 @@ def get_data(bnet, *, _key=None):
 
 # Helper function to retrieve user data and send response message
 async def send_info(ctx, user, key=None):
-    if user in db[key_dsc]:
-        await ctx.channel.send(get_data(db[user][key_pr], _key=key))
+    if user in db[k.DSC]:
+        await ctx.channel.send(get_data(db[user][k.PRM], _key=key))
     elif user is None:
         author = str(ctx.author)
         if author in db:
-            bnet = db[author][key_pr]
+            bnet = db[author][k.PRM]
             await ctx.channel.send(get_data(bnet, _key=key))
         else:
             await ctx.channel.send('{0} does not have any linked battlenet accounts'.format(author))
-    elif user in db[key_bn]:
+    elif user in db[k.BNT]:
         await ctx.channel.send(get_data(user, _key=key))
     else:
         await ctx.channel.send('Unable to get info on {0}'.format(user))

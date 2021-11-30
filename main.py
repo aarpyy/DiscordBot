@@ -1,5 +1,6 @@
 from discord.ext import commands, tasks
 from discord.utils import get
+from discord import Intents
 import os
 import add
 from config import KEYS as k
@@ -14,20 +15,25 @@ SUPERUSER = "aarpyy#3360"
 
 
 def main():
-    bot = commands.Bot(command_prefix='/')
+    intents = Intents.default()
+    intents.members = True
+    bot = commands.Bot(command_prefix='/', intents=intents)
 
     @bot.event
     async def on_ready():
-        print(f"logged in as {bot.user}")
+        print(f"Logged in as {bot.user}.")
+        update_loop.start()
 
-    @tasks.loop(seconds=30)
+    @tasks.loop(minutes=1)
     async def update_loop():
         request.update()
+        for guild in bot.guilds:
+            for user in guild.members:
+                if user == bot.user or str(user) not in db:
+                    continue
+                print("Updating user {0}".format(str(user)))
+                await update_roles(guild, user)
         print("Updated all accounts")
-
-    @update_loop.before_loop
-    async def start_loop():
-        await bot.wait_until_ready()
 
     @bot.command()
     async def roles(ctx):
