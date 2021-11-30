@@ -20,4 +20,13 @@ def battlenet(bnet):
         db[KEYS.BNT].remove(bnet)
     if bnet in db:
         del db[bnet]
-    return True
+    for user in db[KEYS.DSC]:
+        if bnet in db[user][KEYS.ALL]:
+            db[user][KEYS.ALL].remove(bnet)
+        if bnet == db[user][KEYS.PRM]:
+            if len(db[user][KEYS.ALL]) > 0:
+                db[user][KEYS.PRM] = db[user][KEYS.ALL][0]
+            else:
+                del db[user]
+                db[KEYS.DSC].remove(user)
+    return "Successfully removed {0}".format(bnet)

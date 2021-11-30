@@ -23,7 +23,7 @@ def main():
         print(f"Logged in as {bot.user}.")
         update_loop.start()
 
-    @tasks.loop(minutes=1)
+    @tasks.loop(hours=1)
     async def update_loop():
         request.update()
         for guild in bot.guilds:
@@ -31,7 +31,7 @@ def main():
                 if user == bot.user or str(user) not in db:
                     continue
                 print("Updating user {0}".format(str(user)))
-                await update_roles(guild, user)
+                await update_roles(guild, str(user))
         print("Updated all accounts")
 
     @bot.command()
@@ -46,7 +46,7 @@ def main():
             await ctx.channel.send("Name: {0}; ID: {1}".format(emoji.name, emoji.id))
 
     @bot.command(name="db")
-    async def _db(ctx, cmd, value, *args):
+    async def _db(ctx, cmd, value=None, *args):
         if str(ctx.author) not in db[KEYS.ADM]:
             await ctx.channel.send("You must be a database administrator to run a /db command")
             return
@@ -65,19 +65,37 @@ def main():
             await ctx.channel.send("Available database commands:\nclear\nadd\nget\nremove\nadmin")
         else:
             await ctx.channel.send("Unrecognized database command")
+    
+    @bot.command()
+    async def set(ctx, key, bnet):
+        author = str(ctx.author)
+        if key == 'primary':
+            if bnet == db[author][KEYS.PRM]:
+                await ctx.channel.send(f"{bnet} is already your primary!")
+            elif bnet in db[author][KEYS.ALL]:
+                db[author][KEYS.PRM] = bnet
+                await ctx.channel.send(f"Successfully made {bnet} your new primary")
+            else:
+                await ctx.channel.send(f"{bnet} is not linked to your discord. Link it first!")
+        else:
+            await ctx.channel.send("Incorrect /set usage. Try using /set primary bnet to set a primary battlenet.")
 
     @bot.command(name="remove")
     async def _remove(ctx, value):
+        print(f"All discords: {db[KEYS.DSC]}")
         author = str(ctx.author)
-        if value in db[KEYS.BNT]:
+        print(f"value: {value}")
+        print(f"bnet: {db[KEYS.BNT]}")
+        print(f"disc: {db[KEYS.DSC]}")
+        if value in db[KEYS.BNT] or value in db:
             if author == SUPERUSER or value in db[author][KEYS.ALL]:
                 message = remove.battlenet(value)
                 await ctx.channel.send(message)
             else:
                 await ctx.channel.send("{0} is not linked to your discord so you can't remove it".format(value))
-        elif value in db[KEYS.DSC]:
+        elif value in db[KEYS.DSC] or value in db:
             if value == author or author == SUPERUSER:
-                message = remove.user(value)
+                message = remove.member(value)
                 await ctx.channel.send(message)
             else:
                 await ctx.channel.send("You are not able to remove {0} from the database, sorry!".format(value))
@@ -88,6 +106,8 @@ def main():
     async def send_info(ctx, user, key=None):
         if user in db[KEYS.DSC]:
             await ctx.channel.send(retrieve.player_stats(db[user][KEYS.PRM], _key=key))
+        elif user in db[KEYS.BNT]:
+            await ctx.channel.send(retrieve.player_stats(user, _key=key))
         elif user is None:
             author = str(ctx.author)
             if author in db:
@@ -95,8 +115,6 @@ def main():
                 await ctx.channel.send(retrieve.player_stats(bnet, _key=key))
             else:
                 await ctx.channel.send('{0} does not have any linked battlenet accounts'.format(author))
-        elif user in db[KEYS.BNT]:
-            await ctx.channel.send(retrieve.player_stats(user, _key=key))
         else:
             await ctx.channel.send('Unable to get info on {0}'.format(user))
 
@@ -116,6 +134,8 @@ def main():
     async def update(ctx, user=None):
         if user is None:
             request.update()
+            for user in ctx.guild.members:
+                await update_roles(ctx.guild, user)
             await ctx.channel.send("{0} Battlenet accounts updated".format(len(db[KEYS.BNT])))
         elif user in db[KEYS.BNT]:
             request.update(user)
@@ -124,8 +144,12 @@ def main():
             await ctx.channel.send("{0} not linked Battlenet".format(user))
 
     async def update_roles(guild, user):
-        player_roles = retrieve.user_roles(str(user))
+        player_roles = retrieve.user_roles(user)
 
+        if isinstance(user, str):
+            user = guild.get_member_named(user)
+        if user is None:
+            return
         # Create all new roles
         for role in player_roles:
             role_obj = await add.role(guild, player_roles[role])
@@ -152,7 +176,8 @@ def main():
             await ctx.channel.send("{0} is linked with another discord user".format(bnet))
         else:
             try:
-                await update_roles(ctx.channel.guild, user)
+                if ctx.guild is not None:
+                    await update_roles(ctx.guild, user)
             except ValueError:
                 await ctx.channel.send("An error occurred in assigning you roles. Try /remove battlenet and re-adding"
                                        " it. If this doesn't fix it, probably message aarpyy")
@@ -165,7 +190,7 @@ def main():
     async def primary(ctx):
         usern = str(ctx.author)
         if usern in db:
-            await ctx.channel.send("Your primary linked battlenet account is " + db[usern]['primary'])
+            await ctx.channel.send("Your primary linked battlenet account is " + db[usern][KEYS.PRM])
         else:
             await ctx.channel.send(
                 "You have not yet linked a battlenet account!\nRun /battlenet followed by your full battletag to link.")

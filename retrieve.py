@@ -11,6 +11,17 @@ def sec_to_t(t):
         time.append(r)
     return time[::-1]
 
+# Converts time (in seconds) into a string to display time
+def seconds_to_time(t):
+    time = sec_to_t(t)
+    if len(time) == 3:
+        return "{0}h, {1}m, {2}s".format(*time)
+    elif len(time) == 2:
+        return "{0}m, {1}s".format(*time)
+    elif len(time) == 1:
+        return "{0}s".format(*time)
+    else:
+        return ':'.join(str(e) for e in time)
 
 def get_rank(r):
     if r < 1500:
@@ -29,20 +40,6 @@ def get_rank(r):
         return 'Grandmaster'
     else:
         raise ValueError(f"{r} not a valid rank")
-
-
-# Converts time (in seconds) into a string to display time
-def seconds_to_time(t):
-    time = sec_to_t(t)
-    if len(time) == 3:
-        return "{0}h, {1}m, {2}s".format(*time)
-    elif len(time) == 2:
-        return "{0}m, {1}s".format(*time)
-    elif len(time) == 1:
-        return "{0}s".format(*time)
-    else:
-        return ':'.join(time)
-
 
 # Returns value associated with user key in replit db. Raises NameError if user not in db
 # ValueError if user has no valid data.

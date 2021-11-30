@@ -1,7 +1,6 @@
 import os
 import unidecode
-from config import KEYS
-from config import N_HEROES
+from config import KEYS, N_HEROES
 from replit import db
 
 
@@ -69,3 +68,6 @@ def main(bnet):
 
     # Update table, regardless of what was there before
     db[bnet] = {KEYS.RNK: ranks, KEYS.TPL: time_played}
+    # If not in list of current battlenets, add it
+    if bnet not in db[KEYS.BNT]:
+        db[KEYS.BNT].append(bnet)

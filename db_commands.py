@@ -8,7 +8,7 @@ def clear():
         for key in db:
             if key not in KEYS.const:
                 del db[key]
-        db[KEYS.BNET] = []
+        db[KEYS.BNT] = []
         db[KEYS.DSC] = []
     except KeyError:
         return "An error occurred"

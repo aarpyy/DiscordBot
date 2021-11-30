@@ -6,13 +6,22 @@ from replit import db
 
 
 def battlenet(user, bnet):
-    # If already added as a battlenet, don't do anything
-    if user in db and bnet in db[user][KEYS.ALL]:
-        return
-
-    # If the account already loaded and not for this user, don't allow them to link
-    if bnet in db and bnet not in db[user][KEYS.ALL]:
-        raise NameError("{0} linked to another account".format(bnet))
+    
+    # If user in in database and battlenet also is but battlenet isn't linked than this user can't access. If it is linked then return. If user in db and battlnet not in then everything is fine. If user is not in db but battlenet is, then battlenet is registered to another user.
+    if user in db:
+        if bnet in db:
+            if bnet not in db[user][KEYS.ALL]:
+                raise NameError(f"{bnet} linked to another account")
+            else: 
+                return
+        else:
+            db[user][KEYS.ALL].append(bnet)
+    elif bnet in db:
+        raise NameError(f"{bnet} linked to another account")
+    else:
+        # If not linked discord, add it now in case bnet needs to be removed from this user
+        db[user] = {KEYS.PRM: bnet, KEYS.ALL: [bnet]}
+        db[KEYS.DSC].append(user)
 
     # Load bnet information in table
     request.main(bnet)
@@ -22,16 +31,13 @@ def battlenet(user, bnet):
         # Delete data associated with battletag if it is inaccessible
         remove.battlenet(bnet)
         raise ValueError(bnet, "is either private or does not exist")
-    elif user in db:
-        db[user][KEYS.ALL].append(bnet)
-    else:
-        db[user] = {KEYS.PRM: bnet, KEYS.ALL: [bnet]}
-
-    db[KEYS.BNT].append(bnet)
 
 
 async def role(guild, name):
     if name not in db[KEYS.RLE]:
         print("Creating {0} as a role...".format(name))
         await guild.create_role(name=name)
+        role_obj = get(guild.roles, name=name)
+        db[KEYS.RLE][name] = role_obj.id
+        return role_obj
     return get(guild.roles, name=name)
