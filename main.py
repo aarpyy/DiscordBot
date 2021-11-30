@@ -1,4 +1,4 @@
-from discord.ext import commands
+from discord.ext import commands, tasks
 from discord.utils import get
 import os
 import add
@@ -19,6 +19,15 @@ def main():
     @bot.event
     async def on_ready():
         print(f"logged in as {bot.user}")
+
+    @tasks.loop(seconds=30)
+    async def update_loop():
+        request.update()
+        print("Updated all accounts")
+
+    @update_loop.before_loop
+    async def start_loop():
+        await bot.wait_until_ready()
 
     @bot.command()
     async def roles(ctx):
@@ -85,11 +94,10 @@ def main():
     @bot.command(brief="Updates player stats for all linked battlenets")
     async def update(ctx, user=None):
         if user is None:
-            for player in db[k.BNT]:
-                request.main(player)
+            request.update()
             await ctx.channel.send("{0} Battlenet accounts updated".format(len(db[k.BNT])))
         elif user in db[k.BNT]:
-            request.main(user)
+            request.update(user)
             await ctx.channel.send("{0} updated".format(user))
         else:
             await ctx.channel.send("{0} not linked Battlenet".format(user))

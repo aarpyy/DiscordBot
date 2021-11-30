@@ -14,6 +14,18 @@ def time_to_int(time):
     return total
 
 
+def update(user=None):
+    if user is None:
+        for player in db[k.BNT]:
+            main(player)
+        return True
+    elif user in db[k.BNT]:
+        main(user)
+        return True
+    else:
+        return False
+
+
 def main(bnet):
     player_name, player_id = bnet.split('#')  # get player name from command line
     url = 'https://playoverwatch.com/en-us/career/pc/{0}-{1}/'.format(player_name, player_id)  # match name to url
