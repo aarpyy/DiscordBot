@@ -1,5 +1,5 @@
 from replit import db
-from config import KEYS as k
+from config import KEYS
 from functools import reduce
 
 
@@ -28,7 +28,7 @@ def get_rank(r):
     elif r < 5000:
         return 'Grandmaster'
     else:
-        raise ValueError("{0} not a valid rank".format(r))
+        raise ValueError(f"{r} not a valid rank")
 
 
 # Converts time (in seconds) into a string to display time
@@ -46,22 +46,22 @@ def seconds_to_time(t):
 
 # Returns value associated with user key in replit db. Raises NameError if user not in db
 # ValueError if user has no valid data.
-def get_user(bnet):
+def user_index(bnet):
     if bnet in db:
-        if not db[bnet][k.TPL]:
+        if not db[bnet][KEYS.TPL]:
             raise ValueError("PRIVATE|DNE")
         return db[bnet]
     else:
         raise NameError
 
 
-def get_roles(disc):
+def user_roles(disc):
     if disc not in db:
         print(f"{disc} not in db")
         return None
-    bnet = db[disc][k.PRM]
+    bnet = db[disc][KEYS.PRM]
     try:
-        user_data = get_user(bnet)
+        user_data = user_index(bnet)
     except NameError:
         return None
     except ValueError as exc:
@@ -70,20 +70,19 @@ def get_roles(disc):
         raise ValueError
     else:
         # Get user's highest rank
-        max_rank = max(user_data[k.RNK].values())
+        max_rank = max(user_data[KEYS.RNK].values())
         # Get user's most played hero
-        most_played = reduce(lambda r, c: c if user_data[k.TPL][c] > user_data[k.TPL][r] else r, user_data[k.TPL])
-        print("Rank: {0}; Most played: {1}".format(max_rank, most_played))
+        most_played = reduce(lambda r, c: c if user_data[KEYS.TPL][c] > user_data[KEYS.TPL][r] else r, user_data[KEYS.TPL])
         return {'rank-value': str(max_rank), 'rank': get_rank(max_rank), 'most-played': most_played}
 
 
-def get_data(bnet, *, _key=None):
+def player_stats(bnet, *, _key=None):
     try:
-        user_data = get_user(bnet)
+        user_data = user_index(bnet)
 
         # Prepare data for easy printing
-        ranks = {key.capitalize(): str(value) for key, value in user_data[k.RNK].items()}
-        time_played = {key: seconds_to_time(value) for key, value in user_data[k.TPL].items()}
+        ranks = {key.capitalize(): str(value) for key, value in user_data[KEYS.RNK].items()}
+        time_played = {key: seconds_to_time(value) for key, value in user_data[KEYS.TPL].items()}
     except NameError:
         # If NameError raised from get_user(), then username does not have linked battlenet
         return 'No Battle.net accounts are linked to your Discord yet!'
@@ -103,20 +102,3 @@ def get_data(bnet, *, _key=None):
             message += '\n-----\n'
             message += '\n'.join(': '.join(e) for e in time_played.items())
         return message
-
-
-# Helper function to retrieve user data and send response message
-async def send_info(ctx, user, key=None):
-    if user in db[k.DSC]:
-        await ctx.channel.send(get_data(db[user][k.PRM], _key=key))
-    elif user is None:
-        author = str(ctx.author)
-        if author in db:
-            bnet = db[author][k.PRM]
-            await ctx.channel.send(get_data(bnet, _key=key))
-        else:
-            await ctx.channel.send('{0} does not have any linked battlenet accounts'.format(author))
-    elif user in db[k.BNT]:
-        await ctx.channel.send(get_data(user, _key=key))
-    else:
-        await ctx.channel.send('Unable to get info on {0}'.format(user))

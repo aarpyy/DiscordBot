@@ -1,14 +1,13 @@
 from discord.ext import commands, tasks
-from discord.utils import get
 from discord import Intents
 import os
 import add
-from config import KEYS as k
+from config import KEYS
 import request
 import db_commands as db_cmd
 from replit import db
-from retrieve import get_roles, send_info
-from remove import remove_user, remove_bnet
+import retrieve
+import remove
 
 
 SUPERUSER = "aarpyy#3360"
@@ -38,7 +37,7 @@ def main():
     @bot.command()
     async def roles(ctx):
         for role in ctx.guild.roles:
-            db[k.RLE][str(role)] = role.id
+            db[KEYS.RLE][str(role)] = role.id
         await ctx.channel.send("Server roles:\n" + '\n'.join(str(e) for e in ctx.guild.roles))
     
     @bot.command()
@@ -48,7 +47,7 @@ def main():
 
     @bot.command(name="db")
     async def _db(ctx, cmd, value, *args):
-        if str(ctx.author) not in db[k.ADM]:
+        if str(ctx.author) not in db[KEYS.ADM]:
             await ctx.channel.send("You must be a database administrator to run a /db command")
             return
 
@@ -67,23 +66,39 @@ def main():
         else:
             await ctx.channel.send("Unrecognized database command")
 
-    @bot.command()
-    async def remove(ctx, value):
+    @bot.command(name="remove")
+    async def _remove(ctx, value):
         author = str(ctx.author)
-        if value in db[k.BNT]:
-            if author == SUPERUSER or value in db[author][k.ALL]:
-                message = remove_bnet(value)
+        if value in db[KEYS.BNT]:
+            if author == SUPERUSER or value in db[author][KEYS.ALL]:
+                message = remove.battlenet(value)
                 await ctx.channel.send(message)
             else:
                 await ctx.channel.send("{0} is not linked to your discord so you can't remove it".format(value))
-        elif value in db[k.DSC]:
+        elif value in db[KEYS.DSC]:
             if value == author or author == SUPERUSER:
-                message = remove_user(value)
+                message = remove.user(value)
                 await ctx.channel.send(message)
             else:
                 await ctx.channel.send("You are not able to remove {0} from the database, sorry!".format(value))
         else:
             await ctx.channel.send("Invalid remove options.\nUsage: /remove (battlenet or discord username)")
+
+    # Helper function to retrieve user data and send response message
+    async def send_info(ctx, user, key=None):
+        if user in db[KEYS.DSC]:
+            await ctx.channel.send(retrieve.player_stats(db[user][KEYS.PRM], _key=key))
+        elif user is None:
+            author = str(ctx.author)
+            if author in db:
+                bnet = db[author][KEYS.PRM]
+                await ctx.channel.send(retrieve.player_stats(bnet, _key=key))
+            else:
+                await ctx.channel.send('{0} does not have any linked battlenet accounts'.format(author))
+        elif user in db[KEYS.BNT]:
+            await ctx.channel.send(retrieve.player_stats(user, _key=key))
+        else:
+            await ctx.channel.send('Unable to get info on {0}'.format(user))
 
     @bot.command(brief="Shows player's competitive rank(s) for this season")
     async def rank(ctx, user=None):
@@ -101,22 +116,22 @@ def main():
     async def update(ctx, user=None):
         if user is None:
             request.update()
-            await ctx.channel.send("{0} Battlenet accounts updated".format(len(db[k.BNT])))
-        elif user in db[k.BNT]:
+            await ctx.channel.send("{0} Battlenet accounts updated".format(len(db[KEYS.BNT])))
+        elif user in db[KEYS.BNT]:
             request.update(user)
             await ctx.channel.send("{0} updated".format(user))
         else:
             await ctx.channel.send("{0} not linked Battlenet".format(user))
 
     async def update_roles(guild, user):
-        user_roles = get_roles(str(user))
+        player_roles = retrieve.user_roles(str(user))
 
         # Create all new roles
-        for role in user_roles:
-            role_obj = await add.role(guild, user_roles[role])
+        for role in player_roles:
+            role_obj = await add.role(guild, player_roles[role])
 
             if role_obj not in user.roles:
-                print("Giving {0} role to {1}...".format(user_roles[role], str(user)))
+                print("Giving {0} role to {1}...".format(player_roles[role], str(user)))
                 await user.add_roles(role_obj)
 
     @bot.command(brief="Connects given battlenet to user's Discord")

@@ -3,6 +3,7 @@
 N_HEROES = 10
 
 
+# Class for constant database keys to prevent typos in keys that are not user dependant
 class db_key:
     def __init__(self):
         self.PRM = 'primary'
@@ -27,4 +28,5 @@ class db_key:
         yield from self._keys
 
 
+# key object for easy importing
 KEYS = db_key()

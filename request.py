@@ -1,6 +1,6 @@
 import os
 import unidecode
-from config import KEYS as k
+from config import KEYS
 from config import N_HEROES
 from replit import db
 
@@ -16,10 +16,10 @@ def time_to_int(time):
 
 def update(user=None):
     if user is None:
-        for player in db[k.BNT]:
+        for player in db[KEYS.BNT]:
             main(player)
         return True
-    elif user in db[k.BNT]:
+    elif user in db[KEYS.BNT]:
         main(user)
         return True
     else:
@@ -68,4 +68,4 @@ def main(bnet):
     os.system('rm -f temp.txt')
 
     # Update table, regardless of what was there before
-    db[bnet] = {k.RNK: ranks, k.TPL: time_played}
+    db[bnet] = {KEYS.RNK: ranks, KEYS.TPL: time_played}
