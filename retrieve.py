@@ -11,6 +11,7 @@ def sec_to_t(t):
         time.append(r)
     return time[::-1]
 
+
 # Converts time (in seconds) into a string to display time
 def seconds_to_time(t):
     time = sec_to_t(t)
@@ -22,6 +23,7 @@ def seconds_to_time(t):
         return "{0}s".format(*time)
     else:
         return ':'.join(str(e) for e in time)
+
 
 def get_rank(r):
     if r < 1500:
@@ -41,6 +43,7 @@ def get_rank(r):
     else:
         raise ValueError(f"{r} not a valid rank")
 
+
 # Returns value associated with user key in replit db. Raises NameError if user not in db
 # ValueError if user has no valid data.
 def user_index(bnet):
@@ -56,7 +59,7 @@ def user_roles(disc):
     if disc not in db:
         print(f"{disc} not in db")
         return None
-    bnet = db[disc][KEYS.PRM]
+    bnet = db[disc][KEYS.PRIM]
     try:
         user_data = user_index(bnet)
     except NameError:
@@ -67,10 +70,32 @@ def user_roles(disc):
         raise ValueError
     else:
         # Get user's highest rank
-        max_rank = max(user_data[KEYS.RNK].values())
+        max_rank = max(user_data[KEYS.RANK].values())
         # Get user's most played hero
         most_played = reduce(lambda r, c: c if user_data[KEYS.TPL][c] > user_data[KEYS.TPL][r] else r, user_data[KEYS.TPL])
         return {'rank-value': str(max_rank), 'rank': get_rank(max_rank), 'most-played': most_played}
+
+
+def max_key(d):
+    mk, mv = None, None
+    for k, v in d.items():
+        if mk is None or mv is None:
+            mk, mv = k, v
+        elif v > mv:
+            mk, mv = k, v
+    return mk
+
+
+def player_roles(bnet):
+    roles = {}
+    for mode in db[bnet][KEYS.STAT]:
+        roles[mode] = {}
+        for categ in db[bnet][KEYS.STAT][mode]:
+            for hero in db[bnet][KEYS.STAT][mode][categ]:
+                # Get only first hero data since it is already sorted
+                roles[mode][categ] = (hero, db[bnet][KEYS.STAT][mode][categ][hero])
+                break
+    return roles
 
 
 def player_stats(bnet, *, _key=None):
@@ -78,7 +103,7 @@ def player_stats(bnet, *, _key=None):
         user_data = user_index(bnet)
 
         # Prepare data for easy printing
-        ranks = {key.capitalize(): str(value) for key, value in user_data[KEYS.RNK].items()}
+        ranks = {key.capitalize(): str(value) for key, value in user_data[KEYS.RANK].items()}
         time_played = {key: seconds_to_time(value) for key, value in user_data[KEYS.TPL].items()}
     except NameError:
         # If NameError raised from get_user(), then username does not have linked battlenet

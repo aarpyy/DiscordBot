@@ -1,6 +1,7 @@
 from replit import db
 from config import KEYS
 from functools import reduce
+from init import database
 
 
 def clear():
@@ -8,8 +9,8 @@ def clear():
         for key in db:
             if key not in KEYS.const:
                 del db[key]
-        db[KEYS.BNT] = []
-        db[KEYS.DSC] = []
+        db[KEYS.BNET] = []
+        db[KEYS.MMBR] = []
     except KeyError:
         return "An error occurred"
     else:
@@ -46,5 +47,9 @@ def remove(key, *keys):
 
 
 def admin(value):
-    db[KEYS.ADM].append(value)
+    db[KEYS.ADMN].append(value)
     return "{0} successfully added as a database administrator".format(value)
+
+
+def init():
+    database()

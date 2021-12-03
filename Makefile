@@ -1,16 +1,13 @@
 CC = gcc -g -pedantic -std=c99 -Wall -Wextra
 
-TARGETS = split format
+TARGETS = split
 
 .PHONY: clean
 
-all: split format
+all: split
 
 split: split.c
 	@$(CC) -o split split.c
-
-format: format.c config.h
-	@$(CC) -o format format.c
 
 clean:
 	@rm -f $(TARGETS)
