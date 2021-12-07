@@ -30,12 +30,12 @@ def main():
                     print(f"Added {str(mmbr)} to the database")
 
         # Start loop for updated all users
-        update_loop.start()
+        # update_loop.start()
 
     @tasks.loop(hours=1)
     async def update_loop():
         # Request for all loaded battlenets
-        request.update()
+        # request.update()
 
         # Iterate through guilds and update roles for everyone
         for gld in bot.guilds:
@@ -144,7 +144,7 @@ def main():
             await ctx.channel.send(f"{index}'s rank:\n{str(bnet_data[KEYS.RANK])}")
             await ctx.channel.send(f"{index}'s stats:\n{str(bnet_data[KEYS.STAT])}")
         elif index in db:               # If index given is user's discord
-            disc = db[index]
+            disc = index
             if db[disc][KEYS.PRIM] is None:
                 await ctx.channel.send(f"{disc} doesn't have linked any battlenet accounts yet!")
             else:
