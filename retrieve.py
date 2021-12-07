@@ -91,36 +91,6 @@ def player_roles(bnet):
     for mode in db[bnet][KEYS.STAT]:
         roles[mode] = {}
         for categ in db[bnet][KEYS.STAT][mode]:
-            for hero in db[bnet][KEYS.STAT][mode][categ]:
-                # Get only first hero data since it is already sorted
-                roles[mode][categ] = (hero, db[bnet][KEYS.STAT][mode][categ][hero])
-                break
+            hero = next(iter(db[bnet][KEYS.STAT][mode][categ]))
+            roles[mode][categ] = (hero, db[bnet][KEYS.STAT][mode][categ][hero])
     return roles
-
-
-def player_stats(bnet, *, _key=None):
-    try:
-        user_data = user_index(bnet)
-
-        # Prepare data for easy printing
-        ranks = {key.capitalize(): str(value) for key, value in user_data[KEYS.RANK].items()}
-        time_played = {key: seconds_to_time(value) for key, value in user_data[KEYS.TPL].items()}
-    except NameError:
-        # If NameError raised from get_user(), then username does not have linked battlenet
-        return 'No Battle.net accounts are linked to your Discord yet!'
-    except ValueError:
-        return 'Battle.net account is not viewable'
-    else:
-        message = ""
-        if _key == 'rank':
-            message += "Your competitive rank(s):\n"
-            message += '\n'.join(': '.join(e) for e in ranks.items())
-        elif _key == 'time':
-            message += "Your top 10 most played heroes:\n"
-            message += '\n'.join(': '.join(e) for e in time_played.items())
-        else:
-            message += "Your player stats:\n"
-            message += '\n'.join(': '.join(e) for e in ranks.items())
-            message += '\n-----\n'
-            message += '\n'.join(': '.join(e) for e in time_played.items())
-        return message

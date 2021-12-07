@@ -5,6 +5,30 @@ from discord import *
 from discord.guild import *
 
 
+# Converts time (in seconds) to list of time intervals in descending magnitudes of time
+def sec_to_t(t):
+    time = []
+    while t:
+        t, r = divmod(t, 60)
+        time.append(r)
+    return time[::-1]
+
+
+# Converts time (in seconds) into a string to display time
+def seconds_to_time(t):
+    time = sec_to_t(t)
+    if len(time) == 4:
+        return "{0}d, {1}h, {2}m, {3}s".format(*time)
+    elif len(time) == 3:
+        return "{0}h, {1}m, {2}s".format(*time)
+    elif len(time) == 2:
+        return "{0}m, {1}s".format(*time)
+    elif len(time) == 1:
+        return "{0}s".format(*time)
+    else:
+        return ':'.join(str(e) for e in time)
+
+
 def user(gld, mmbr):
     """Returns all roles held by member"""
     if isinstance(mmbr, str):
@@ -67,10 +91,12 @@ async def get(bnet):
     # For each stat associated with battlenet, add that stat
     for mode in table:
         for rle in table[mode]:
-            for hero in table[mode][rle]:
-                if role_filter(rle, hero):
-                    roles.add(f"{mode}-{rle}-{'-'.join(str(e) for e in table[mode][rle][hero])}")
-                break
+            if rle == 'Win Percentage':
+                hero = next(iter(table[mode][rle]))
+                roles.add(f"{hero}–{table[mode][rle][hero]}%W [{mode}]")
+            elif rle == 'Time Played':
+                hero = next(iter(table[mode][rle]))
+                roles.add(f"{hero}–{seconds_to_time(table[mode][rle][hero])} [{mode}]")
 
     return roles
 

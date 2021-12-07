@@ -35,6 +35,7 @@ class db_key:
 # key object for easy importing
 KEYS = db_key()
 data_categories = {'Time Played', 'Win Percentage'}
+create_user_index = lambda: {KEYS.PRIM: None, KEYS.ALL: [], KEYS.ROLE: set()}
 
 
 def init():
