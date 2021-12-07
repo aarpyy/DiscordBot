@@ -22,12 +22,19 @@ def main():
     @bot.event
     async def on_ready():
         print(f"Logged in as {bot.user}.")
+        keys = db.keys()
+        while keys:
+            del db[keys.pop()]
+        db[KEYS.BNET] = []
+        db[KEYS.MMBR] = []
 
         for gld in bot.guilds:
             for mmbr in gld.members:
+                if mmbr.bot:
+                    continue
                 if str(mmbr) not in db:
-                    db[str(mmbr)] = create_user_index()
-                    print(f"Added {str(mmbr)} to the database")
+                    print(f"Adding {str(mmbr)} to the database...")
+                    db[str(mmbr)] = {KEYS.PRIM: None, KEYS.ALL: [], KEYS.ROLE: []}
 
         # Start loop for updated all users
         # update_loop.start()
@@ -64,6 +71,7 @@ def main():
             await ctx.channel.send(f"{bnet} is already linked to another user!")
         else:
             add.battlenet(disc, bnet, 'PC')
+            await ctx.channel.send(f"Successfully linked {bnet} to your discord!")
 
     @bot.command()
     async def xbox(ctx, bnet):
@@ -76,6 +84,7 @@ def main():
             await ctx.channel.send(f"{bnet} is already linked to another user!")
         else:
             add.battlenet(disc, bnet, 'Xbox')
+            await ctx.channel.send(f"Successfully linked {bnet} to your discord!")
 
     @bot.command()
     async def playstation(ctx, bnet):
@@ -88,6 +97,7 @@ def main():
             await ctx.channel.send(f"{bnet} is already linked to another user!")
         else:
             add.battlenet(disc, bnet, 'Playstation')
+            await ctx.channel.send(f"Successfully linked {bnet} to your discord!")
 
     @bot.command(name="remove")
     async def _remove(ctx, bnet):
@@ -137,8 +147,8 @@ def main():
                 await ctx.channel.send(f"You haven't linked any battlenet accounts yet!")
             else:
                 bnet_data = db[db[disc][KEYS.PRIM]]
-                await ctx.channel.send(f"{index}'s rank:\n{str(bnet_data[KEYS.RANK])}")
-                await ctx.channel.send(f"{index}'s stats:\n{str(bnet_data[KEYS.STAT])}")
+                await ctx.channel.send(f"{disc}'s rank:\n{str(bnet_data[KEYS.RANK])}")
+                await ctx.channel.send(f"{disc}'s stats:\n{str(bnet_data[KEYS.STAT])}")
         elif index in db[KEYS.BNET]:    # If index given is a battlenet
             bnet_data = db[index]
             await ctx.channel.send(f"{index}'s rank:\n{str(bnet_data[KEYS.RANK])}")
