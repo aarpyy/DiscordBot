@@ -27,8 +27,8 @@ def main():
 
         for gld in bot.guilds:
             for mmbr in gld.members:
-                if mmbr not in db:
-                    db[mmbr] = create_user_index()
+                if str(mmbr) not in db:
+                    db[str(mmbr)] = create_user_index()
                     print(f"Added {str(mmbr)} to the database")
 
         # Start loop for updated all users
@@ -52,12 +52,12 @@ def main():
             db[KEYS.BOT].append(mmbr)
             return
 
-        db[mmbr] = create_user_index()
-        db[KEYS.MMBR].append(mmbr)
+        db[str(mmbr)] = create_user_index()
+        db[KEYS.MMBR].append(str(mmbr))
 
     @bot.command()
     async def battlenet(ctx, bnet):
-        disc = ctx.author
+        disc = str(ctx.author)
         if disc not in db:
             await ctx.channel.send(f"You aren't a member of a discord server that uses this bot!")
         elif bnet in db[disc][KEYS.ALL]:
@@ -69,7 +69,7 @@ def main():
 
     @bot.command()
     async def xbox(ctx, bnet):
-        disc = ctx.author
+        disc = str(ctx.author)
         if disc not in db:
             await ctx.channel.send(f"You aren't a member of a discord server that uses this bot!")
         elif bnet in db[disc][KEYS.ALL]:
@@ -81,7 +81,7 @@ def main():
 
     @bot.command()
     async def playstation(ctx, bnet):
-        disc = ctx.author
+        disc = str(ctx.author)
         if disc not in db:
             await ctx.channel.send(f"You aren't a member of a discord server that uses this bot!")
         elif bnet in db[disc][KEYS.ALL]:
@@ -93,7 +93,7 @@ def main():
 
     @bot.command(name="remove")
     async def _remove(ctx, bnet):
-        disc = ctx.author
+        disc = str(ctx.author)
         if disc not in db:
             await ctx.channel.send(f"You aren't a member of a discord server that uses this bot!")
         elif bnet not in db:
@@ -115,7 +115,7 @@ def main():
 
     @bot.command()
     async def primary(ctx, bnet):
-        disc = ctx.author
+        disc = str(ctx.author)
         if disc not in db:
             await ctx.channel.send(f"You aren't a member of a discord server that uses this bot!")
         elif bnet in db[disc][KEYS.ALL]:
@@ -131,7 +131,7 @@ def main():
 
     @bot.command()
     async def stats(ctx, index=None):
-        disc = ctx.author
+        disc = str(ctx.author)
         if disc not in db:
             await ctx.channel.send(f"You aren't a member of a discord server that uses this bot!")
         elif index is None:

@@ -109,6 +109,7 @@ async def init(gld, mmbr):
     for bnet in db[mmbr][KEYS.ALL]:
         roles.update(await get(bnet))
 
+    mmbr = gld.get_member_named(mmbr)
     for rle in roles:
         # Get role object, either by creating it or by getting it from dict of role: role_id
         role_obj = await add(gld, rle)
@@ -116,10 +117,10 @@ async def init(gld, mmbr):
         # If role not added to member, add it
         if mmbr not in role_obj.members:
             await mmbr.add_roles(role_obj)
-            db[mmbr][KEYS.ROLE].add(rle)
+            db[str(mmbr)][KEYS.ROLE].add(rle)
 
 
-async def update(gld: Guild, mmbr: Member):
+async def update(gld: Guild, mmbr: str):
 
     # Remove all roles from user that are in list of bot-created roles
     for rle in db[mmbr][KEYS.ROLE]:
