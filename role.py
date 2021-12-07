@@ -1,7 +1,6 @@
 from replit import db
 from config import KEYS, data_categories
 import retrieve
-from discord import *
 from discord.guild import *
 
 

@@ -3,8 +3,6 @@ from unidecode import unidecode
 from config import KEYS
 from functools import reduce
 from replit import db
-import sys
-from role import role_filter
 
 
 def update(bnet=None):
@@ -153,24 +151,3 @@ def main(url):
         _stats[_mode] = {k: v for k, v in _stats[_mode].items() if v}
 
     return _ranks, _stats
-
-
-if __name__ == '__main__':
-    ranks, stats = main(search_url('pc')(sys.argv[1]))
-    roles = {}
-    for mode in stats:
-        roles[mode] = {}
-        for categ in stats[mode]:
-            for hero in stats[mode][categ]:
-                # Get only first hero data since it is already sorted
-                roles[mode][categ] = (hero, stats[mode][categ][hero])
-                break
-
-    _roles = set()
-    for mode in roles:
-        for role in roles[mode]:
-            if role_filter(role, roles[mode][role]):
-                _roles.add(f"{mode}-{role}-{'-'.join(str(e) for e in roles[mode][role])}")
-
-    print(roles)
-    print(_roles)

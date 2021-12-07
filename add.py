@@ -1,9 +1,7 @@
 import request
 import remove
 from config import KEYS
-from discord.utils import get
 from replit import db
-import role
 
 
 def battlenet(member, bnet, platform):
