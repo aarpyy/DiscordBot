@@ -57,8 +57,6 @@ def main():
             return
         elif str(msg.author) == su:
             await bot.process_commands(msg)
-        else:
-            await msg.channel.send("You can't run any commands while bot is being tested, sorry!")
 
     @bot.event
     async def on_member_join(mmbr):
