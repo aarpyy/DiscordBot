@@ -5,7 +5,7 @@ from asyncio import sleep
 import os
 import add
 import config
-from config import KEYS, create_user_index
+from config import KEYS
 import request
 import role
 from replit import db
@@ -27,6 +27,7 @@ def main():
             del db[keys.pop()]
         db[KEYS.BNET] = []
         db[KEYS.MMBR] = []
+        db[KEYS.ROLE] = {}
 
         for gld in bot.guilds:
             for mmbr in gld.members:

@@ -92,5 +92,5 @@ def player_roles(bnet):
         roles[mode] = {}
         for categ in db[bnet][KEYS.STAT][mode]:
             hero = next(iter(db[bnet][KEYS.STAT][mode][categ]))
-            roles[mode][categ] = (hero, db[bnet][KEYS.STAT][mode][categ][hero])
+            roles[mode][categ][hero] = db[bnet][KEYS.STAT][mode][categ][hero]
     return roles

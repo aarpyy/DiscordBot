@@ -51,7 +51,7 @@ async def remove(rle: Role, reason=None):
 async def add(gld, rle):
     if rle not in db[KEYS.ROLE]:
         role_obj = await gld.create_role(name=rle)
-        db[KEYS.ROLE][rle] = role_obj.id
+        db[KEYS.ROLE][rle] = int(role_obj.id)
     else:
         role_obj = gld.get_role(db[KEYS.ROLE][rle])
     return role_obj
@@ -59,7 +59,7 @@ async def add(gld, rle):
 
 def get(bnet):
     roles = set()
-    table = retrieve.player_roles(bnet)
+    table = db[bnet][KEYS.STAT]
     # For each stat associated with battlenet, add that stat
     for mode in table:
         for rle in table[mode]:
@@ -95,19 +95,23 @@ async def init(gld, mmbr):
             db[KEYS.ROLE][rle] = int(role_obj.id)
 
 
-async def update(gld: Guild, mmbr: str):
+async def update(gld: Guild, disc: str):
+    mmbr = gld.get_member_named(disc)
 
     # Remove all roles from user that are in list of bot-created roles
-    for rle in db[mmbr][KEYS.ROLE]:
+    for rle in db[disc][KEYS.ROLE]:
         role_obj = gld.get_role(db[KEYS.ROLE][rle])
 
         # If current member is the only member who has this role, remove it
         if len(role_obj.members) <= 1:
             role_obj.delete()
             db[KEYS.ROLE].remove(rle)
+        
+        
 
-    db[mmbr][KEYS.ROLE] = []
+
+    db[disc][KEYS.ROLE] = []
 
     # All bot given roles are removed, now add all back
-    await init(gld, mmbr)
+    await init(gld, disc)
 
