@@ -82,7 +82,7 @@ def main():
         else:
             add.battlenet(disc, bnet, 'PC')
             if ctx.guild is not None:
-                await role.init(ctx.guild, disc)
+                await role.update(ctx.guild, disc)
             await ctx.channel.send(f"Successfully linked {bnet} to your discord!")
 
     @bot.command()
@@ -97,7 +97,7 @@ def main():
         else:
             add.battlenet(disc, bnet, 'Xbox')
             if ctx.guild is not None:
-                await role.init(ctx.guild, disc)
+                await role.update(ctx.guild, disc)
             await ctx.channel.send(f"Successfully linked {bnet} to your discord!")
 
     @bot.command()
@@ -112,7 +112,7 @@ def main():
         else:
             add.battlenet(disc, bnet, 'Playstation')
             if ctx.guild is not None:
-                await role.init(ctx.guild, disc)
+                await role.update(ctx.guild, disc)
             await ctx.channel.send(f"Successfully linked {bnet} to your discord!")
 
     @bot.command(name="remove")

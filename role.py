@@ -96,7 +96,7 @@ async def init(gld, mmbr):
 
 
 async def update(gld: Guild, disc: str):
-    mmbr = gld.get_member_named(disc)
+    mmbr = gld.get_member_named(disc)   # type: Member
 
     # Remove all roles from user that are in list of bot-created roles
     for rle in db[disc][KEYS.ROLE]:
@@ -107,8 +107,7 @@ async def update(gld: Guild, disc: str):
             role_obj.delete()
             db[KEYS.ROLE].remove(rle)
         
-        
-
+        await mmbr.remove_roles(role_obj, reason="Role refresh")
 
     db[disc][KEYS.ROLE] = []
 
