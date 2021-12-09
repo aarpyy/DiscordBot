@@ -22,12 +22,6 @@ def main():
     @bot.event
     async def on_ready():
         print(f"Logged in as {bot.user}.")
-        keys = db.keys()
-        while keys:
-            del db[keys.pop()]
-        db[KEYS.BNET] = []
-        db[KEYS.MMBR] = []
-        db[KEYS.ROLE] = {}
 
         for gld in bot.guilds:
             for mmbr in gld.members:
