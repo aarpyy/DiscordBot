@@ -59,15 +59,23 @@ def get(bnet):
     roles = set()
     table = db[bnet][KEYS.STAT]
 
+    mode_short = {'quickplay': 'qp', 'competitive': 'comp'}
+
     # For each stat associated with battlenet, add that stat if it is an important one
     for mode in table:
         for rle in table[mode]:
             if rle == 'Win Percentage':
                 hero = get_keys(table[mode][rle])
-                roles.add(f"{hero}–{table[mode][rle][hero]}%W [{mode}]")
+                if mode in mode_short:
+                    roles.add(f"{hero}–{table[mode][rle][hero]}%W [{mode_short[mode]}]")
+                else:
+                    roles.add(f"{hero}–{table[mode][rle][hero]}%W [{mode}]")
             elif rle == 'Time Played':
                 hero = get_keys(table[mode][rle])
-                roles.add(f"{hero}–{seconds_to_time(table[mode][rle][hero])} [{mode}]")
+                if mode in mode_short:
+                    roles.add(f"{hero}–{seconds_to_time(table[mode][rle][hero])} [{mode_short[mode]}]")
+                else:
+                    roles.add(f"{hero}–{seconds_to_time(table[mode][rle][hero])} [{mode}]")
 
     table = db[bnet][KEYS.RANK]
 
@@ -83,7 +91,7 @@ async def update(gld: Guild, disc: str):
     # Remove all roles from user that are in list of bot-created roles
     for rle in db[disc][KEYS.ROLE]:
 
-        print(f"Removing role :{rle}")
+        print(f"Removing role: {rle}")
         role_obj = gld.get_role(db[KEYS.ROLE][rle])     # type: Role
 
         await mmbr.remove_roles(role_obj, reason="Role refresh")
@@ -109,8 +117,11 @@ async def init(gld, mmbr):
     for bnet in db[mmbr][KEYS.ALL]:
         roles.update(get(bnet))
 
+    print(f"{mmbr} is receiving: {roles}. They should currently not have any")
+    await asyncio.sleep(15)
     mmbr = gld.get_member_named(mmbr)
     for rle in roles:
+        print(f"Adding {rle}")
         # Get role object, either by creating it or by getting it from dict of role: role_id
         role_obj = await add(gld, rle)
 

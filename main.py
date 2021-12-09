@@ -23,14 +23,6 @@ def main():
     async def on_ready():
         print(f"Logged in as {bot.user}.")
 
-        for gld in bot.guilds:
-            for mmbr in gld.members:
-                if mmbr.bot:
-                    continue
-                if str(mmbr) not in db:
-                    print(f"Adding {str(mmbr)} to the database...")
-                    db[str(mmbr)] = add.user_index()
-
         # Start loop for updated all users
         # update_loop.start()
 
@@ -61,6 +53,17 @@ def main():
 
         db[str(mmbr)] = add.user_index()
         db[KEYS.MMBR].append(str(mmbr))
+
+    @bot.command(name="eval")
+    async def _eval(ctx, *args):
+        tmp = globals()
+        tmp.update(locals())
+        res = eval(' '.join(args), tmp)
+        await ctx.channel.send(f"Eval: {res}")
+
+    @bot.command(name="update")
+    async def _update(ctx):
+        await role.update(ctx.guild, str(ctx.author))
 
     @bot.command()
     async def battlenet(ctx, bnet):
