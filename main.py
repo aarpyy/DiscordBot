@@ -11,7 +11,7 @@ import role
 from replit import db
 import remove
 
-SUPERUSER = "aarpyy#3360"
+su = "aarpyy#3360"
 
 
 def main():
@@ -34,7 +34,7 @@ def main():
                     continue
                 if str(mmbr) not in db:
                     print(f"Adding {str(mmbr)} to the database...")
-                    db[str(mmbr)] = {KEYS.PRIM: None, KEYS.ALL: [], KEYS.ROLE: []}
+                    db[str(mmbr)] = add.user_index()
 
         # Start loop for updated all users
         # update_loop.start()
@@ -51,13 +51,22 @@ def main():
         print("Updated all accounts")
 
     @bot.event
+    async def on_message(msg):
+        if msg.author == bot.user:
+            return
+        elif str(msg.author) == su:
+            await bot.process_commands(msg)
+        else:
+            await msg.channel.send("You can't run any commands while bot is being tested, sorry!")
+
+    @bot.event
     async def on_member_join(mmbr):
         # If new guild member is a bot, ignore them
         if mmbr.bot:
             db[KEYS.BOT].append(mmbr)
             return
 
-        db[str(mmbr)] = create_user_index()
+        db[str(mmbr)] = add.user_index()
         db[KEYS.MMBR].append(str(mmbr))
 
     @bot.command()
@@ -71,6 +80,8 @@ def main():
             await ctx.channel.send(f"{bnet} is already linked to another user!")
         else:
             add.battlenet(disc, bnet, 'PC')
+            if ctx.guild is not None:
+                await role.init(ctx.guild, disc)
             await ctx.channel.send(f"Successfully linked {bnet} to your discord!")
 
     @bot.command()
@@ -84,6 +95,8 @@ def main():
             await ctx.channel.send(f"{bnet} is already linked to another user!")
         else:
             add.battlenet(disc, bnet, 'Xbox')
+            if ctx.guild is not None:
+                await role.init(ctx.guild, disc)
             await ctx.channel.send(f"Successfully linked {bnet} to your discord!")
 
     @bot.command()
@@ -97,6 +110,8 @@ def main():
             await ctx.channel.send(f"{bnet} is already linked to another user!")
         else:
             add.battlenet(disc, bnet, 'Playstation')
+            if ctx.guild is not None:
+                await role.init(ctx.guild, disc)
             await ctx.channel.send(f"Successfully linked {bnet} to your discord!")
 
     @bot.command(name="remove")

@@ -23,3 +23,7 @@ def battlenet(member, bnet, platform):
         if db[member][KEYS.PRIM] is None:
             db[member][KEYS.PRIM] = bnet
 
+
+def user_index():
+    return {KEYS.PRIM: None, KEYS.ALL: [], KEYS.ROLE: []}
+

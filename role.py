@@ -4,18 +4,21 @@ import retrieve
 from discord.guild import *
 
 
-# Converts time (in seconds) to list of time intervals in descending magnitudes of time
-def sec_to_t(t):
-    time = []
-    while t:
-        t, r = divmod(t, 60)
-        time.append(r)
-    return time[::-1]
+def get_keys(d: dict, n: int = 1):
+    it = iter(d)
+    if n == 1:
+        return next(it)
+    else:
+        return tuple(map(lambda x: next(it), range(n)))
 
 
 # Converts time (in seconds) into a string to display time
 def seconds_to_time(t):
-    time = sec_to_t(t)
+    time = []
+    while t:
+        t, r = divmod(t, 60)
+        time.insert(0, r)
+
     if len(time) == 4:
         return "{0}d, {1}h, {2}m, {3}s".format(*time)
     elif len(time) == 3:
@@ -28,51 +31,21 @@ def seconds_to_time(t):
         return ':'.join(str(e) for e in time)
 
 
-def user(gld, mmbr):
-    """Returns all roles held by member"""
-    if isinstance(mmbr, str):
-        mmbr = gld.get_member_named(mmbr)
-        if mmbr is None:
-            return None
+# Role methods
 
-    return mmbr.roles
-
-
-def oberwatch_user(gld, mmbr):
-    """Returns all Oberwatch specific roles held by member"""
-    if isinstance(mmbr, str):
-        mmbr = gld.get_member_named(mmbr)
-        if mmbr is None:
-            return None
-
-    oberwatch_roles = []
-    for rle in mmbr.roles:
-        if str(rle) in db[KEYS.ROLE]:
-            oberwatch_roles.append(rle)
-    return oberwatch_roles
-
-
+# Refresh all roles for all members of a guild
 async def refresh(gld: Guild):
     for mmbr in gld.members:
         await update(gld, mmbr)
     return True
 
 
-async def remove(*roles: Role):
-    for rle in roles:
-        if rle is not None:
-            await rle.delete()              # Delete from discord - this should also delete from all members
-            del db[KEYS.ROLE][str(rle)]     # Delete from list of all roles
-            for mmbr in db[KEYS.MMBR]:      # For each member that has this role
-                if rle in db[mmbr][KEYS.ROLE]:
-                    # Remove role from list of their roles
-                    db[mmbr][KEYS.ROLE].remove(rle)
-    return True
-
-
-def role_filter(rle, value):
-    print(f"role: {rle}; value: {value}")
-    return rle in data_categories or (rle == 'Weapon Accuracy' and value[0] in ('Hanzo', 'Widowmaker'))
+async def remove(rle: Role, reason=None):
+    if rle in db[KEYS.ROLE]:
+        await rle.delete(reason=reason)
+        db[KEYS.ROLE].remove(rle)
+    else:
+        raise KeyError(f"{rle} not in database") from None
 
 
 async def add(gld, rle):
@@ -84,17 +57,17 @@ async def add(gld, rle):
     return role_obj
 
 
-async def get(bnet):
+def get(bnet):
     roles = set()
     table = retrieve.player_roles(bnet)
     # For each stat associated with battlenet, add that stat
     for mode in table:
         for rle in table[mode]:
             if rle == 'Win Percentage':
-                hero = next(iter(table[mode][rle]))
+                hero = get_keys(table[mode][rle])
                 roles.add(f"{hero}–{table[mode][rle][hero]}%W [{mode}]")
             elif rle == 'Time Played':
-                hero = next(iter(table[mode][rle]))
+                hero = get_keys(table[mode][rle])
                 roles.add(f"{hero}–{seconds_to_time(table[mode][rle][hero])} [{mode}]")
 
     return roles
@@ -106,7 +79,7 @@ async def init(gld, mmbr):
 
     # For each battlenet linked with user,
     for bnet in db[mmbr][KEYS.ALL]:
-        roles.update(await get(bnet))
+        roles.update(get(bnet))
 
     mmbr = gld.get_member_named(mmbr)
     for rle in roles:
@@ -116,7 +89,10 @@ async def init(gld, mmbr):
         # If role not added to member, add it
         if mmbr not in role_obj.members:
             await mmbr.add_roles(role_obj)
-            db[str(mmbr)][KEYS.ROLE].add(rle)
+            db[str(mmbr)][KEYS.ROLE].append(rle)
+
+        if rle not in db[KEYS.ROLE]:
+            db[KEYS.ROLE][rle] = int(role_obj.id)
 
 
 async def update(gld: Guild, mmbr: str):
@@ -130,7 +106,8 @@ async def update(gld: Guild, mmbr: str):
             role_obj.delete()
             db[KEYS.ROLE].remove(rle)
 
-    db[mmbr][KEYS.ROLE] = set()
+    db[mmbr][KEYS.ROLE] = []
 
+    # All bot given roles are removed, now add all back
     await init(gld, mmbr)
 
