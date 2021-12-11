@@ -2,15 +2,8 @@ from replit import db
 from config import KEYS
 
 
-def battlenet(bnet, disc=None):
+def battlenet(bnet, disc):
     db[KEYS.BNET].remove(bnet)
-    del db[bnet]
-
-    if disc in db:
-        db[disc][KEYS.ALL].remove(bnet)
-    else:
-        for disc in db[KEYS.MMBR]:
-            if bnet in db[disc][KEYS.ALL]:
-                db[disc][KEYS.ALL].remove(bnet)
+    del db[KEYS.MMBR][disc][KEYS.ALL][bnet]
 
     return "Successfully removed {0}".format(bnet)

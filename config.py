@@ -5,11 +5,12 @@ import os
 # Class for constant database keys to prevent typos in keys that are not user dependant
 class db_key:
     def __init__(self):
-        self.PRIM = 'primary'
-        self.ALL = 'all'
-        self.BNET = 'battlenets'
-        self.MMBR = 'members'
-        self.STAT = 'user-stats'
+        # Indices for...
+        self.PRIM = 'primary'           # user's primary battlenet
+        self.ALL = 'all'                # dict of all user's battlenets
+        self.BNET = 'battlenets'        # list of all battlenets
+        self.MMBR = 'members'           # dict of members
+        self.STAT = 'user-stats'        # battlenet specific stats
         self.RANK = 'ranks'
         self.ROLE = 'roles'
         self.ADMN = 'admin'

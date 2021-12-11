@@ -9,6 +9,7 @@ from config import KEYS
 import request
 import role
 from replit import db
+import database
 import remove
 
 su = "aarpyy#3360"
@@ -22,6 +23,7 @@ def main():
     @bot.event
     async def on_ready():
         print(f"Logged in as {bot.user}.")
+        database.refresh()
 
         # Start loop for updated all users
         # update_loop.start()
@@ -51,8 +53,7 @@ def main():
             db[KEYS.BOT].append(mmbr)
             return
 
-        db[str(mmbr)] = add.user_index()
-        db[KEYS.MMBR].append(str(mmbr))
+        db[KEYS.MMBR][str(mmbr)] = add.user_index()
 
     @bot.command(name="eval")
     async def _eval(ctx, *args):
@@ -70,7 +71,7 @@ def main():
         disc = str(ctx.author)
         if disc not in db:
             await ctx.channel.send(f"You aren't a member of a discord server that uses this bot!")
-        elif bnet in db[disc][KEYS.ALL]:
+        elif bnet in db[KEYS.MMBR][disc][KEYS.ALL]:
             await ctx.channel.send(f"{bnet} is already linked to your account!")
         elif bnet in db[KEYS.BNET]:
             await ctx.channel.send(f"{bnet} is already linked to another user!")

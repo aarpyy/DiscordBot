@@ -17,10 +17,9 @@ def battlenet(member, bnet, platform):
         remove.battlenet(bnet, member)
         raise ValueError(bnet, "is either private or does not exist") from src
     else:
-        db[bnet] = {KEYS.RANK: rank, KEYS.STAT: stats, KEYS.PLTFRM: platform}
+        db[KEYS.MMBR][member][KEYS.ALL][bnet] = {KEYS.RANK: rank, KEYS.STAT: stats, KEYS.PLTFRM: platform}
         db[KEYS.BNET].append(bnet)
-        db[member][KEYS.ALL].append(bnet)
-        if db[member][KEYS.PRIM] is None:
+        if db[KEYS.MMBR][member][KEYS.PRIM] is None:
             db[member][KEYS.PRIM] = bnet
 
 
