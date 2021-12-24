@@ -4,6 +4,7 @@ from discord import Intents, Member, User, DMChannel, Guild
 
 from os import getenv
 from replit import db
+from replit.database.database import ObservedList, ObservedDict
 
 import json
 
@@ -17,6 +18,15 @@ import remove
 su = "aarpyy#3360"  # Creator of bot
 
 
+def db_to_dict(o):
+    if isinstance(o, ObservedDict):
+        return {k: db_to_dict(v) for k, v in o.items()}
+    elif isinstance(o, ObservedList):
+        return list(db_to_dict(e) for e in o)
+    else:
+        return o
+
+
 def main():
     intents = Intents.default()
     intents.members = True
@@ -28,7 +38,7 @@ def main():
         database.refresh()
 
         # Start loop for updated all users
-        # update_loop.start()
+        update_loop.start()
 
     @tasks.loop(hours=1)
     async def update_loop():
@@ -39,7 +49,7 @@ def main():
                 update.user_data(disc, bnet)
 
         with open("userdata.json", "w") as outfile:
-            outfile.write(json.dumps(dict(db)))
+            outfile.write(json.dumps(db_to_dict(db), indent=4))
 
         input("All user data should now be updated. Check userdata.json to confirm. ")
 
@@ -52,7 +62,7 @@ def main():
                         await role.update(gld, disc, bnet)
 
         with open("userdata.json", "w") as outfile:
-            outfile.write(json.dumps(dict(db)))
+            outfile.write(json.dumps(db_to_dict(db), indent=4))
 
         input("All roles should now be updated. Check userdata.json and user roles to confirm. ")
 
