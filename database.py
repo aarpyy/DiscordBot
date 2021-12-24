@@ -2,6 +2,7 @@ from replit import db
 from config import KEYS
 from os import system
 from unidecode import unidecode
+from json import load
 
 
 def data_categories():
@@ -30,7 +31,8 @@ def init():
     db[KEYS.MMBR] = {}
     db[KEYS.ROLE] = {}
     db[KEYS.BNET] = []
-    db[KEYS.CTG] = data_categories()
+    with open("categories.json", "r") as infile:
+        db[KEYS.CTG] = load(infile)
 
 
 def clear():

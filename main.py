@@ -2,14 +2,12 @@ from discord.ext import tasks
 from discord.ext.commands import Bot
 from discord import Intents, Member, User, DMChannel, Guild
 
-from asyncio import sleep
 from os import getenv
 from replit import db
 
 import json
 
 import add
-import config
 from config import KEYS
 import role
 import database
@@ -65,9 +63,9 @@ def main():
                 # If battlenet is inactive, let user know it's removed
                 if not db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.ACTIVE]:
                     user = await bot.fetch_user(db[KEYS.MMBR][disc][KEYS.ID])
-                    channel = user.dm_channel
+                    channel = user.dm_channel               # type: DMChannel
                     if channel is None:
-                        channel = user.create_dm()
+                        channel = await user.create_dm()    # type: DMChannel
                     message = f"Stats for {bnet} were unable to be updated and the account was unlinked " \
                               f"from your discord."
                     if prim := remove.battlenet(bnet, disc):
@@ -164,5 +162,4 @@ def main():
 
 
 if __name__ == '__main__':
-    config.init()
     main()
