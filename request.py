@@ -1,25 +1,8 @@
-import os
+from os import system
 from unidecode import unidecode
-from config import KEYS
-from functools import reduce
+from collections import deque
 from replit import db
-
-
-def update(bnet=None):
-    if bnet is None:
-        for _bnet in db[KEYS.BNET]:
-            _update(_bnet)
-    else:
-        _update(bnet)
-
-
-def _update(bnet):
-    try:
-        url = search_url(bnet[KEYS.PLTFRM])(bnet)
-    except ValueError as exc:
-        raise ValueError(str(bnet)) from exc
-    else:
-        db[bnet][KEYS.RANK], db[bnet][KEYS.STAT] = main(url)
+from config import KEYS
 
 
 # Given a platform of overwatch, returns a function that accepts a username of that platform
@@ -30,124 +13,112 @@ def search_url(platform):
     elif platform.lower() == 'playstation':
         return lambda x: 'https://playoverwatch.com/en-us/career/psn/{0}/'.format(x)
     else:
-        return lambda x: 'https://playoverwatch.com/en-us/career/pc/{0}-{1}/'.format(x.split('#')[0], x.split('#')[1])
-
-
-def data_categories():
-    if not os.system("./get/category > categories"):
-        categ_id = {}
-        ctg = []
-        with open("categories", "r") as infile:
-            lines = infile.readlines()
-
-        for line in lines:
-            line = line.strip('\n')
-            # Only read categories that start with data-id
-            if not line.startswith("0x"):
-                continue
-            else:
-                _id, name = line.split('|')
-                name = unidecode(name)
-                categ_id[_id] = name
-                if name not in ctg:
-                    ctg.append(name)
-
-        os.system("rm -f categories")
-        return categ_id, ctg
-
-    else:
-        raise ValueError("An error occurred in either a curl or sed")
+        return lambda x: 'https://playoverwatch.com/en-us/career/pc/{0}/'.format(x.replace('#', '-'))
 
 
 def main(url):
+    """
+    Requests from playoverwatch.com user data for a given overwatch username, returning
+    Python dictionaries containing competitive rank and general statistics. On average
+    takes ~5.05s to complete.
+    :param url: url to request from
+    :return: dict of ranks, dict of stats
+    """
     # Get html from url in silent mode, split the file by < to make lines easily readable by sed, then
     # run sed command and format output into key/value pairs
-    os.system(f"curl -s {url} | ./split > player.info")
-    os.system(f"./get/stats player.info > player.stats")
-    os.system(f"./get/comp player.info > player.comp")
-    os.system("rm -f player.info")
+    system(f"curl -s {url} | ./split > player.info")
+    system("./get/stats player.info > player.stats")
+    system("./get/comp player.info > player.comp")
+
+    try:
+        if system("./get/is_private player.info"):
+            raise AttributeError("PRIVATE")
+        elif system("get/dne player.info"):
+            raise NameError("DNE")
+    finally:
+        system("rm -f player.info")
 
     # Python dictionaries for ranks and time played data
     _ranks = {}
     _stats = {}
 
-    with open("player.comp", 'r') as infile:
-        lines = infile.readlines()
-    os.system("rm -f player.comp")
+    lines = deque()
+    ranks_found = 0
 
-    # If there are ranks to read
-    if len(lines) >= 2:
-        _role, rank = lines.pop(0).strip('\n'), lines.pop(0).strip('\n')
-        ranks_read = 0
-        while lines:
-            if ranks_read >= 3:     # All ranks usually appear twice, redudancy adds nothing so ignore
-                break
+    with open("player.comp", "r") as infile:
+        while line := infile.readline():
+            lines.append(line)
+            ranks_found += 1
+    system("rm -f player.comp")
 
-            # Confirm that role and rank are what is expected
-            if not _role.startswith("https://static.playoverwatch.com/img/pages/career/icon-") or \
-                    not rank.strip().isnumeric():
-                raise ValueError
+    url_prefix = "https://static.playoverwatch.com/img/pages/career/icon-"
 
-            ranks_read += 1
-            # End of url is user specific data, split by / to get end, then split by - to get specific data
-            _role = _role.split('/')[-1].split('-')
-            _role = _role[_role.index('icon') + 1]
+    ranks_found //= 4   # Two lines per rank, ranks always appear twice
+    for _ in range(ranks_found):
+        role_url, _rank = lines.popleft().strip('\n'), lines.popleft().strip('\n')
 
-            _ranks[_role] = int(rank)
-            _role, rank = lines.pop(0), lines.pop(0)
+        # Confirm that role and rank are what is expected
+        _role = role_url.removeprefix(url_prefix)
+        if _role.startswith("https") or not _rank.strip().isnumeric():
+            raise ValueError
 
-    with open("player.stats", 'r') as infile:
-        lines = infile.readlines()
-    os.system("rm -f player.stats")
+        # End of url is user specific data, split by / to get end, then split by - to get specific data
+        _role = _role.split('-')[0]
+        _ranks[_role] = int(_rank)
 
-    # Not having ranks to read is fine but not having stats to read means either private or DNE
-    if not len(lines):
-        raise ValueError
+    lines.clear()
+
+    with open("player.stats", "r") as infile:
+        while line := infile.readline():
+            lines.append(line)
+    system("rm -f player.stats")
 
     # Get table of data categories
-    categories, _ = data_categories()
+    # with open("categories.json", "r") as infile:
+    #     categories = json.load(infile)
+    categories = db[KEYS.CTG]
 
-    # Mode of play (either qp or comp) should be first line
-    _mode = lines.pop(0).strip('\n')
+    _stats = {}
+    mode, categ = "", ""
+    short = {0: 'hrs', 1: 'mins', 2: 'secs'}
 
-    # Url was parsed so that game modes are bookended by |
-    if not _mode.startswith('|') or not _mode.endswith('|'):
-        raise ValueError    # If first line isn't mode, we won't be able to get data
-    else:
-        _mode = _mode[1:-1]   # Otherwise, get mode and use that
-
-    _stats[_mode] = {}
-    line = lines.pop(0).strip('\n')
-    if not line.startswith('0x'):   # First line after mode should be data category
+    # If first two lines are not a gamemode and a data category then this data can't be used since its in an
+    # unexpected format
+    if not lines[0].startswith('|') or not lines[1].startswith("0x"):
         raise ValueError
-    _categ = categories[line]
-    _stats[_mode][_categ] = {}
 
     while lines:
-        line = lines.pop(0).strip('\n')     # Get first line, always strip \n
-        if line.startswith('|') and line.endswith('|'):     # If it is a new mode, set the new mode
-            _mode = line[1:-1]
-            _stats[_mode] = {}
-        elif line.startswith('0x'):     # If a data category, set the new category
-            _categ = categories[line]
-            _stats[_mode][_categ] = {}
-        else:   # Otherwise, it is assumed to be name of hero, pop for stat
-            stat = lines.pop(0).strip('\n')
-            if not any(c.isdigit() for c in stat):  # If there are no numbers then not valid data
-                continue
-
+        line = lines.popleft().strip('\n')
+        if line.startswith('|'):
+            # If its name of mode, set current mode to new mode
+            mode = line.strip('|')
+            _stats[mode] = {}
+        elif line.startswith("0x02E"):
+            # If its a category type we don't care about, read all the data of that category until we hit
+            # either a new mode or a new category, or we finish the file, in which case we return
+            while 1:
+                line = lines.popleft()
+                if not lines:
+                    return _ranks, _stats
+                elif line.startswith("0x") or line.startswith('|'):
+                    lines.appendleft(line)
+                    break
+        elif line.startswith("0x"):
+            categ = categories[line]
+            _stats[mode][categ] = {}
+        else:
+            stat = lines.popleft().strip('\n')
+            # All time stats are given hrs:mins:secs even if most significant value is days so we can
+            # convert time to integer using integer conversion
             if ':' in stat:
-                stat = reduce(lambda r, c: (r * 60) + int(c), stat.strip('\n').split(':'), 0)
-            elif '%' in stat:
-                stat = int(stat.strip('%'))
-            elif '.' in stat:
-                stat = float(stat)
-            else:
-                stat = int(stat)
-            _stats[_mode][_categ][unidecode(line)] = stat
+                time_split = stat.split(':')
+                for i in range(len(time_split)):
+                    j = int(time_split[i])
+                    if j:
+                        if i in short:
+                            stat = f"{j} {short[i]}"
+                        break
 
-    # Filters stats so that empty dicts aren't returned (these are mostly fake categories anyway)
-    for _mode in _stats:
-        _stats[_mode] = {k: v for k, v in _stats[_mode].items() if v}
+            _stats[mode][categ][unidecode(line)] = stat
 
     return _ranks, _stats

@@ -1,28 +1,33 @@
 import request
-import remove
 from config import KEYS
 from replit import db
+from role import get_bnet_roles
 
 
-def battlenet(member, bnet, platform):
+def bnet_index(prim: bool, priv: bool, platform: str, rank: dict, stats: dict, rle: list):
+    return {KEYS.PRIM: prim,
+            KEYS.PRIV: priv,
+            KEYS.ACTIVE: True,
+            KEYS.PTFM: platform,
+            KEYS.RANK: rank,
+            KEYS.STAT: stats,
+            KEYS.ROLE: rle}
+
+
+def battlenet(disc, bnet, pf):
     # At this point, user is in database with primary and all values and in list of all discords
 
     # Load bnet information in table - if the battlenet is not in list of all battlenets it gets added here
     try:
-        rank, stats = request.main(request.search_url(platform)(bnet))
-    except ValueError as src:
-        # If player_request was unable to load time played, then this user is either private or DNE
-
-        # Delete data associated with battletag if it is inaccessible
-        remove.battlenet(bnet, member)
-        raise ValueError(bnet, "is either private or does not exist") from src
-    else:
-        db[KEYS.MMBR][member][KEYS.ALL][bnet] = {KEYS.RANK: rank, KEYS.STAT: stats, KEYS.PLTFRM: platform}
+        rank, stats = request.main(request.search_url(pf)(bnet))
+    except AttributeError:      # AttributeError means private account, still add it
         db[KEYS.BNET].append(bnet)
-        if db[KEYS.MMBR][member][KEYS.PRIM] is None:
-            db[member][KEYS.PRIM] = bnet
-
-
-def user_index():
-    return {KEYS.PRIM: None, KEYS.ALL: [], KEYS.ROLE: []}
-
+        db[KEYS.MMBR][disc][KEYS.BNET][bnet] = bnet_index(not bool(db[KEYS.MMBR][disc]), True, pf, {}, {}, [])
+    except NameError as src:    # NameError means DNE, don't add it
+        raise NameError("unable to add battlenet") from src
+    except ValueError as src:   # ValueError means error with data organization or UNIX error
+        raise ValueError("unable to add battlenet") from src
+    else:
+        db[KEYS.BNET].append(bnet)
+        db[KEYS.MMBR][disc][KEYS.BNET][bnet] = bnet_index(
+            not bool(db[KEYS.MMBR][disc]), False, pf, rank, stats, list(get_bnet_roles(disc, bnet)))

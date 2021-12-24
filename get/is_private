@@ -1,0 +1,3 @@
+#!/bin/sh
+
+exit $(egrep -c -i "this profile is currently private" "$1")

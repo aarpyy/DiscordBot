@@ -1,0 +1,3 @@
+#!/bin/sh
+
+exit $(egrep -c -i "profile not found" "$1")
