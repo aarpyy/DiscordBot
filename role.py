@@ -8,7 +8,7 @@ from tools import getkey
 
 # Recognizers
 
-def is_unique(rle: str, gld: Guild):
+async def is_unique(rle: str, gld: Guild):
     """
     Determines if given role has more than one member.
     :param rle: string name of role
@@ -117,7 +117,7 @@ async def update(gld: Guild, disc: str, bnet: str):
     for role in to_remove:
         role_obj = gld.get_role(db[KEYS.ROLE][role])    # type: Role
 
-        if is_unique(role, gld):
+        if await is_unique(role, gld):
             await role_obj.delete()
             del db[KEYS.ROLE][role]
 
