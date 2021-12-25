@@ -1,6 +1,10 @@
 from collections.abc import MutableMapping, MutableSequence
 
 
+def getkey(d):
+    return next(iter(d))
+
+
 def jsonify(o):
     if isinstance(o, str):
         return f'"{o}"'
@@ -30,4 +34,4 @@ def jsondump(obj, indent=4):
         else:
             return jsonify(o)
 
-    return dumpitem(obj, indent) + "\n"
+    return dumpitem(obj, indent)

@@ -29,7 +29,7 @@ def main():
     @bot.event
     async def on_ready():
         print(f"Logged in as {bot.user}.")
-        # database.refresh()
+        database.refresh()
 
         # Start loop for updated all users
         update_loop.start()
@@ -112,8 +112,12 @@ def main():
         else:
             add.battlenet(disc, bnet, 'PC')
             if ctx.guild is not None:
+                print("role.update() called")
                 await role.update(ctx.guild, disc, bnet)
             await ctx.channel.send(f"Successfully linked {bnet} to your discord!")
+
+        with open("userdata.json", "w") as outfile:
+            outfile.write(jsondump(db))
 
     @bot.command()
     async def xbox(ctx, bnet):

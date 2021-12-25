@@ -1,6 +1,7 @@
 from replit import db
 from config import KEYS
 from discord.guild import *
+from tools import getkey
 
 
 # Role methods
@@ -46,13 +47,13 @@ def get_bnet_roles(disc: str, bnet: str):
             # Heroes organized in descending stat value already so getting first hero for both of these
             # gets the hero with the best stats
             if rle == 'Win Percentage':
-                hero = next(iter(table[mode][rle]))
+                hero = getkey(table[mode][rle])
                 if mode in mode_short:
                     roles.add(f"{hero}–{table[mode][rle][hero]}W [{mode_short[mode]}]")
                 else:
                     roles.add(f"{hero}–{table[mode][rle][hero]}W [{mode}]")
             elif rle == 'Time Played':
-                hero = next(iter(table[mode][rle]))
+                hero = getkey(table[mode][rle])
                 if mode in mode_short:
                     roles.add(f"{hero}–{table[mode][rle][hero]} [{mode_short[mode]}]")
                 else:
@@ -81,12 +82,24 @@ async def add(gld: Guild, mmbr: Member, rle: str):
 
 async def update(gld: Guild, disc: str, bnet: str):
     mmbr = await gld.fetch_member(db[KEYS.MMBR][disc][KEYS.ID])     # type: Member
-    roles = get_bnet_roles(disc, bnet)
 
-    current_roles = set(db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.ROLE])
+    print(f"Member fetched: {str(mmbr)} ({mmbr.id})")
 
-    to_add = roles.difference(current_roles)
-    to_remove = current_roles.difference(roles)
+    roles = get_bnet_roles(disc, bnet)                  # Roles battlenet should have
+    current_roles = set(str(r) for r in mmbr.roles)     # Roles discord user currently has
+
+    # All roles associated with battlenet, no correlation to roles held
+    bnet_roles = set(db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.ROLE])
+
+    all_roles = bnet_roles.union(roles)         # All roles the user currently or previously associated with battlenet
+
+    to_add = roles.difference(current_roles)    # Roles user should have minus roles discord thinks they have
+
+    # roles_held is all roles that the bot could have given the user that they DO have
+    roles_held = all_roles.intersection(current_roles)
+
+    # Thus, to_remove is all the roles bot given roles minus the ones that the user SHOULD have
+    to_remove = roles_held.difference(roles)
 
     for role in to_add:
         db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.ROLE].append(role)

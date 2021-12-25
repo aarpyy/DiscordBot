@@ -1,6 +1,6 @@
 from replit import db
 from config import KEYS
-import role
+from tools import getkey
 
 
 def battlenet(bnet, disc):
@@ -16,7 +16,7 @@ def battlenet(bnet, disc):
     if db[KEYS.MMBR][disc][bnet][KEYS.PRIM]:            # If it was this user's primary account,
         del db[KEYS.MMBR][disc][bnet]                   # first remove it then,
         if db[KEYS.MMBR][disc]:                         # check if they have any other accounts
-            new_prim = next(iter(db[KEYS.MMBR][disc]))  # If they do, make it primary, otherwise do nothing
+            new_prim = getkey(db[KEYS.MMBR][disc])      # If they do, make it primary, otherwise do nothing
             db[KEYS.MMBR][disc][new_prim][KEYS.PRIM] = True
             return new_prim
     else:
