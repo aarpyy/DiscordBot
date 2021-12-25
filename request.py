@@ -3,6 +3,7 @@ from unidecode import unidecode
 from collections import deque
 from replit import db
 from config import KEYS
+import json
 
 
 # Given a platform of overwatch, returns a function that accepts a username of that platform
@@ -74,9 +75,9 @@ def main(url):
     system("rm -f player.stats")
 
     # Get table of data categories
-    # with open("categories.json", "r") as infile:
-    #     categories = json.load(infile)
-    categories = db[KEYS.CTG]
+    with open("categories.json", "r") as infile:
+        categories = json.load(infile)
+    # categories = db[KEYS.CTG]
 
     _stats = {}
     mode, categ = "", ""

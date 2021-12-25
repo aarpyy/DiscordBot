@@ -19,10 +19,13 @@ def battlenet(disc, bnet, pf):
 
     # Load bnet information in table - if the battlenet is not in list of all battlenets it gets added here
     try:
-        rank, stats = request.main(request.search_url(pf)(bnet))
+        url = request.search_url(pf)(bnet)
+        print(f"requesting {url}...")
+        rank, stats = request.main(url)
     except AttributeError:      # AttributeError means private account, still add it
         db[KEYS.BNET].append(bnet)
-        db[KEYS.MMBR][disc][KEYS.BNET][bnet] = bnet_index(not bool(db[KEYS.MMBR][disc]), True, pf, {}, {}, [])
+        db[KEYS.MMBR][disc][KEYS.BNET][bnet] = bnet_index(
+            not bool(db[KEYS.MMBR][disc][KEYS.BNET]), True, pf, {}, {}, [])
     except NameError as src:    # NameError means DNE, don't add it
         raise NameError("unable to add battlenet") from src
     except ValueError as src:   # ValueError means error with data organization or UNIX error
@@ -30,4 +33,4 @@ def battlenet(disc, bnet, pf):
     else:
         db[KEYS.BNET].append(bnet)
         db[KEYS.MMBR][disc][KEYS.BNET][bnet] = bnet_index(
-            not bool(db[KEYS.MMBR][disc]), False, pf, rank, stats, list(get_bnet_roles(disc, bnet)))
+            not bool(db[KEYS.MMBR][disc][KEYS.BNET]), False, pf, rank, stats, list(get_bnet_roles(disc, bnet)))
