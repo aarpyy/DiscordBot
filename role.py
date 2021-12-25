@@ -45,7 +45,7 @@ def get_bnet_roles(disc: str, bnet: str):
             # gets the hero with the best stats
             if rle == 'Win Percentage':
                 it = iter(table[mode][rle])
-                # next(it)
+                next(it)
                 hero = next(it)
                 if mode in mode_short:
                     roles.add(f"{hero}–{table[mode][rle][hero]}W [{mode_short[mode]}]")
@@ -134,7 +134,10 @@ async def update(gld: Guild, disc: str, bnet: str):
         role_obj = gld.get_role(db[KEYS.ROLE][role])    # type: Role
 
         if await is_unique(role, gld):
+            await mmbr.remove_roles(role_obj)
             await role_obj.delete()
             del db[KEYS.ROLE][role]
+        else:
+            await mmbr.remove_roles(role_obj)
 
     db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.ROLE] = list(roles)

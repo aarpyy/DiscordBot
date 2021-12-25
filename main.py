@@ -30,7 +30,7 @@ def main():
     async def on_ready():
         print(f"Logged in as {bot.user}.")
         database.refresh()
-        update.clean_roles(bot)
+        await update.clean_roles(bot)
 
         # Start loop for updated all users
         update_loop.start()
