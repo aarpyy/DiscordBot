@@ -1,30 +1,21 @@
 from replit import db
-from config import KEYS
-from discord.guild import *
+
+from discord import Guild, Member, Role, Forbidden, HTTPException
+
+from config import KEYS, bot_role_prefix
 from tools import getkey
+
+from typing import Optional, List, Set
+
+mode_short = {"quickplay": "qp", "competitive": "comp"}
+categ_short = {"Win Percentage": "%W ", "Time Played": ""}
+categ_major = ("Win Percentage", "Time Played")
 
 
 # Role methods
 
-# Recognizers
 
-async def is_unique(rle: str, gld: Guild):
-    """
-    Determines if given role has more than one member.
-    :param rle: string name of role
-    :param gld: Guild object containing role
-    :return: True iff role has 0 or 1 members, False otherwise
-    """
-    role_obj = await get(gld, rle)  # type: Role
-    if role_obj is None:
-        return False
-    else:
-        return len(role_obj.members) <= 1
-
-
-# Accessors
-
-def get_bnet_roles(disc: str, bnet: str):
+def get_bnet_roles(disc: str, bnet: str) -> Set[str]:
     """
     Gets all roles associated with given battlenet based on stats.
 
@@ -34,63 +25,79 @@ def get_bnet_roles(disc: str, bnet: str):
     """
 
     roles = set()  # Empty set for roles
-    mode_short = {'quickplay': 'qp', 'competitive': 'comp'}
 
-    table = db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.STAT]     # Table of battlenet's statistics
+    table = db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.STAT]  # Table of battlenet's statistics
 
     # For each stat associated with battlenet, add that stat if it is an important one
     for mode in table:
         for rle in table[mode]:
             # Heroes organized in descending stat value already so getting first hero for both of these
             # gets the hero with the best stats
-            if rle == 'Win Percentage':
-                it = iter(table[mode][rle])
-                next(it)
-                hero = next(it)
-                if mode in mode_short:
-                    roles.add(f"{hero}–{table[mode][rle][hero]}W [{mode_short[mode]}]")
-                else:
-                    roles.add(f"{hero}–{table[mode][rle][hero]}W [{mode}]")
-            elif rle == 'Time Played':
-                hero = getkey(table[mode][rle])
-                if mode in mode_short:
-                    roles.add(f"{hero}–{table[mode][rle][hero]} [{mode_short[mode]}]")
-                else:
-                    roles.add(f"{hero}–{table[mode][rle][hero]} [{mode}]")
+            if rle in categ_major:
+                hero = max(table[mode][rle], key=lambda k: int(table[mode][rle][k].split(" ")[0]))
+                roles.add(f"{hero}-{table[mode][rle][hero]} " + categ_short[rle] + f"[{mode_short.get(mode, '')}]")
 
-    table = db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.RANK]     # Table of battlenet's competitive ranks
+    table = db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.RANK]  # Table of battlenet's competitive ranks
 
     for rle in table:  # type: str
         roles.add(f"{rle.capitalize()}-{table[rle]}")
 
-    return set("--" + r for r in roles)
+    return set(bot_role_prefix + r for r in roles)
 
 
-# Updaters
+async def get(gld: Guild, rle: str) -> Optional[Role]:
+    """
+    Helper function that more sufficiently ensures that the Role is returned if it exists. First, it
+    checks if the Role is already in the db, getting the Role via Role.id if true. Otherwise,
+    it iterates through all Roles in Guild, attempting to match via string, returning None if no
+    matches were made.
 
-async def add(gld: Guild, rle: str):
-    role_obj = await gld.create_role(name=rle)
-    return role_obj
+    :param gld: Guild
+    :param rle: name of role
+    :return: Optional[Role]
+    """
+    if rle in db[KEYS.ROLE]:
+        return gld.get_role(db[KEYS.ROLE][rle])
+    else:
+        try:
+            roles = await gld.fetch_roles()  # type: List[Role]
+        except HTTPException:
+            return None
+        else:
+            for r in roles:  # type: Role
+                if str(r) == rle:
+                    return r
+            return None
 
 
-async def get(gld: Guild, rle: str):
-    roles = await gld.fetch_roles()
-    for r in roles:
-        if str(r) == rle:
-            return r
-    return None
+async def update(gld: Guild, disc: str, bnet: str) -> None:
+    """
+    Gives Guild Member Role objects based off of the stats retrieved from connected battlenet.
 
-
-async def update(gld: Guild, disc: str, bnet: str):
+    :param gld: Guild that the discord user belongs to
+    :param disc: Discord username
+    :param bnet: Linked battlenet
+    :raises AttributeError: If Bot lacks access to Guild
+    :raises ValueError: If Discord API unable to fetch Member
+    :return: None
+    """
     print(f"Updating roles for {disc}[{bnet}]...")
 
-    mmbr = await gld.fetch_member(db[KEYS.MMBR][disc][KEYS.ID])     # type: Member
+    user_id = db[KEYS.MMBR][disc][KEYS.ID]
+
+    # Use Guild.fetch_member() to ensure that even if member not in cache they are retrieved
+    try:
+        mmbr = await gld.fetch_member(user_id)  # type: Member
+    except Forbidden as src:
+        raise AttributeError(f"Unable to access Guild {str(gld)}") from src
+    except HTTPException as src:
+        raise ValueError(f"Fetching user {disc}({user_id}) failed") from src
 
     print(f"Member fetched: {str(mmbr)} ({mmbr.id})")
 
-    roles = get_bnet_roles(disc, bnet)                  # Roles battlenet should have
-    current_roles = set(str(r) for r in mmbr.roles)     # Roles discord user currently has
-    to_add = roles.difference(current_roles)            # Roles user should have minus roles discord thinks they have
+    new_roles = get_bnet_roles(disc, bnet)  # Roles battlenet should have
+    current_roles = set(str(r) for r in mmbr.roles)  # Roles discord user currently has
+    to_add = new_roles.difference(current_roles)  # Roles user should have minus roles discord thinks they have
 
     print(f"Roles in to_add: {to_add}")
     input("ENTER: ")
@@ -104,40 +111,37 @@ async def update(gld: Guild, disc: str, bnet: str):
     # controlled by the bot, that they now should NOT have, thus giving us to_remove
 
     # All roles associated with battlenet, no correlation to roles held
-    bnet_roles = set(db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.ROLE])
-    all_roles = bnet_roles.union(roles)  # All roles the user currently or previously associated with battlenet
+    roles_listed = set(db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.ROLE])
+    all_roles = roles_listed.union(new_roles)  # All roles the user currently or previously associated with battlenet
 
     print(f"Roles in all_roles: {all_roles}")
     input("ENTER: ")
 
     # roles_held is all roles that the bot could have given the user that they DO have
-    roles_held = all_roles.intersection(current_roles)
+    current_bot_roles = all_roles.intersection(current_roles)
 
-    print(f"Roles in roles_held: {roles_held}")
+    print(f"Roles in roles_held: {current_bot_roles}")
     input("ENTER: ")
 
     # Thus, to_remove is all the roles bot given roles minus the ones that the user SHOULD have
-    to_remove = roles_held.difference(roles)
+    to_remove = current_bot_roles.difference(new_roles)
 
     print(f"Roles in to_remove: {to_remove}")
     input("ENTER: ")
 
     for role in to_add:
-        role_obj = await get(gld, role)
-        if role_obj is None:
-            role_obj = await add(gld, role)
-
+        role_obj = await get(gld, role) or await gld.create_role(name=role)
         db[KEYS.ROLE][role] = role_obj.id
         await mmbr.add_roles(role_obj)
 
     for role in to_remove:
-        role_obj = gld.get_role(db[KEYS.ROLE][role])    # type: Role
+        role_obj = await get(gld, role)  # type: Role
+        if role_obj is None:
+            continue
 
-        if await is_unique(role, gld):
-            await mmbr.remove_roles(role_obj)
+        await mmbr.remove_roles(role_obj)
+        if not len(role_obj.members):  # If just removed last member, delete the Role
             await role_obj.delete()
             del db[KEYS.ROLE][role]
-        else:
-            await mmbr.remove_roles(role_obj)
 
-    db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.ROLE] = list(roles)
+    db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.ROLE] = list(new_roles)

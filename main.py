@@ -1,12 +1,10 @@
+from replit import db
+
 from discord.ext import tasks
 from discord.ext.commands import Bot
-from discord import Intents, Member, User, DMChannel, Guild
+from discord import Intents, Member, DMChannel, Guild
 
 from os import getenv
-from replit import db
-from replit.database.database import ObservedList, ObservedDict
-
-import json
 
 import add
 from config import KEYS
@@ -16,7 +14,6 @@ import update
 import remove
 from tools import jsondump
 
-from collections.abc import MutableMapping, MutableSequence
 
 su = "aarpyy#3360"  # Creator of bot
 

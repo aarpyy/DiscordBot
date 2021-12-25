@@ -1,14 +1,21 @@
 from os import system
 from unidecode import unidecode
 from collections import deque
-from replit import db
-from config import KEYS
 import json
+
+from typing import Dict, Tuple, Callable
 
 
 # Given a platform of overwatch, returns a function that accepts a username of that platform
 # and returns a url to that players profile if it exists
-def search_url(platform):
+def search_url(platform: str) -> Callable[[str], str]:
+    """
+    Given a platform (Xbox, PS, or PC) returns the associated PlayOverwatch url for viewing
+    career profiles.
+
+    :param platform: name of platform
+    :return: function that accepts username and returns url
+    """
     if platform.lower() == 'xbox':
         return lambda x: 'https://playoverwatch.com/en-us/career/xbl/{0}/'.format(x)
     elif platform.lower() == 'playstation':
@@ -17,12 +24,16 @@ def search_url(platform):
         return lambda x: 'https://playoverwatch.com/en-us/career/pc/{0}/'.format(x.replace('#', '-'))
 
 
-def main(url):
+def main(url: str) -> Tuple[Dict, Dict]:
     """
     Requests from playoverwatch.com user data for a given overwatch username, returning
     Python dictionaries containing competitive rank and general statistics. On average
     takes ~5.05s to complete.
+
     :param url: url to request from
+    :raises AttributeError: If url requested is for a private battlenet
+    :raises NameError: If url requested is for a battlenet that does not exist
+    :raises ValueError: If any errors occur reading the data
     :return: dict of ranks, dict of stats
     """
     # Get html from url in silent mode, split the file by < to make lines easily readable by sed, then
@@ -119,6 +130,8 @@ def main(url):
                         if i in short:
                             stat = f"{j} {short[i]}"
                         break
+            elif '%' in stat:
+                stat = stat.strip('%')
 
             _stats[mode][categ][unidecode(line)] = stat
 

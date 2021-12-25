@@ -1,9 +1,12 @@
 from replit import db
+
 from config import KEYS
 from tools import getkey
 
+from typing import Union
 
-def battlenet(bnet, disc):
+
+def battlenet(bnet: str, disc: str) -> Union[str, int]:
     """
     Removes battlenet from replit database, returning flag of if the user's primary
     account was removed.
