@@ -15,14 +15,11 @@ def is_unique(rle: str, gld: Guild):
     :param gld: Guild object containing role
     :return: True iff role has 0 or 1 members, False otherwise
     """
-    if rle in db[KEYS.ROLE]:
-        role_obj = gld.get_role(db[KEYS.ROLE][rle])
-        if role_obj is None:
-            return False
-        else:
-            return len(role_obj.members) <= 1
-    else:
+    role_obj = await get(gld, rle)  # type: Role
+    if role_obj is None:
         return False
+    else:
+        return len(role_obj.members) <= 1
 
 
 # Accessors
@@ -47,7 +44,7 @@ def get_bnet_roles(disc: str, bnet: str):
             # Heroes organized in descending stat value already so getting first hero for both of these
             # gets the hero with the best stats
             if rle == 'Win Percentage':
-                hero = getkey(table[mode][rle])
+                hero = next(next(iter(table[mode][rle])))
                 if mode in mode_short:
                     roles.add(f"{hero}–{table[mode][rle][hero]}W [{mode_short[mode]}]")
                 else:
@@ -69,15 +66,17 @@ def get_bnet_roles(disc: str, bnet: str):
 
 # Updaters
 
-async def remove(rle: Role, reason=None):
-    await rle.delete(reason=reason)
-    db[KEYS.ROLE].remove(str(rle))
-
-
-async def add(gld: Guild, mmbr: Member, rle: str):
+async def add(gld: Guild, rle: str):
     role_obj = await gld.create_role(name=rle)
-    db[KEYS.ROLE][rle] = role_obj.id
-    await mmbr.add_roles(role_obj)
+    return role_obj
+
+
+async def get(gld: Guild, rle: str):
+    roles = await gld.fetch_roles()
+    for r in roles:
+        if str(r) == rle:
+            return r
+    return None
 
 
 async def update(gld: Guild, disc: str, bnet: str):
@@ -87,13 +86,19 @@ async def update(gld: Guild, disc: str, bnet: str):
 
     roles = get_bnet_roles(disc, bnet)                  # Roles battlenet should have
     current_roles = set(str(r) for r in mmbr.roles)     # Roles discord user currently has
+    to_add = roles.difference(current_roles)            # Roles user should have minus roles discord thinks they have
+
+    # To get roles to remove, first we get roles currently associated with battlenet which have no correlation
+    # to actual roles held. Taking the union of this with roles the user SHOULD have we get the roles
+    # that the user SHOULD have plus the roles that they already have. Taking the intersection of this with
+    # roles that specifically Discord knows they have gives us the roles that the user definitely has in Discord
+    # that are also controlled by the bot (ignoring roles they have that aren't this bot's). Then, taking
+    # the difference of this set with roles they SHOULD have, gives us the roles that they have, that are
+    # controlled by the bot, that they now should NOT have, thus giving us to_remove
 
     # All roles associated with battlenet, no correlation to roles held
     bnet_roles = set(db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.ROLE])
-
-    all_roles = bnet_roles.union(roles)         # All roles the user currently or previously associated with battlenet
-
-    to_add = roles.difference(current_roles)    # Roles user should have minus roles discord thinks they have
+    all_roles = bnet_roles.union(roles)  # All roles the user currently or previously associated with battlenet
 
     # roles_held is all roles that the bot could have given the user that they DO have
     roles_held = all_roles.intersection(current_roles)
@@ -102,15 +107,18 @@ async def update(gld: Guild, disc: str, bnet: str):
     to_remove = roles_held.difference(roles)
 
     for role in to_add:
-        db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.ROLE].append(role)
-        if role in db[KEYS.ROLE]:   # If someone else has this role, just use same role object
-            await mmbr.add_roles(gld.get_role(db[KEYS.ROLE][role]))
-        else:
-            await add(gld, mmbr, role)
+        role_obj = await get(gld, role)
+        if role_obj is None:
+            role_obj = await add(gld, role)
+
+        db[KEYS.ROLE][role] = role_obj.id
+        await mmbr.add_roles(role_obj)
 
     for role in to_remove:
-        db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.ROLE].remove(role)
         role_obj = gld.get_role(db[KEYS.ROLE][role])    # type: Role
+
         if is_unique(role, gld):
-            await remove(role_obj)
-        await mmbr.remove_roles(role_obj)
+            await role_obj.delete()
+            del db[KEYS.ROLE][role]
+
+    db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.ROLE] = list(roles)
