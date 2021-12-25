@@ -29,7 +29,8 @@ def main():
     @bot.event
     async def on_ready():
         print(f"Logged in as {bot.user}.")
-        # database.refresh()
+        database.refresh()
+        update.clean_roles(bot)
 
         # Start loop for updated all users
         update_loop.start()

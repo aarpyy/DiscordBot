@@ -63,7 +63,7 @@ def get_bnet_roles(disc: str, bnet: str):
     for rle in table:  # type: str
         roles.add(f"{rle.capitalize()}-{table[rle]}")
 
-    return roles
+    return set("--" + r for r in roles)
 
 
 # Updaters

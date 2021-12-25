@@ -3,6 +3,16 @@ from config import KEYS
 
 import role
 import request
+from replit import db
+from discord.ext.commands import Bot
+from discord import Guild, Role
+
+
+def clean_roles(bot: Bot):
+    for gld in bot.guilds:                  # type: Guild
+        for rle in gld.roles:               # type: Role
+            if str(rle).startswith("--"):
+                rle.delete()
 
 
 def user_data(disc, bnet):
