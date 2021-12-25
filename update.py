@@ -18,4 +18,3 @@ def user_data(disc, bnet):
     finally:
         db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.STAT] = stats
         db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.RANK] = ranks
-        db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.ROLE] = list(role.get_bnet_roles(disc, bnet))
