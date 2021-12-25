@@ -107,8 +107,14 @@ async def update(gld: Guild, disc: str, bnet: str):
     bnet_roles = set(db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.ROLE])
     all_roles = bnet_roles.union(roles)  # All roles the user currently or previously associated with battlenet
 
+    print(f"Roles in all_roles: {all_roles}")
+    input("ENTER: ")
+
     # roles_held is all roles that the bot could have given the user that they DO have
     roles_held = all_roles.intersection(current_roles)
+
+    print(f"Roles in roles_held: {roles_held}")
+    input("ENTER: ")
 
     # Thus, to_remove is all the roles bot given roles minus the ones that the user SHOULD have
     to_remove = roles_held.difference(roles)
