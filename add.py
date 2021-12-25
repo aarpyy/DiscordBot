@@ -4,14 +4,14 @@ from replit import db
 from role import get_bnet_roles
 
 
-def bnet_index(prim: bool, priv: bool, platform: str, rank: dict, stats: dict, rle: list):
+def bnet_index(prim: bool, priv: bool, platform: str, rank: dict, stats: dict):
     return {KEYS.PRIM: prim,
             KEYS.PRIV: priv,
             KEYS.ACTIVE: True,
             KEYS.PTFM: platform,
             KEYS.RANK: rank,
             KEYS.STAT: stats,
-            KEYS.ROLE: rle}
+            KEYS.ROLE: []}
 
 
 def battlenet(disc, bnet, pf):
@@ -27,7 +27,7 @@ def battlenet(disc, bnet, pf):
         print(f"error: {src}")
         db[KEYS.BNET].append(bnet)
         db[KEYS.MMBR][disc][KEYS.BNET][bnet] = bnet_index(
-            not bool(db[KEYS.MMBR][disc][KEYS.BNET]), True, pf, {}, {}, [])
+            not bool(db[KEYS.MMBR][disc][KEYS.BNET]), True, pf, {}, {})
     except NameError as src:    # NameError means DNE, don't add it
         raise NameError("unable to add battlenet") from src
     except ValueError as src:   # ValueError means error with data organization or UNIX error
@@ -35,4 +35,5 @@ def battlenet(disc, bnet, pf):
     else:
         db[KEYS.BNET].append(bnet)
         db[KEYS.MMBR][disc][KEYS.BNET][bnet] = bnet_index(
-            not bool(db[KEYS.MMBR][disc][KEYS.BNET]), False, pf, rank, stats, list(get_bnet_roles(disc, bnet)))
+            not bool(db[KEYS.MMBR][disc][KEYS.BNET]), False, pf, rank, stats)
+        db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.ROLE] = list(get_bnet_roles(disc, bnet))
