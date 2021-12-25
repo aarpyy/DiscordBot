@@ -535,17 +535,24 @@
                         }
                     },
                     "roles": [
+                        "Tank-3813",
+                        "D.Va–2 hrs [comp]",
+                        "Support-3161",
                         "Offense-3059",
                         "Genji–36 hrs [qp]",
-                        "Junkrat–100%W [comp]",
-                        "Support-3161",
-                        "D.Va–2 hrs [comp]",
-                        "Tank-3813"
+                        "Junkrat–100%W [comp]"
                     ]
                 }
             },
             "id": 750888830126522438
         }
     },
-    "roles": {}
+    "roles": {
+        "Offense-3059": 924360697670942730,
+        "Support-3161": 924360699021520978,
+        "Genji–36 hrs [qp]": 924360700405620796,
+        "Zarya–100%W [comp]": 924360701835898940,
+        "D.Va–2 hrs [comp]": 924360702909628427,
+        "Tank-3813": 924360704448954408
+    }
 }
