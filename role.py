@@ -82,6 +82,8 @@ async def get(gld: Guild, rle: str):
 
 
 async def update(gld: Guild, disc: str, bnet: str):
+    print(f"Updating roles for {disc}[{bnet}]...")
+
     mmbr = await gld.fetch_member(db[KEYS.MMBR][disc][KEYS.ID])     # type: Member
 
     print(f"Member fetched: {str(mmbr)} ({mmbr.id})")
@@ -89,6 +91,9 @@ async def update(gld: Guild, disc: str, bnet: str):
     roles = get_bnet_roles(disc, bnet)                  # Roles battlenet should have
     current_roles = set(str(r) for r in mmbr.roles)     # Roles discord user currently has
     to_add = roles.difference(current_roles)            # Roles user should have minus roles discord thinks they have
+
+    print(f"Roles in to_add: {to_add}")
+    input("ENTER: ")
 
     # To get roles to remove, first we get roles currently associated with battlenet which have no correlation
     # to actual roles held. Taking the union of this with roles the user SHOULD have we get the roles
@@ -107,6 +112,9 @@ async def update(gld: Guild, disc: str, bnet: str):
 
     # Thus, to_remove is all the roles bot given roles minus the ones that the user SHOULD have
     to_remove = roles_held.difference(roles)
+
+    print(f"Roles in to_remove: {to_remove}")
+    input("ENTER: ")
 
     for role in to_add:
         role_obj = await get(gld, role)
