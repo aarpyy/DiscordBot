@@ -59,7 +59,7 @@ def main(url):
         role_url, _rank = lines.popleft().strip('\n'), lines.popleft().strip('\n')
 
         # Confirm that role and rank are what is expected
-        _role = role_url.removeprefix(url_prefix)
+        _role = role_url.split(url_prefix)[1]
         if _role.startswith("https") or not _rank.strip().isnumeric():
             raise ValueError
 
