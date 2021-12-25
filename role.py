@@ -8,7 +8,7 @@ from tools import getkey
 from typing import Optional, List, Set
 
 mode_short = {"quickplay": "qp", "competitive": "comp"}
-categ_short = {"Win Percentage": "%W ", "Time Played": ""}
+categ_short = {"Win Percentage": "%W", "Time Played": ""}
 categ_major = ("Win Percentage", "Time Played")
 
 
@@ -35,7 +35,7 @@ def get_bnet_roles(disc: str, bnet: str) -> Set[str]:
             # gets the hero with the best stats
             if rle in categ_major:
                 hero = max(table[mode][rle], key=lambda k: int(table[mode][rle][k].split(" ")[0]))
-                roles.add(f"{hero}-{table[mode][rle][hero]} " + categ_short[rle] + f"[{mode_short.get(mode, '')}]")
+                roles.add(f"{hero}-{table[mode][rle][hero]}" + categ_short[rle] + f" [{mode_short.get(mode, '')}]")
 
     table = db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.RANK]  # Table of battlenet's competitive ranks
 
