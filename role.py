@@ -44,7 +44,9 @@ def get_bnet_roles(disc: str, bnet: str):
             # Heroes organized in descending stat value already so getting first hero for both of these
             # gets the hero with the best stats
             if rle == 'Win Percentage':
-                hero = next(next(iter(table[mode][rle])))
+                it = iter(table[mode][rle])
+                next(it)
+                hero = next(it)
                 if mode in mode_short:
                     roles.add(f"{hero}–{table[mode][rle][hero]}W [{mode_short[mode]}]")
                 else:
