@@ -22,7 +22,9 @@ def battlenet(disc, bnet, pf):
         url = request.search_url(pf)(bnet)
         print(f"requesting {url}...")
         rank, stats = request.main(url)
-    except AttributeError:      # AttributeError means private account, still add it
+        print(f"ranks received: {rank}")
+    except AttributeError as src:      # AttributeError means private account, still add it
+        print(f"error: {src}")
         db[KEYS.BNET].append(bnet)
         db[KEYS.MMBR][disc][KEYS.BNET][bnet] = bnet_index(
             not bool(db[KEYS.MMBR][disc][KEYS.BNET]), True, pf, {}, {}, [])
