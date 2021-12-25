@@ -15,16 +15,41 @@ import database
 import update
 import remove
 
+from collections.abc import MutableMapping, MutableSequence
+
 su = "aarpyy#3360"  # Creator of bot
 
 
-def db_to_dict(o):
-    if isinstance(o, ObservedDict):
-        return {k: db_to_dict(v) for k, v in o.items()}
-    elif isinstance(o, ObservedList):
-        return list(db_to_dict(e) for e in o)
+def jsonify(o):
+    if isinstance(o, str):
+        return f'"{o}"'
+    elif isinstance(o, bool):
+        return str(o).lower()
     else:
-        return o
+        return str(o)
+
+
+def printdb(o, indent=4):
+
+    def _printdb(o, i):
+        if isinstance(o, MutableMapping):
+            s = "{"
+            prefix = " " * i
+            s += ",".join(f"\n{prefix}{jsonify(k)}: {_printdb(v, i + indent)}" for k, v in o.items())
+            if o:
+                s += "\n" + " " * (i - indent)
+            return s + "}"
+        elif isinstance(o, MutableSequence):
+            s = "["
+            prefix = " " * i
+            s += ",".join(f"\n{prefix}{jsonify(e)}" for e in o)
+            if o:
+                s += "\n" + " " * (i - indent)
+            return s + "]"
+        else:
+            return jsonify(o)
+
+    return _printdb(o, indent) + "\n"
 
 
 def main():
@@ -49,7 +74,7 @@ def main():
                 update.user_data(disc, bnet)
 
         with open("userdata.json", "w") as outfile:
-            outfile.write(json.dumps(db_to_dict(db), indent=4))
+            outfile.write(printdb(db))
 
         input("All user data should now be updated. Check userdata.json to confirm. ")
 
@@ -62,7 +87,7 @@ def main():
                         await role.update(gld, disc, bnet)
 
         with open("userdata.json", "w") as outfile:
-            outfile.write(json.dumps(db_to_dict(db), indent=4))
+            outfile.write(printdb(db))
 
         input("All roles should now be updated. Check userdata.json and user roles to confirm. ")
 
