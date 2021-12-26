@@ -57,6 +57,6 @@ def clear():
 
 
 def refresh():
-    del db[KEYS.MMBR]
-    del db[KEYS.ROLE]
-    del db[KEYS.BNET]
+    db[KEYS.MMBR] = {}
+    db[KEYS.ROLE] = {}
+    db[KEYS.BNET] = []
