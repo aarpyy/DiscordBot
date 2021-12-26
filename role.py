@@ -1,6 +1,7 @@
 from replit import db
 
 from discord import Guild, Member, Role, Forbidden, HTTPException
+from asyncio import sleep
 
 from config import KEYS, bot_role_prefix
 from tools import getkey
@@ -139,6 +140,8 @@ async def update(gld: Guild, disc: str, bnet: str) -> None:
             continue
 
         await mmbr.remove_roles(role_obj)
+        print(f"Role {str(role_obj)} members: {role_obj.members}")
+        await sleep(1)
         if not len(role_obj.members):  # If just removed last member, delete the Role
             await role_obj.delete()
             del db[KEYS.ROLE][role]

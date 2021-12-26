@@ -42,14 +42,17 @@ def main(url: str) -> Tuple[Dict, Dict]:
     # Get html from url in silent mode, split the file by < to make lines easily readable by sed, then
     # run sed command and format output into key/value pairs
     system(f"curl -s {url} | ./split > player.info")
-    system("./get/stats player.info > player.stats")
-    system("./get/comp player.info > player.comp")
+
+    raise NameError
 
     try:
         if system("./get/is_private player.info"):
             raise AttributeError("PRIVATE")
         elif system("get/dne player.info"):
             raise NameError("DNE")
+        else:
+            system("./get/stats player.info > player.stats")
+            system("./get/comp player.info > player.comp")
     finally:
         system("rm -f player.info")
 

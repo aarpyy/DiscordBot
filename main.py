@@ -77,6 +77,9 @@ def main():
                         message += f"\n\nYour new primary account is {prim}"
                     await channel.send(message)
 
+        with open("userdata.json", "w") as outfile:
+            outfile.write(jsondump(db))
+
         print("Update loop complete")
 
     @bot.event

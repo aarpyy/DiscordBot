@@ -98,7 +98,7 @@ def remove(bnet: str, disc: str) -> Union[str, int]:
     is_primary = db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.PRIM]
     del db[KEYS.MMBR][disc][KEYS.BNET][bnet]
 
-    if is_primary and db[KEYS.MMBR][disc]:                  # If it was this user's primary account and they have
+    if is_primary and db[KEYS.MMBR][disc][KEYS.BNET]:                  # If it was this user's primary account and they have
         new_prim = getkey(db[KEYS.MMBR][disc][KEYS.BNET])   # another, make it primary
         db[KEYS.MMBR][disc][KEYS.BNET][new_prim][KEYS.PRIM] = True
         return new_prim
