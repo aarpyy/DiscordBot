@@ -1,17 +1,17 @@
 from replit import db
 
 from discord.ext import tasks
-from discord.ext.commands import Bot
+from discord.ext.commands import Bot, Context
 from discord import Intents, Member, DMChannel, Guild
+from discord.message import Message
 
 from os import getenv
 
-import add
-from config import KEYS
 import role
 import database
-import update
-import remove
+import battlenet
+
+from config import KEYS
 from tools import jsondump
 
 
@@ -27,7 +27,7 @@ def main():
     async def on_ready():
         print(f"Logged in as {bot.user}.")
         database.refresh()
-        await update.clean_roles(bot)
+        await database.clean_roles(bot)
 
         # Start loop for updated all users
         update_loop.start()
@@ -38,7 +38,7 @@ def main():
         # Update stats for all battlenets
         for disc in db[KEYS.MMBR]:
             for bnet in db[KEYS.MMBR][disc][KEYS.BNET]:
-                update.user_data(disc, bnet)
+                battlenet.update(disc, bnet)
 
         with open("userdata.json", "w") as outfile:
             outfile.write(jsondump(db))
@@ -64,20 +64,23 @@ def main():
 
                 # If battlenet is inactive, let user know it's removed
                 if not db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.ACTIVE]:
+                    print(f"Removing {disc}[{bnet}]...")
                     user = await bot.fetch_user(db[KEYS.MMBR][disc][KEYS.ID])
                     channel = user.dm_channel               # type: DMChannel
                     if channel is None:
                         channel = await user.create_dm()    # type: DMChannel
+
                     message = f"Stats for {bnet} were unable to be updated and the account was unlinked " \
                               f"from your discord."
-                    if prim := remove.battlenet(bnet, disc):
+
+                    if prim := battlenet.remove(bnet, disc):
                         message += f"\n\nYour new primary account is {prim}"
                     await channel.send(message)
 
         print("Update loop complete")
 
     @bot.event
-    async def on_message(msg):
+    async def on_message(msg: Message):
         if msg.author == bot.user:
             return
         elif str(msg.author) == su:
@@ -98,57 +101,47 @@ def main():
         res = eval(' '.join(args), tmp)
         await ctx.channel.send(f"Eval: {res}")
 
-    @bot.command()
-    async def battlenet(ctx, bnet):
+    async def account(ctx: Context, bnet: str, platform: str):
+        """
+        Attempts to link battlenet accunt to user's discord.
+
+        :param ctx: Context of command
+        :param bnet: battlenet
+        :param platform: platform of battlenet
+        :return: None
+        """
         disc = str(ctx.author)
+
         if disc not in db[KEYS.MMBR]:
             db[KEYS.MMBR][disc] = {KEYS.BNET: {}, KEYS.ID: ctx.author.id}
+
         if bnet in db[KEYS.MMBR][disc][KEYS.BNET]:
             await ctx.channel.send(f"{bnet} is already linked to your account!")
         elif bnet in db[KEYS.BNET]:
             await ctx.channel.send(f"{bnet} is already linked to another user!")
         else:
-            add.battlenet(disc, bnet, 'PC')
+            battlenet.add(disc, bnet, platform)
             if ctx.guild is not None:
-                print("role.update() called")
                 await role.update(ctx.guild, disc, bnet)
             await ctx.channel.send(f"Successfully linked {bnet} to your discord!")
 
         with open("userdata.json", "w") as outfile:
             outfile.write(jsondump(db))
 
-    @bot.command()
-    async def xbox(ctx, bnet):
-        disc = str(ctx.author)
-        if disc not in db[KEYS.MMBR]:
-            db[KEYS.MMBR][disc] = {KEYS.BNET: {}, KEYS.ID: ctx.author.id}
-        if bnet in db[KEYS.MMBR][disc][KEYS.BNET]:
-            await ctx.channel.send(f"{bnet} is already linked to your account!")
-        elif bnet in db[KEYS.BNET]:
-            await ctx.channel.send(f"{bnet} is already linked to another user!")
-        else:
-            add.battlenet(disc, bnet, 'Xbox')
-            if ctx.guild is not None:
-                await role.update(ctx.guild, disc, bnet)
-            await ctx.channel.send(f"Successfully linked {bnet} to your discord!")
+    @bot.command(name="battlenet")
+    async def _battlenet(ctx: Context, bnet: str):
+        await account(ctx, bnet, "PC")
 
     @bot.command()
-    async def playstation(ctx, bnet):
-        disc = str(ctx.author)
-        if disc not in db[KEYS.MMBR]:
-            db[KEYS.MMBR][disc] = {KEYS.BNET: {}, KEYS.ID: ctx.author.id}
-        if bnet in db[KEYS.MMBR][disc][KEYS.BNET]:
-            await ctx.channel.send(f"{bnet} is already linked to your account!")
-        elif bnet in db[KEYS.BNET]:
-            await ctx.channel.send(f"{bnet} is already linked to another user!")
-        else:
-            add.battlenet(disc, bnet, 'Playstation')
-            if ctx.guild is not None:
-                await role.update(ctx.guild, disc, bnet)
-            await ctx.channel.send(f"Successfully linked {bnet} to your discord!")
+    async def xbox(ctx: Context, bnet: str):
+        await account(ctx, bnet, "Xbox")
 
     @bot.command()
-    async def primary(ctx, bnet):
+    async def playstation(ctx: Context, bnet: str):
+        await account(ctx, bnet, "Playstation")
+
+    @bot.command()
+    async def primary(ctx: Context, bnet: str):
         disc = str(ctx.author)
         try:
             user_battlenets = db[KEYS.MMBR][disc][KEYS.BNET]

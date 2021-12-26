@@ -3,7 +3,6 @@ from replit import db
 from discord import Guild, Member, Role, Forbidden, HTTPException
 
 from config import KEYS, bot_role_prefix
-from tools import getkey
 
 from typing import Optional, List, Set
 
@@ -24,23 +23,21 @@ def get_bnet_roles(disc: str, bnet: str) -> Set[str]:
     :return: set of roles as strings
     """
 
-    roles = set()  # Empty set for roles
+    roles = set()   # Empty set for roles
 
-    table = db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.STAT]  # Table of battlenet's statistics
+    table = db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.STAT]     # Table of battlenet's statistics
 
     # For each stat associated with battlenet, add that stat if it is an important one
     for mode in table:
-        for rle in table[mode]:
-            # Heroes organized in descending stat value already so getting first hero for both of these
-            # gets the hero with the best stats
-            if rle in categ_major:
-                hero = max(table[mode][rle], key=lambda k: int(table[mode][rle][k].split(" ")[0]))
-                roles.add(f"{hero}-{table[mode][rle][hero]}" + categ_short[rle] + f" [{mode_short.get(mode, '')}]")
+        for ctg in table[mode]:
+            if ctg in categ_major:
+                hero = max(table[mode][ctg], key=lambda k: float(table[mode][ctg][k].split()[0]))
+                roles.add(f"{hero}-{table[mode][ctg][hero]}" + categ_short[ctg] + f" [{mode_short.get(mode, '')}]")
 
-    table = db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.RANK]  # Table of battlenet's competitive ranks
+    table = db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.RANK]     # Table of battlenet's competitive ranks
 
-    for rle in table:  # type: str
-        roles.add(f"{rle.capitalize()}-{table[rle]}")
+    for rnk in table:  # type: str
+        roles.add(f"{rnk.capitalize()}-{table[rnk]}")
 
     return set(bot_role_prefix + r for r in roles)
 

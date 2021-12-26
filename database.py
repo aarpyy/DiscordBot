@@ -1,8 +1,10 @@
 from replit import db
-from config import KEYS
+from config import KEYS, bot_role_prefix
 from os import system
 from unidecode import unidecode
 from json import load
+from discord.ext.commands import Bot
+from discord import Guild, Role
 
 
 def data_categories():
@@ -27,6 +29,20 @@ def data_categories():
         raise ValueError("UNIX ERROR")
 
 
+async def clean_roles(bot: Bot) -> None:
+    """
+    Deletes all roles given by Bot. Identifies these roles by a specific prefix. Only applicable
+    during testing when the prefix is given.
+
+    :param bot: discord bot
+    :return: None
+    """
+    for gld in bot.guilds:                  # type: Guild
+        for rle in gld.roles:               # type: Role
+            if str(rle).startswith(bot_role_prefix):
+                await rle.delete()
+
+
 def init():
     db[KEYS.MMBR] = {}
     db[KEYS.ROLE] = {}
@@ -36,10 +52,11 @@ def init():
 
 
 def clear():
-    for key in db.keys():
+    for key in db:
         del db[key]
 
 
 def refresh():
-    clear()
-    init()
+    del db[KEYS.MMBR]
+    del db[KEYS.ROLE]
+    del db[KEYS.BNET]
