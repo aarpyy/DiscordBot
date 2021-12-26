@@ -1,7 +1,10 @@
+from replit import db
+
 from os import system
 from unidecode import unidecode
 from collections import deque
 import json
+from config import KEYS
 
 from typing import Dict, Tuple, Callable
 
@@ -86,9 +89,9 @@ def main(url: str) -> Tuple[Dict, Dict]:
     system("rm -f player.stats")
 
     # Get table of data categories
-    with open("categories.json", "r") as infile:
-        categories = json.load(infile)
-    # categories = db[KEYS.CTG]
+    # with open("categories.json", "r") as infile:
+    #     categories = json.load(infile)
+    categories = db[KEYS.CTG]
 
     _stats = {}
     mode, categ = "", ""

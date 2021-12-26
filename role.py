@@ -3,6 +3,7 @@ from replit import db
 from discord import Guild, Member, Role, Forbidden, HTTPException
 
 from config import KEYS, bot_role_prefix
+from tools import getkey
 
 from typing import Optional, List, Set
 
@@ -31,7 +32,8 @@ def get_bnet_roles(disc: str, bnet: str) -> Set[str]:
     for mode in table:
         for ctg in table[mode]:
             if ctg in categ_major:
-                hero = max(table[mode][ctg], key=lambda k: float(table[mode][ctg][k].split()[0]))
+                # hero = max(table[mode][ctg], key=lambda k: float(table[mode][ctg][k].split()[0]))
+                hero = getkey(table[mode][ctg])
                 roles.add(f"{hero}-{table[mode][ctg][hero]}" + categ_short[ctg] + f" [{mode_short.get(mode, '')}]")
 
     table = db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.RANK]     # Table of battlenet's competitive ranks
