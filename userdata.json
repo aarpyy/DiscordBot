@@ -1,5 +1,8 @@
 {
-    "battlenets": [],
+    "battlenets": [
+        "Aarpyy#1975",
+        "Dragongale#1783"
+    ],
     "categories": {
         "0x0860000000000021": "Time Played",
         "0x0860000000000039": "Games Won",
@@ -45,9 +48,41 @@
     },
     "members": {
         "aarpyy#3360": {
-            "battlenets": {},
+            "battlenets": {
+                "Aarpyy#1975": {
+                    "primary": true,
+                    "private": true,
+                    "active": true,
+                    "platform": "PC",
+                    "ranks": {},
+                    "stats": {},
+                    "roles": [
+                        "@mAarpyy#1975"
+                    ]
+                },
+                "Dragongale#1783": {
+                    "primary": false,
+                    "private": true,
+                    "active": true,
+                    "platform": "PC",
+                    "ranks": {},
+                    "stats": {},
+                    "roles": [
+                        "@mDragongale#1783"
+                    ]
+                }
+            },
             "id": 750888830126522438
         }
     },
-    "roles": {}
+    "roles": {
+        "@mAarpyy#1975": {
+            "id": 924853671542526002,
+            "members": 1
+        },
+        "@mDragongale#1783": {
+            "id": 924854217057906710,
+            "members": 1
+        }
+    }
 }
