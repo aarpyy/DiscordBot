@@ -154,6 +154,9 @@ def main():
         except KeyError:
             await ctx.channel.send(f"{bnet} is not linked to your discord!")
         else:
+            db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.STAT] = {}
+            db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.RANK] = {}
+            db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.ACTIVE] = False
             if ctx.guild is not None:
                 await role.update(ctx.guild, disc, bnet)
             message = f"You have successfully unlinked {bnet} from your discord!"

@@ -113,7 +113,7 @@ async def update(gld: Guild, disc: str, bnet: str) -> None:
     to_add = new_roles.difference(current_roles)  # Roles user should have minus roles discord thinks they have
 
     print(f"Roles in to_add: {to_add}")
-    input("ENTER: ")
+    # input("ENTER: ")
 
     # To get roles to remove, first we get roles currently associated with battlenet which have no correlation
     # to actual roles held. Taking the union of this with roles the user SHOULD have we get the roles
@@ -140,7 +140,7 @@ async def update(gld: Guild, disc: str, bnet: str) -> None:
     to_remove = current_bot_roles.difference(new_roles)
 
     print(f"Roles in to_remove: {to_remove}")
-    input("ENTER: ")
+    # input("ENTER: ")
 
     for role in to_add:
         if role.startswith("@m"):

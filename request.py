@@ -46,7 +46,7 @@ def main(url: str) -> Tuple[Dict, Dict]:
     # Get html from url in silent mode, split the file by < to make lines easily readable by sed, then
     # run sed command and format output into key/value pairs
     system(f"curl -s {url} | ./split > {info_file}")
-    raise AttributeError
+
     # This try block allows for the errors to be raised and player.info removed regardless of
     # errors thrown
     try:
