@@ -44,6 +44,7 @@ def get_bnet_roles(disc: str, bnet: str) -> Set[str]:
     roles = set(bot_role_prefix + r for r in roles)
     if db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.ACTIVE]:
         roles.add(f"@m{bnet}")
+        roles.add(f"@m{db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.PTFM]}")
     return roles
 
 
@@ -126,14 +127,14 @@ async def update(gld: Guild, disc: str, bnet: str) -> None:
     roles_listed = set(db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.ROLE])
     all_roles = roles_listed.union(new_roles)  # All roles the user currently or previously associated with battlenet
 
-    print(f"Roles in all_roles: {all_roles}")
-    input("ENTER: ")
+    # print(f"Roles in all_roles: {all_roles}")
+    # input("ENTER: ")
 
     # roles_held is all roles that the bot could have given the user that they DO have
     current_bot_roles = all_roles.intersection(current_roles)
 
-    print(f"Roles in roles_held: {current_bot_roles}")
-    input("ENTER: ")
+    # print(f"Roles in roles_held: {current_bot_roles}")
+    # input("ENTER: ")
 
     # Thus, to_remove is all the roles bot given roles minus the ones that the user SHOULD have
     to_remove = current_bot_roles.difference(new_roles)
@@ -177,8 +178,8 @@ async def update(gld: Guild, disc: str, bnet: str) -> None:
 
         db[KEYS.ROLE][role][KEYS.MMBR] -= 1
 
-        print(f"Role {str(role_obj)}; Role.members: {role_obj.members}; "
-              f"db[role][members]: {db[KEYS.ROLE][role][KEYS.MMBR]}")
+        print(f"Deleting {str(role_obj)}; Role.members: {[str(m) for m in role_obj.members]}; "
+              f"db: {db[KEYS.ROLE][role][KEYS.MMBR]}")
 
         if not db[KEYS.ROLE][role][KEYS.MMBR]:  # If just removed last member, delete the Role
             await role_obj.delete()

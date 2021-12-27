@@ -146,6 +146,22 @@ def main():
         await account(ctx, bnet, "Playstation")
 
     @bot.command()
+    async def remove(ctx: Context, bnet: str):
+        disc = str(ctx.author)
+        try:
+            if bnet not in db[KEYS.MMBR][disc][KEYS.BNET]:
+                raise KeyError
+        except KeyError:
+            await ctx.channel.send(f"{bnet} is not linked to your discord!")
+        else:
+            if ctx.guild is not None:
+                await role.update(ctx.guild, disc, bnet)
+            message = f"You have successfully unlinked {bnet} from your discord!"
+            if prim := battlenet.remove(bnet, disc):
+                message += f"\n\nYour new primary account is {prim}"
+            await ctx.channel.send(message)
+
+    @bot.command()
     async def primary(ctx: Context, bnet: str):
         disc = str(ctx.author)
         try:
