@@ -41,7 +41,11 @@ def get_bnet_roles(disc: str, bnet: str) -> Set[str]:
     for rnk in table:  # type: str
         roles.add(f"{rnk.capitalize()}-{table[rnk]}")
 
-    return set(bot_role_prefix + r for r in roles)
+    for r in roles:
+        r = bot_role_prefix + r
+
+    roles.add(f"@m{bnet}")
+    return roles
 
 
 async def get(gld: Guild, rle: str) -> Optional[Role]:
@@ -99,7 +103,13 @@ async def update(gld: Guild, disc: str, bnet: str) -> None:
     print(f"Member fetched: {str(mmbr)} ({mmbr.id})")
 
     new_roles = get_bnet_roles(disc, bnet)  # Roles battlenet should have
-    current_roles = set(str(r) for r in mmbr.roles)  # Roles discord user currently has
+    current_roles = set()       # Roles discord user currently has
+    for r in mmbr.roles:        # type: Role
+        if r.mentionable:
+            current_roles.add(f"@m{str(r)}")
+        else:
+            current_roles.add(str(r))
+
     to_add = new_roles.difference(current_roles)  # Roles user should have minus roles discord thinks they have
 
     print(f"Roles in to_add: {to_add}")
@@ -133,19 +143,29 @@ async def update(gld: Guild, disc: str, bnet: str) -> None:
     input("ENTER: ")
 
     for role in to_add:
-        role_obj = await get(gld, role)
-
-        if role_obj is None:
-            role_obj = await gld.create_role(name=role)
+        if role.startswith("@m"):
+            role_obj = await gld.create_role(name=role[2:], mentionable=True)
             db[KEYS.ROLE][role] = {KEYS.ID: role_obj.id, KEYS.MMBR: 0}
-        elif role not in db[KEYS.ROLE]:
-            db[KEYS.ROLE][role] = {KEYS.ID: role_obj.id, KEYS.MMBR: len(role_obj.members)}
+        else:
+            role_obj = await get(gld, role)
+            if role_obj is None:
+                role_obj = await gld.create_role(name=role)
+                db[KEYS.ROLE][role] = {KEYS.ID: role_obj.id, KEYS.MMBR: 0}
+            elif role not in db[KEYS.ROLE]:
+                db[KEYS.ROLE][role] = {KEYS.ID: role_obj.id, KEYS.MMBR: len(role_obj.members)}
 
         db[KEYS.ROLE][role][KEYS.MMBR] += 1
         await mmbr.add_roles(role_obj)
 
     for role in to_remove:
-        role_obj = await get(gld, role)  # type: Role
+        if role.startswith("@m"):
+            if role in db[KEYS.ROLE]:
+                role_obj = gld.get_role(db[KEYS.ROLE][role][KEYS.ID])
+            else:
+                role_obj = await get(gld, role[2:])
+        else:
+            role_obj = await get(gld, role)  # type: Role
+
         if role_obj is None:
             continue
 
