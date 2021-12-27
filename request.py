@@ -1,12 +1,16 @@
 from replit import db
 
-from os import system
+from os import system, remove
 from unidecode import unidecode
 from collections import deque
-import json
 from config import KEYS
 
 from typing import Dict, Tuple, Callable
+
+
+info_file = "player.info"
+comp_file = "player.comp"
+stat_file = "player.stats"
 
 
 # Given a platform of overwatch, returns a function that accepts a username of that platform
@@ -41,62 +45,60 @@ def main(url: str) -> Tuple[Dict, Dict]:
     """
     # Get html from url in silent mode, split the file by < to make lines easily readable by sed, then
     # run sed command and format output into key/value pairs
-    system(f"curl -s {url} | ./split > player.info")
+    system(f"curl -s {url} | ./split > {info_file}")
+    # raise NameError
 
-    raise NameError
-
+    # This try block allows for the errors to be raised and player.info removed regardless of
+    # errors thrown
     try:
-        if system("./get/is_private player.info"):
+        if system(f"./get/is_private {info_file}"):
             raise AttributeError("PRIVATE")
-        elif system("get/dne player.info"):
+        elif system(f"./get/dne {info_file}"):
             raise NameError("DNE")
         else:
-            system("./get/stats player.info > player.stats")
-            system("./get/comp player.info > player.comp")
+            system(f"./get/stats {info_file} > {stat_file}")
+            system(f"./get/comp {info_file} > {comp_file}")
     finally:
-        system("rm -f player.info")
+        remove(info_file)
 
     # Python dictionaries for ranks and time played data
-    _ranks = {}
-    _stats = {}
+    comp_ranks = {}
+    bnet_stats = {}
 
     lines = deque()
     ranks_found = 0
 
-    with open("player.comp", "r") as infile:
+    with open(comp_file, "r") as infile:
         while line := infile.readline():
             lines.append(line)
             ranks_found += 1
-    system("rm -f player.comp")
+    remove(comp_file)
 
     url_prefix = "https://static.playoverwatch.com/img/pages/career/icon-"
 
     ranks_found //= 4   # Two lines per rank, ranks always appear twice
     for _ in range(ranks_found):
-        role_url, _rank = lines.popleft().strip('\n'), lines.popleft().strip('\n')
+        role_url, ow_rank = lines.popleft().strip('\n'), lines.popleft().strip('\n')
 
         # Confirm that role and rank are what is expected
-        _role = role_url.split(url_prefix)[1]
-        if _role.startswith("https") or not _rank.strip().isnumeric():
+        ow_role = role_url.split(url_prefix)[1]
+        if ow_role.startswith("https") or not ow_rank.strip().isnumeric():
             raise ValueError
 
         # End of url is user specific data, split by / to get end, then split by - to get specific data
-        _role = _role.split('-')[0]
-        _ranks[_role] = int(_rank)
+        ow_role = ow_role.split('-')[0]
+        comp_ranks[ow_role] = int(ow_rank)
 
     lines.clear()
 
-    with open("player.stats", "r") as infile:
+    with open(stat_file, "r") as infile:
         while line := infile.readline():
             lines.append(line)
-    system("rm -f player.stats")
+    remove(stat_file)
 
-    # Get table of data categories
-    # with open("categories.json", "r") as infile:
-    #     categories = json.load(infile)
     categories = db[KEYS.CTG]
 
-    _stats = {}
+    bnet_stats = {}
     mode, categ = "", ""
     short = {0: 'hrs', 1: 'mins', 2: 'secs'}
 
@@ -110,20 +112,20 @@ def main(url: str) -> Tuple[Dict, Dict]:
         if line.startswith('|'):
             # If its name of mode, set current mode to new mode
             mode = line.strip('|')
-            _stats[mode] = {}
+            bnet_stats[mode] = {}
         elif line.startswith("0x02E"):
             # If its a category type we don't care about, read all the data of that category until we hit
             # either a new mode or a new category, or we finish the file, in which case we return
             while 1:
                 line = lines.popleft()
                 if not lines:
-                    return _ranks, _stats
+                    return comp_ranks, bnet_stats
                 elif line.startswith("0x") or line.startswith('|'):
                     lines.appendleft(line)
                     break
         elif line.startswith("0x"):
             categ = categories[line]
-            _stats[mode][categ] = {}
+            bnet_stats[mode][categ] = {}
         else:
             stat = lines.popleft().strip('\n')
             # All time stats are given hrs:mins:secs even if most significant value is days so we can
@@ -136,9 +138,7 @@ def main(url: str) -> Tuple[Dict, Dict]:
                         if i in short:
                             stat = f"{j} {short[i]}"
                         break
-            elif '%' in stat:
-                stat = stat.strip('%')
 
-            _stats[mode][categ][unidecode(line)] = stat
+            bnet_stats[mode][categ][unidecode(line)] = stat
 
-    return _ranks, _stats
+    return comp_ranks, bnet_stats

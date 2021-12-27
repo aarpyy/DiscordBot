@@ -62,7 +62,7 @@ if (optimizelyId)
     checkPerformance();
 
 </script>
-<script>var clientVars = {"language":"en","urlLocale":"en-us","locale":"en_US","region":"3","serverRegion":"us","OVERWATCH_API_URL":"https://overwatch-api-prod.playoverwatch.com","CLOUDFRONT_URL":"https://d1u1mce87gyfbn.cloudfront.net","learnMore":"Learn More","codeFile":"https://static.playoverwatch.com/video/dva-code-1840e4fbda.mp3"};
+<script>var clientVars = {"language":"en","urlLocale":"en-us","locale":"en_US","region":"1","serverRegion":"us","OVERWATCH_API_URL":"https://overwatch-api-prod.playoverwatch.com","CLOUDFRONT_URL":"https://d1u1mce87gyfbn.cloudfront.net","learnMore":"Learn More","codeFile":"https://static.playoverwatch.com/video/dva-code-1840e4fbda.mp3"};
 const tooltipGlossary = {"ptr":"Upcoming heroes and maps are tested on the Public Test Region (PTR) before official launch (PC only)."};
 
 window.blizzard = window.blizzard || {};
@@ -72,7 +72,7 @@ Object.keys(clientVars).forEach(function(key) {
 window.blizzard.tooltipGlossary = tooltipGlossary;
 </script>
 <script>var dataLayer = dataLayer || [];
-dataLayer.push({"locale":"en_US","localeRegion":"us","region":"3","serverRegion":"3","project":"overwatch","authenticated":"0"});
+dataLayer.push({"locale":"en_US","localeRegion":"us","region":"1","serverRegion":"1","project":"overwatch","authenticated":"0"});
 
 
 </script>

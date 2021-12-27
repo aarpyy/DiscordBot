@@ -8,8 +8,8 @@ from tools import getkey
 
 from typing import Optional, List, Set
 
-mode_short = {"quickplay": "qp", "competitive": "comp"}
-categ_short = {"Win Percentage": "%W", "Time Played": ""}
+mode_short = {"quickplay": "[qp]", "competitive": "[comp]"}
+categ_short = {"Win Percentage": "W", "Time Played": ""}
 categ_major = ("Win Percentage", "Time Played")
 
 
@@ -33,9 +33,8 @@ def get_bnet_roles(disc: str, bnet: str) -> Set[str]:
     for mode in table:
         for ctg in table[mode]:
             if ctg in categ_major:
-                # hero = max(table[mode][ctg], key=lambda k: float(table[mode][ctg][k].split()[0]))
                 hero = getkey(table[mode][ctg])
-                roles.add(f"{hero}-{table[mode][ctg][hero]}" + categ_short[ctg] + f" [{mode_short.get(mode, '')}]")
+                roles.add(f"{hero}-{table[mode][ctg][hero]}" + categ_short[ctg] + f" {mode_short.get(mode, '')}")
 
     table = db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.RANK]     # Table of battlenet's competitive ranks
 
@@ -56,16 +55,20 @@ async def get(gld: Guild, rle: str) -> Optional[Role]:
     :param rle: name of role
     :return: Optional[Role]
     """
+
+    # Theoretically this will always be true, since the only arguments being passed here are roles
+    # created by Oberwatch bot which are all default stored in the db
     if rle in db[KEYS.ROLE]:
-        return gld.get_role(db[KEYS.ROLE][rle])
+        return gld.get_role(db[KEYS.ROLE][rle][KEYS.ID])
     else:
         try:
-            roles = await gld.fetch_roles()  # type: List[Role]
+            roles = await gld.fetch_roles()     # type: List[Role]
         except HTTPException:
             return None
         else:
-            for r in roles:  # type: Role
+            for r in roles:                     # type: Role
                 if str(r) == rle:
+                    db[KEYS.ROLE][rle] = {KEYS.ID: r.id, KEYS.MMBR: len(r.members)}
                     return r
             return None
 
@@ -130,8 +133,15 @@ async def update(gld: Guild, disc: str, bnet: str) -> None:
     input("ENTER: ")
 
     for role in to_add:
-        role_obj = await get(gld, role) or await gld.create_role(name=role)
-        db[KEYS.ROLE][role] = role_obj.id
+        role_obj = await get(gld, role)
+
+        if role_obj is None:
+            role_obj = await gld.create_role(name=role)
+            db[KEYS.ROLE][role] = {KEYS.ID: role_obj.id, KEYS.MMBR: 0}
+        elif role not in db[KEYS.ROLE]:
+            db[KEYS.ROLE][role] = {KEYS.ID: role_obj.id, KEYS.MMBR: len(role_obj.members)}
+
+        db[KEYS.ROLE][role][KEYS.MMBR] += 1
         await mmbr.add_roles(role_obj)
 
     for role in to_remove:
@@ -140,9 +150,18 @@ async def update(gld: Guild, disc: str, bnet: str) -> None:
             continue
 
         await mmbr.remove_roles(role_obj)
-        print(f"Role {str(role_obj)} members: {role_obj.members}")
-        await sleep(1)
-        if not len(role_obj.members):  # If just removed last member, delete the Role
+
+        # This should theoretically never happen, so 5 seconds of sleep isn't super important wait time
+        if role not in db[KEYS.ROLE]:
+            await sleep(5)      # Give 5 seconds sleep time to confirm that role_obj was updated with mmbr as a member
+            db[KEYS.ROLE][role] = {KEYS.ID: role_obj.id, KEYS.MMBR: len(role_obj.members)}
+
+        db[KEYS.ROLE][role][KEYS.MMBR] -= 1
+
+        print(f"Role {str(role_obj)}; Role.members: {role_obj.members}; "
+              f"db[role][members]: {db[KEYS.ROLE][role][KEYS.MMBR]}")
+
+        if not db[KEYS.ROLE][role][KEYS.MMBR]:  # If just removed last member, delete the Role
             await role_obj.delete()
             del db[KEYS.ROLE][role]
 

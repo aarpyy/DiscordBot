@@ -20,12 +20,13 @@ def jsonify(o: object) -> str:
     :param o: object to be converted
     :return: string hopefully recognizable by JSON
     """
-    if isinstance(o, str):
-        return f'"{o}"'
+
+    if isinstance(o, (int, float)):
+        return str(o)
     elif isinstance(o, bool):
         return str(o).lower()
     else:
-        return str(o)
+        return f'"{str(o)}"'
 
 
 def jsondump(obj: Union[MutableMapping, MutableSequence], indent: int = 4) -> str:

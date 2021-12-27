@@ -5,7 +5,9 @@ from discord.ext.commands import Bot, Context
 from discord import Intents, Member, DMChannel, Guild
 from discord.message import Message
 
-from os import getenv
+from os import getenv, system
+from os.path import join, exists
+from sys import exit
 
 import role
 import database
@@ -46,8 +48,8 @@ def main():
         input("All user data should now be updated. Check userdata.json to confirm. ")
 
         # Update all roles for people in guilds
-        for gld in bot.guilds:  # type: Guild
-            for mmbr in gld.members:
+        for gld in bot.guilds:          # type: Guild
+            for mmbr in gld.members:    # type: Member
                 disc = str(mmbr)
                 if disc in db[KEYS.MMBR]:
                     for bnet in db[KEYS.MMBR][disc][KEYS.BNET]:
@@ -148,6 +150,8 @@ def main():
         disc = str(ctx.author)
         try:
             user_battlenets = db[KEYS.MMBR][disc][KEYS.BNET]
+            if bnet not in user_battlenets:
+                raise KeyError
         except KeyError:
             await ctx.channel.send(f"{bnet} is not linked to your account!")
         else:
@@ -163,5 +167,12 @@ def main():
     bot.run(getenv('TOKEN'))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
+    for f in ("comp", "dne", "is_private", "stats"):
+        if not exists(join("get", f)):
+            exit(1)
+
+    if not exists("split"):
+        system("make split")
+
     main()
