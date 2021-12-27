@@ -1,7 +1,5 @@
 {
-    "battlenets": [
-        "Aarpyy#1975"
-    ],
+    "battlenets": [],
     "categories": {
         "0x0860000000000021": "Time Played",
         "0x0860000000000039": "Games Won",
@@ -47,17 +45,7 @@
     },
     "members": {
         "aarpyy#3360": {
-            "battlenets": {
-                "Aarpyy#1975": {
-                    "primary": true,
-                    "private": false,
-                    "active": false,
-                    "platform": "PC",
-                    "ranks": {},
-                    "stats": {},
-                    "roles": []
-                }
-            },
+            "battlenets": {},
             "id": 750888830126522438
         }
     },

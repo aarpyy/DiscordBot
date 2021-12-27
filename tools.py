@@ -21,10 +21,10 @@ def jsonify(o: object) -> str:
     :return: string hopefully recognizable by JSON
     """
 
-    if isinstance(o, (int, float)):
-        return str(o)
-    elif isinstance(o, bool):
+    if isinstance(o, bool):
         return str(o).lower()
+    elif isinstance(o, (int, float)):
+        return str(o)
     else:
         return f'"{str(o)}"'
 
