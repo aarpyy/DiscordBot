@@ -41,10 +41,9 @@ def get_bnet_roles(disc: str, bnet: str) -> Set[str]:
     for rnk in table:  # type: str
         roles.add(f"{rnk.capitalize()}-{table[rnk]}")
 
-    for r in roles:
-        r = bot_role_prefix + r
-
-    roles.add(f"@m{bnet}")
+    roles = set(bot_role_prefix + r for r in roles)
+    if db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.ACTIVE]:
+        roles.add(f"@m{bnet}")
     return roles
 
 
