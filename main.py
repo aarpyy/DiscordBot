@@ -2,7 +2,7 @@ from replit import db
 
 from discord.ext import tasks
 from discord.ext.commands import Bot, Context
-from discord import Intents, Member, DMChannel, Guild
+from discord import Intents, Member, DMChannel, Guild, Role
 from discord.message import Message
 
 from os import getenv, system
@@ -25,14 +25,7 @@ def main():
     intents.members = True
     bot = Bot(command_prefix='/', intents=intents, case_insensitive=True)
 
-    @bot.event
-    async def on_ready():
-        print(f"Logged in as {bot.user}.")
-        # database.refresh()
-        # await database.clean_roles(bot)
-
-        # Start loop for updated all users
-        update_loop.start()
+    # Loops
 
     @tasks.loop(hours=1)
     async def update_loop():
@@ -48,8 +41,8 @@ def main():
         input("All user data should now be updated. Check userdata.json to confirm. ")
 
         # Update all roles for people in guilds
-        for gld in bot.guilds:          # type: Guild
-            for mmbr in gld.members:    # type: Member
+        for gld in bot.guilds:  # type: Guild
+            for mmbr in gld.members:  # type: Member
                 disc = str(mmbr)
                 if disc in db[KEYS.MMBR]:
                     for bnet in db[KEYS.MMBR][disc][KEYS.BNET]:
@@ -68,9 +61,9 @@ def main():
                 if not db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.ACTIVE]:
                     print(f"Removing {disc}[{bnet}]...")
                     user = await bot.fetch_user(db[KEYS.MMBR][disc][KEYS.ID])
-                    channel = user.dm_channel               # type: DMChannel
+                    channel = user.dm_channel  # type: DMChannel
                     if channel is None:
-                        channel = await user.create_dm()    # type: DMChannel
+                        channel = await user.create_dm()  # type: DMChannel
 
                     message = f"Stats for {bnet} were unable to be updated and the account was unlinked " \
                               f"from your discord."
@@ -83,6 +76,17 @@ def main():
             outfile.write(jsondump(db))
 
         print("Update loop complete")
+
+    # Events
+
+    @bot.event
+    async def on_ready():
+        print(f"Logged in as {bot.user}.")
+        # database.refresh()
+        # await database.clean_roles(bot)
+
+        # Start loop for updated all users
+        update_loop.start()
 
     @bot.event
     async def on_message(msg: Message):
@@ -98,6 +102,13 @@ def main():
             disc = str(mmbr)
             if disc not in db[KEYS.MMBR]:
                 db[KEYS.MMBR][disc] = {KEYS.BNET: {}, KEYS.ID: mmbr.id}
+
+    @bot.event
+    async def on_guild_role_delete(rle: Role):
+        # If the role is bot-controlled, delete it from db!
+        pass
+
+    # Commands
 
     @bot.command(name="eval")
     async def _eval(ctx, *args):
@@ -154,9 +165,7 @@ def main():
         except KeyError:
             await ctx.channel.send(f"{bnet} is not linked to your discord!")
         else:
-            db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.STAT] = {}
-            db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.RANK] = {}
-            db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.ACTIVE] = False
+            battlenet.deactivate(disc, bnet)
             if ctx.guild is not None:
                 await role.update(ctx.guild, disc, bnet)
             message = f"You have successfully unlinked {bnet} from your discord!"

@@ -3,14 +3,16 @@ from replit import db
 from discord import Guild, Member, Role, Forbidden, HTTPException
 from asyncio import sleep
 
-from config import KEYS, bot_role_prefix
+from config import KEYS
 from tools import getkey
 
 from typing import Optional, List, Set
 
-mode_short = {"quickplay": "[qp]", "competitive": "[comp]"}
-categ_short = {"Win Percentage": "W", "Time Played": ""}
+categ_short = {"Win Percentage": "W"}
 categ_major = ("Win Percentage", "Time Played")
+
+mention_tag = "@m"
+no_tag = "--"
 
 
 # Role methods
@@ -27,24 +29,22 @@ def get_bnet_roles(disc: str, bnet: str) -> Set[str]:
 
     roles = set()   # Empty set for roles
 
-    table = db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.STAT]     # Table of battlenet's statistics
+    table = db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.STAT]["quickplay"]     # Table of battlenet's statistics
 
     # For each stat associated with battlenet, add that stat if it is an important one
-    for mode in table:
-        for ctg in table[mode]:
-            if ctg in categ_major:
-                hero = getkey(table[mode][ctg])
-                roles.add(f"{hero}-{table[mode][ctg][hero]}" + categ_short[ctg] + f" {mode_short.get(mode, '')}")
+    for ctg in table:
+        if ctg in categ_major:
+            hero = getkey(table[ctg])
+            roles.add(f"{no_tag}{hero}-{table[ctg][hero]}" + categ_short.get(ctg, ""))
 
     table = db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.RANK]     # Table of battlenet's competitive ranks
 
     for rnk in table:  # type: str
-        roles.add(f"{rnk.capitalize()}-{table[rnk]}")
+        roles.add(f"{no_tag}{rnk.capitalize()}-{table[rnk]}")
 
-    roles = set(bot_role_prefix + r for r in roles)
     if db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.ACTIVE]:
-        roles.add(f"@m{bnet}")
-        roles.add(f"@m{db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.PTFM]}")
+        roles.add(mention_tag + bnet)
+        roles.add(mention_tag + db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.PTFM])
     return roles
 
 
@@ -65,6 +65,7 @@ async def get(gld: Guild, rle: str) -> Optional[Role]:
     if rle in db[KEYS.ROLE]:
         return gld.get_role(db[KEYS.ROLE][rle][KEYS.ID])
     else:
+        rle = rle[2:]       # If wasn't in db, remove tag to search with actual role name
         try:
             roles = await gld.fetch_roles()     # type: List[Role]
         except HTTPException:
@@ -106,9 +107,9 @@ async def update(gld: Guild, disc: str, bnet: str) -> None:
     current_roles = set()       # Roles discord user currently has
     for r in mmbr.roles:        # type: Role
         if r.mentionable:
-            current_roles.add(f"@m{str(r)}")
+            current_roles.add(mention_tag + str(r))
         else:
-            current_roles.add(str(r))
+            current_roles.add(no_tag + str(r))
 
     to_add = new_roles.difference(current_roles)  # Roles user should have minus roles discord thinks they have
 
@@ -143,29 +144,24 @@ async def update(gld: Guild, disc: str, bnet: str) -> None:
     # input("ENTER: ")
 
     for role in to_add:
-        if role.startswith("@m"):
-            role_obj = await gld.create_role(name=role[2:], mentionable=True)
+        role_obj = await get(gld, role)
+        if role_obj is None:
+
+            if role.startswith(mention_tag):
+                role_obj = await gld.create_role(name=role[2:], mentionable=True)
+            else:
+                role_obj = await gld.create_role(name=role[2:])
+
             db[KEYS.ROLE][role] = {KEYS.ID: role_obj.id, KEYS.MMBR: 0}
-        else:
-            role_obj = await get(gld, role)
-            if role_obj is None:
-                role_obj = await gld.create_role(name=role)
-                db[KEYS.ROLE][role] = {KEYS.ID: role_obj.id, KEYS.MMBR: 0}
-            elif role not in db[KEYS.ROLE]:
-                db[KEYS.ROLE][role] = {KEYS.ID: role_obj.id, KEYS.MMBR: len(role_obj.members)}
+
+        elif role not in db[KEYS.ROLE]:
+            db[KEYS.ROLE][role] = {KEYS.ID: role_obj.id, KEYS.MMBR: len(role_obj.members)}
 
         db[KEYS.ROLE][role][KEYS.MMBR] += 1
         await mmbr.add_roles(role_obj)
 
     for role in to_remove:
-        if role.startswith("@m"):
-            if role in db[KEYS.ROLE]:
-                role_obj = gld.get_role(db[KEYS.ROLE][role][KEYS.ID])
-            else:
-                role_obj = await get(gld, role[2:])
-        else:
-            role_obj = await get(gld, role)  # type: Role
-
+        role_obj = await get(gld, role)  # type: Role
         if role_obj is None:
             continue
 
@@ -175,8 +171,8 @@ async def update(gld: Guild, disc: str, bnet: str) -> None:
         if role not in db[KEYS.ROLE]:
             await sleep(5)      # Give 5 seconds sleep time to confirm that role_obj was updated with mmbr as a member
             db[KEYS.ROLE][role] = {KEYS.ID: role_obj.id, KEYS.MMBR: len(role_obj.members)}
-
-        db[KEYS.ROLE][role][KEYS.MMBR] -= 1
+        else:
+            db[KEYS.ROLE][role][KEYS.MMBR] -= 1
 
         print(f"Deleting {str(role_obj)}; Role.members: {[str(m) for m in role_obj.members]}; "
               f"db: {db[KEYS.ROLE][role][KEYS.MMBR]}")

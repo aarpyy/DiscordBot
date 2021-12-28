@@ -9,6 +9,16 @@ from role import get_bnet_roles
 from typing import Union
 
 
+def clear_index(disc: str, bnet: str):
+    db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.STAT] = {}
+    db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.RANK] = {}
+
+
+def deactivate(disc: str, bnet: str):
+    clear_index(disc, bnet)
+    db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.ACTIVE] = False
+
+
 def create_index(prim: bool, priv: bool, platform: str, rank: dict, stats: dict) -> dict:
     """
     Creates and returns standard index for battlenet.
@@ -74,6 +84,7 @@ def update(disc: str, bnet: str) -> None:
         ranks, stats = request.main(request.search_url(db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.PTFM])(bnet))
     except AttributeError:
         db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.PRIV] = True
+        print(f"{bnet} marked as private")
     except NameError or ValueError:
         db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.ACTIVE] = False
         print(f"{bnet} marked as inactive")
