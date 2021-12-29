@@ -145,8 +145,6 @@ async def update(gld: Guild, disc: str, bnet: str) -> None:
 
     to_add = new_roles.difference(current_roles)  # Roles user should have minus roles discord thinks they have
 
-    to_update = new_roles.difference(to_add)    # Roles that user should have that already exist
-
     loudprint(f"Roles in to_add: {to_add}")
 
     # To get roles to remove, first we get roles currently associated with battlenet which have no correlation
@@ -169,6 +167,9 @@ async def update(gld: Guild, disc: str, bnet: str) -> None:
 
     loudprint(f"Roles in to_remove: {to_remove}")
 
+    # Don't increment member count for any roles in to_add, since these are not all the roles that need to be
+    # incremented. Instead, take care of adding and removing of actual roles/entrance into db and later
+    # increment all roles being added directly to user regardless of if the role was just created
     for role in to_add:  # type: str
         role_obj = await get(gld, role)
         if role_obj is None:
@@ -182,7 +183,6 @@ async def update(gld: Guild, disc: str, bnet: str) -> None:
         elif role not in db[KEYS.ROLE]:
             db[KEYS.ROLE][role] = {KEYS.ID: role_obj.id, KEYS.MMBR: len(role_obj.members)}
 
-        db[KEYS.ROLE][role][KEYS.MMBR] += 1
         await member.add_roles(role_obj)
 
     for role in to_remove:  # type: str
@@ -205,7 +205,7 @@ async def update(gld: Guild, disc: str, bnet: str) -> None:
         if not db[KEYS.ROLE][role][KEYS.MMBR]:  # If just removed last member, delete the Role
             await globaldel(role_obj, role)
 
-    for role in to_update:
+    for role in new_roles:
         db[KEYS.ROLE][role][KEYS.MMBR] += 1
 
     db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.ROLE] = list(new_roles)
