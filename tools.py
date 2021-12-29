@@ -2,6 +2,18 @@ from collections.abc import MutableMapping, MutableSequence
 
 from typing import Union
 
+from config import loud
+
+
+def loudprint(*args, **kwargs):
+    if loud:
+        print(*args, **kwargs)
+
+
+def loudinput(*args, **kwargs):
+    if loud:
+        input(*args, **kwargs)
+
 
 def getkey(d: dict) -> str:
     """

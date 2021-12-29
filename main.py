@@ -2,7 +2,7 @@ from replit import db
 
 from discord.ext import tasks
 from discord.ext.commands import Bot, Context
-from discord import Intents, Member, DMChannel, Guild, Role, User
+from discord import Intents, Member, DMChannel, Guild, Role, User, Forbidden, HTTPException, NotFound
 from discord.message import Message
 
 from os import getenv, system
@@ -15,6 +15,7 @@ import database
 import battlenet
 
 from config import KEYS
+from tools import loudprint, loudinput
 
 from typing import Dict, Union
 
@@ -29,6 +30,29 @@ async def getdm(user: Union[User, Member]) -> DMChannel:
     return channel
 
 
+async def getuser(bot: Bot, disc: str):
+    try:
+        return await bot.fetch_user(db[KEYS.MMBR][disc][KEYS.ID])
+    except NotFound:
+        loudprint(f"User {disc} <id={db[KEYS.MMBR][disc][KEYS.ID]}> does not exist"
+                  f" and has been removed from db", file=stderr)
+        user_bnet = set(db[KEYS.MMBR][disc][KEYS.BNET])
+        db[KEYS.BNET] = list(set(db[KEYS.BNET]).difference(user_bnet))
+        del db[KEYS.MMBR][disc]     # If not real user no roles to remove anyway so just delete
+    except HTTPException as src:
+        loudprint(f"Failed {getuser.__name__}(): {str(src)}", file=stderr)
+
+
+async def roleupdate(guild: Guild, disc: str, bnet: str):
+    try:
+        await obwrole.update(guild, disc, bnet)
+    except Forbidden:
+        await guild.leave()
+        loudprint(f"Left {str(guild)} guild because inaccessible", file=stderr)
+    except HTTPException as src:
+        loudprint(f"Failed {obwrole.update.__name__}(): {str(src)}", file=stderr)
+
+
 def main():
     intents = Intents.default()
     intents.members = True
@@ -41,7 +65,7 @@ def main():
 
         # Print contents of db to userdata.json, only used for testing
         database.dump()
-        print("Database dumped")
+        loudprint("Database dumped")
 
     @tasks.loop(hours=1)
     async def update_loop():
@@ -53,19 +77,19 @@ def main():
 
         database.dump()
 
-        input("All user data should now be updated")
+        loudinput("All user data should now be updated")
 
         # Update all roles for people in guilds
-        for gld in bot.guilds:  # type: Guild
-            for mmbr in gld.members:  # type: Member
+        for guild in bot.guilds:  # type: Guild
+            for mmbr in guild.members:  # type: Member
                 disc = str(mmbr)
                 if disc in db[KEYS.MMBR]:
                     for bnet in db[KEYS.MMBR][disc][KEYS.BNET]:
-                        await obwrole.update(gld, disc, bnet)
+                        await roleupdate(guild, disc, bnet)
 
         database.dump()
 
-        input("All roles should now be updated")
+        loudinput("All roles should now be updated")
 
         # If any accounts are marked for removal, re-run through them and remove them
         for disc in db[KEYS.MMBR]:
@@ -73,23 +97,25 @@ def main():
 
                 # If battlenet is inactive, let user know it's removed
                 if not db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.ACTIVE]:
-                    print(f"Removing {disc}[{bnet}]...")
-                    channel = await getdm(await bot.fetch_user(db[KEYS.MMBR][disc][KEYS.ID]))
+                    loudprint(f"Removing {disc}[{bnet}]...")
+                    user = await getuser(bot, disc)
+                    if user is not None:
+                        channel = await getdm(user)
 
-                    message = f"Stats for {bnet} were unable to be updated and the account was unlinked " \
-                              f"from your discord."
+                        message = f"Stats for {bnet} were unable to be updated and the account was unlinked " \
+                                  f"from your discord."
 
-                    if prim := battlenet.remove(bnet, disc):
-                        message += f"\n\nYour new primary account is {prim}"
-                    await channel.send(message)
+                        if prim := battlenet.remove(bnet, disc):
+                            message += f"\n\nYour new primary account is {prim}"
+                        await channel.send(message)
 
-        print("Update loop complete")
+        loudprint("Update loop complete")
 
     # Events
 
     @bot.event
     async def on_ready():
-        print(f"Logged in as {bot.user}.")
+        loudprint(f"Logged in as {bot.user}.")
         # database.refresh()
         # await database.clean_roles(bot)
 
@@ -123,45 +149,10 @@ def main():
         database.dump()
 
     @bot.event
-    async def on_member_update(before: Member, after: Member):
-        disc = str(after)   # Discord username can't change
-
-        broles, aroles = set(), set()
-        role_map = dict()           # type: Dict[str, Role]
-        for role in before.roles:
-            rname = obwrole.rolename(role)
-            broles.add(rname)
-            role_map[rname] = role
-
-        for role in after.roles:
-            rname = obwrole.rolename(role)
-            aroles.add(rname)
-            role_map[rname] = role
-
-        removed = broles.difference(aroles)
-        added = aroles.difference(broles)
-
-        for role in removed:
-            if role in db[KEYS.ROLE]:
-                db[KEYS.ROLE][role][KEYS.MMBR] -= 1
-                if not db[KEYS.ROLE][role][KEYS.MMBR]:      # If this was the only member with the role
-                    await obwrole.globaldel(role_map[role], role)
-                elif disc in db[KEYS.MMBR]:                 # If not, just remove it from all their bnet profiles
-                    obwrole.remove(disc, role)
-
-        # All Oberwatch roles are Bot managed and users are not allowed to manually add them, only manually remove
-        for role in added:
-            if role in db[KEYS.ROLE]:
-                await after.remove_roles(role_map[role])
-                channel = await getdm(after)
-                await channel.send(f"You tried to add {role} to your {str(after.guild)} profile but "
-                                   f"do not have permission for this, so the role was removed.")
-
-        database.dump()
-
-    @bot.event
     async def on_guild_role_delete(role: Role):
         rname = obwrole.rolename(role)
+
+        # If the bot removed this role, then rname will already be deleted, this is just if another user deletes role
         if rname in db[KEYS.ROLE]:
             obwrole.globalrm(rname)
 
@@ -205,8 +196,9 @@ def main():
             await ctx.channel.send(f"{bnet} is already linked to another user!")
         else:
             battlenet.add(disc, bnet, platform)
-            if ctx.guild is not None:
-                await obwrole.update(ctx.guild, disc, bnet)
+            guild = ctx.guild       # type: Guild
+            if guild is not None:
+                await roleupdate(guild, disc, bnet)
             await ctx.channel.send(f"Successfully linked {bnet} to your discord!")
 
         database.dump()
@@ -233,8 +225,9 @@ def main():
             await ctx.channel.send(f"{bnet} is not linked to your discord!")
         else:
             battlenet.deactivate(disc, bnet)
-            if ctx.guild is not None:
-                await obwrole.update(ctx.guild, disc, bnet)
+            guild = ctx.guild       # type: Guild
+            if guild is not None:
+                await roleupdate(guild, disc, bnet)
             message = f"You have successfully unlinked {bnet} from your discord!"
             if prim := battlenet.remove(bnet, disc):
                 message += f"\n\nYour new primary account is {prim}"

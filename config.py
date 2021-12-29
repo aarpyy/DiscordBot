@@ -18,3 +18,6 @@ class KEYS:
     ROLE = "roles"          # roles associated with battlenet
     PTFM = "platform"       # battlenet platform
     CTG = "categories"      # PlayOverwatch data categories
+
+
+loud = True

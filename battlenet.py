@@ -3,7 +3,7 @@ from replit import db
 import request
 
 from config import KEYS
-from tools import getkey
+from tools import getkey, loudprint
 from obwrole import get_bnet_roles
 
 from typing import Union
@@ -84,10 +84,10 @@ def update(disc: str, bnet: str) -> None:
         ranks, stats = request.main(request.search_url(db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.PTFM])(bnet))
     except AttributeError:
         db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.PRIV] = True
-        print(f"{bnet} marked as private")
+        loudprint(f"{bnet} marked as private")
     except NameError or ValueError:
         db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.ACTIVE] = False
-        print(f"{bnet} marked as inactive")
+        loudprint(f"{bnet} marked as inactive")
     else:
         db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.PRIV] = False
     finally:

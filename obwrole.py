@@ -1,10 +1,10 @@
 from replit import db
 
-from discord import Guild, Member, Role, Forbidden, HTTPException, utils
+from discord import Guild, Member, Role, Forbidden, HTTPException, utils, Colour
 from asyncio import sleep
 
 from config import KEYS
-from tools import getkey
+from tools import getkey, loudprint
 
 from typing import Optional, List, Set
 
@@ -13,6 +13,8 @@ categ_major = ("Win Percentage", "Time Played")
 
 mention_tag = "@m"
 no_tag = "--"
+
+obw_color = Colour.from_rgb(143, 33, 23)
 
 
 # Role methods
@@ -41,8 +43,8 @@ def globalrm(role: str) -> None:
 
 def remove(disc: str, role: str) -> None:
     for bnet in db[KEYS.MMBR][disc][KEYS.BNET]:
-        if role in db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.ROLE]:
-            db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.ROLE].remove(role)
+        db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.ROLE] = list(
+            r for r in db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.ROLE] if r != role)
 
 
 def rename(before: str, after: str) -> None:
@@ -121,7 +123,7 @@ async def update(gld: Guild, disc: str, bnet: str) -> None:
     :raises ValueError: If Discord API unable to fetch Member
     :return: None
     """
-    print(f"Updating roles for {disc}[{bnet}]...")
+    loudprint(f"Updating roles for {disc}[{bnet}]...")
 
     user_id = db[KEYS.MMBR][disc][KEYS.ID]
 
@@ -133,7 +135,7 @@ async def update(gld: Guild, disc: str, bnet: str) -> None:
     except HTTPException as src:
         raise ValueError(f"Fetching user {disc} <id={user_id}> failed") from src
 
-    print(f"Member fetched: {str(member)} ({member.id})")
+    loudprint(f"Member fetched: {str(member)} ({member.id})")
 
     new_roles = get_bnet_roles(disc, bnet)  # Roles battlenet should have
 
@@ -142,8 +144,7 @@ async def update(gld: Guild, disc: str, bnet: str) -> None:
 
     to_add = new_roles.difference(current_roles)  # Roles user should have minus roles discord thinks they have
 
-    print(f"Roles in to_add: {to_add}")
-    # input("ENTER: ")
+    loudprint(f"Roles in to_add: {to_add}")
 
     # To get roles to remove, first we get roles currently associated with battlenet which have no correlation
     # to actual roles held. Taking the union of this with roles the user SHOULD have we get the roles
@@ -157,28 +158,21 @@ async def update(gld: Guild, disc: str, bnet: str) -> None:
     roles_listed = set(db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.ROLE])
     all_roles = roles_listed.union(new_roles)  # All roles the user currently or previously associated with battlenet
 
-    # print(f"Roles in all_roles: {all_roles}")
-    # input("ENTER: ")
-
     # roles_held is all roles that the bot could have given the user that they DO have
     current_bot_roles = all_roles.intersection(current_roles)
-
-    # print(f"Roles in roles_held: {current_bot_roles}")
-    # input("ENTER: ")
 
     # Thus, to_remove is all the roles bot given roles minus the ones that the user SHOULD have
     to_remove = current_bot_roles.difference(new_roles)
 
-    print(f"Roles in to_remove: {to_remove}")
-    # input("ENTER: ")
+    loudprint(f"Roles in to_remove: {to_remove}")
 
     for role in to_add:     # type: str
         role_obj = await get(gld, role)
         if role_obj is None:
             if role.startswith(mention_tag):
-                role_obj = await gld.create_role(name=role[2:], mentionable=True)
+                role_obj = await gld.create_role(name=role[2:], mentionable=True, color=obw_color)
             else:
-                role_obj = await gld.create_role(name=role[2:])
+                role_obj = await gld.create_role(name=role[2:], color=obw_color)
 
             db[KEYS.ROLE][role] = {KEYS.ID: role_obj.id, KEYS.MMBR: 0}
 
@@ -202,7 +196,7 @@ async def update(gld: Guild, disc: str, bnet: str) -> None:
         else:
             db[KEYS.ROLE][role][KEYS.MMBR] -= 1
 
-        print(f"Deleting {str(role_obj)}; Role.members: {[str(m) for m in role_obj.members]}; "
+        loudprint(f"Deleting {str(role_obj)}; Role.members: {[str(m) for m in role_obj.members]}; "
               f"db: {db[KEYS.ROLE][role][KEYS.MMBR]}")
 
         if not db[KEYS.ROLE][role][KEYS.MMBR]:  # If just removed last member, delete the Role

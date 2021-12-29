@@ -5,7 +5,7 @@ from unidecode import unidecode
 from json import load
 from discord.ext.commands import Bot
 from discord import Guild
-from tools import jsondump
+from tools import jsondump, loudprint
 import obwrole
 
 
@@ -44,7 +44,7 @@ async def clean_roles(bot: Bot) -> None:
         for role in await guild.fetch_roles():
             if (rname := obwrole.rolename(role)) in db[KEYS.ROLE]:
                 await obwrole.globaldel(role, rname)
-    print("All roles cleaned")
+    loudprint("All roles cleaned")
     dump()
 
 
