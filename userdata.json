@@ -1,6 +1,5 @@
 {
     "battlenets": [
-        "Aarpyy#1975",
         "Dragongale#1783"
     ],
     "categories": {
@@ -49,22 +48,6 @@
     "members": {
         "aarpyy#3360": {
             "battlenets": {
-                "Aarpyy#1975": {
-                    "primary": false,
-                    "private": false,
-                    "active": false,
-                    "platform": "PC",
-                    "ranks": {},
-                    "stats": {},
-                    "roles": [
-                        "@mPC",
-                        "@mAarpyy#1975",
-                        "--Tank-3813",
-                        "--Support-3161",
-                        "--Genji-36 hrs",
-                        "--Offense-3059"
-                    ]
-                },
                 "Dragongale#1783": {
                     "primary": true,
                     "private": false,
@@ -527,11 +510,11 @@
                         }
                     },
                     "roles": [
-                        "@mPC",
-                        "--Lucio-178 hrs",
-                        "@mDragongale#1783",
+                        "--Offense-2145",
                         "--Tank-2716",
-                        "--Offense-2145"
+                        "@mDragongale#1783",
+                        "--Lucio-178 hrs",
+                        "@mPC"
                     ]
                 }
             },
@@ -541,14 +524,6 @@
     "roles": {
         "--Genji-36 hrs": {
             "id": 925838776952045578,
-            "members": 1
-        },
-        "@mAarpyy#1975": {
-            "id": 925838778264858645,
-            "members": 1
-        },
-        "@mPC": {
-            "id": 925838780022284388,
             "members": 1
         },
         "--Tank-3813": {
@@ -577,6 +552,10 @@
         },
         "--Offense-2145": {
             "id": 925839521893998683,
+            "members": 1
+        },
+        "@mPC": {
+            "id": 925840665420636180,
             "members": 1
         }
     }

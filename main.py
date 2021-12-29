@@ -116,8 +116,8 @@ def main():
     @bot.event
     async def on_ready():
         loudprint(f"Logged in as {bot.user}.")
-        # database.refresh()
-        # await database.clean_roles(bot)
+        database.refresh()
+        await database.clean_roles(bot)
 
         # Start loop for updated all users
         update_loop.start()
@@ -128,7 +128,6 @@ def main():
         print(f"event: {event}", file=stderr)
         print(f"args: {args}", file=stderr)
         print(f"kwargs: {kwargs}", file=stderr)
-        print(exc_info(), file=stderr)
         await bot.close()
 
     @bot.event

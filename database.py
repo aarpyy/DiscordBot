@@ -42,7 +42,7 @@ async def clean_roles(bot: Bot) -> None:
 
     for guild in bot.guilds:            # type: Guild
         for role in await guild.fetch_roles():
-            if (rname := obwrole.rolename(role)) in db[KEYS.ROLE]:
+            if (rname := obwrole.rolename(role)) in db[KEYS.ROLE] or role.color == obwrole.obw_color:
                 await obwrole.globaldel(role, rname)
     loudprint("All roles cleaned")
     dump()
