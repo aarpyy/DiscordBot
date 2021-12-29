@@ -1,10 +1,10 @@
 from replit import db
 from config import KEYS
-from os import system
+from os import system, remove
 from unidecode import unidecode
 from json import load
 from discord.ext.commands import Bot
-from discord import Guild, Role
+from discord import Guild
 from tools import jsondump
 import obwrole
 
@@ -25,7 +25,7 @@ def data_categories():
                 name = unidecode(name)
                 categ_id[_id] = name
 
-        system("rm -f categories")
+        remove("categories")
         return categ_id
     else:
         raise ValueError("UNIX ERROR")
@@ -44,6 +44,8 @@ async def clean_roles(bot: Bot) -> None:
         for role in await guild.fetch_roles():
             if (rname := obwrole.rolename(role)) in db[KEYS.ROLE]:
                 await obwrole.globaldel(role, rname)
+    print("All roles cleaned")
+    dump()
 
 
 def init():

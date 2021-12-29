@@ -41,6 +41,7 @@ def main():
 
         # Print contents of db to userdata.json, only used for testing
         database.dump()
+        print("db dumped")
 
     @tasks.loop(hours=1)
     async def update_loop():
