@@ -64,7 +64,7 @@ def get_bnet_roles(disc: str, bnet: str) -> Set[str]:
     :return: set of roles as strings
     """
 
-    roles = set()   # Empty set for roles
+    roles = set()  # Empty set for roles
 
     # Table of battlenet's statistics; KEYS.STAT will always exist, but could be empty dict
     table = db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.STAT].get("quickplay", {})
@@ -75,7 +75,7 @@ def get_bnet_roles(disc: str, bnet: str) -> Set[str]:
             hero = getkey(table[ctg])
             roles.add(f"{no_tag}{hero}-{table[ctg][hero]}" + categ_short.get(ctg, ""))
 
-    table = db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.RANK]     # Table of battlenet's competitive ranks
+    table = db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.RANK]  # Table of battlenet's competitive ranks
 
     for rnk in table:  # type: str
         roles.add(f"{no_tag}{rnk.capitalize()}-{table[rnk]}")
@@ -141,9 +141,11 @@ async def update(gld: Guild, disc: str, bnet: str) -> None:
     new_roles = get_bnet_roles(disc, bnet)  # Roles battlenet should have
 
     role: Role
-    current_roles = set(rolename(role) for role in member.roles)       # Roles discord user currently has
+    current_roles = set(rolename(role) for role in member.roles)  # Roles discord user currently has
 
     to_add = new_roles.difference(current_roles)  # Roles user should have minus roles discord thinks they have
+
+    to_update = new_roles.difference(to_add)    # Roles that user should have that already exist
 
     loudprint(f"Roles in to_add: {to_add}")
 
@@ -167,7 +169,7 @@ async def update(gld: Guild, disc: str, bnet: str) -> None:
 
     loudprint(f"Roles in to_remove: {to_remove}")
 
-    for role in to_add:     # type: str
+    for role in to_add:  # type: str
         role_obj = await get(gld, role)
         if role_obj is None:
             if role.startswith(mention_tag):
@@ -192,15 +194,18 @@ async def update(gld: Guild, disc: str, bnet: str) -> None:
 
         # This should theoretically never happen, so 5 seconds of sleep isn't super important wait time
         if role not in db[KEYS.ROLE]:
-            await sleep(5)      # Give 5 seconds sleep time to confirm that role_obj was updated with member
+            await sleep(5)  # Give 5 seconds sleep time to confirm that role_obj was updated with member
             db[KEYS.ROLE][role] = {KEYS.ID: role_obj.id, KEYS.MMBR: len(role_obj.members)}
         else:
             db[KEYS.ROLE][role][KEYS.MMBR] -= 1
 
         loudprint(f"Deleting {str(role_obj)}; Role.members: {[str(m) for m in role_obj.members]}; "
-              f"db: {db[KEYS.ROLE][role][KEYS.MMBR]}")
+                  f"db: {db[KEYS.ROLE][role][KEYS.MMBR]}")
 
         if not db[KEYS.ROLE][role][KEYS.MMBR]:  # If just removed last member, delete the Role
             await globaldel(role_obj, role)
+
+    for role in to_update:
+        db[KEYS.ROLE][role][KEYS.MMBR] += 1
 
     db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.ROLE] = list(new_roles)
