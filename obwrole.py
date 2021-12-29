@@ -199,10 +199,9 @@ async def update(gld: Guild, disc: str, bnet: str) -> None:
         else:
             db[KEYS.ROLE][role][KEYS.MMBR] -= 1
 
-        loudprint(f"Deleting {str(role_obj)}; Role.members: {[str(m) for m in role_obj.members]}; "
-                  f"db: {db[KEYS.ROLE][role][KEYS.MMBR]}")
-
         if not db[KEYS.ROLE][role][KEYS.MMBR]:  # If just removed last member, delete the Role
+            loudprint(f"Deleting {str(role_obj)}; Role.members: {[str(m) for m in role_obj.members]}; "
+                  f"db: {db[KEYS.ROLE][role][KEYS.MMBR]}")
             await globaldel(role_obj, role)
 
     for role in new_roles:
