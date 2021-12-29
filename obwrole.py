@@ -66,7 +66,8 @@ def get_bnet_roles(disc: str, bnet: str) -> Set[str]:
 
     roles = set()   # Empty set for roles
 
-    table = db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.STAT]["quickplay"]     # Table of battlenet's statistics
+    # Table of battlenet's statistics; KEYS.STAT will always exist, but could be empty dict
+    table = db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.STAT].get("quickplay", {})
 
     # For each stat associated with battlenet, add that stat if it is an important one
     for ctg in table:
