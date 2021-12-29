@@ -41,7 +41,7 @@ def main():
 
         # Print contents of db to userdata.json, only used for testing
         database.dump()
-        print("db dumped")
+        print("Database dumped")
 
     @tasks.loop(hours=1)
     async def update_loop():
@@ -53,7 +53,7 @@ def main():
 
         database.dump()
 
-        input("All user data should now be updated. Check userdata.json to confirm. ")
+        input("All user data should now be updated")
 
         # Update all roles for people in guilds
         for gld in bot.guilds:  # type: Guild
@@ -65,7 +65,7 @@ def main():
 
         database.dump()
 
-        input("All roles should now be updated. Check userdata.json and user roles to confirm. ")
+        input("All roles should now be updated")
 
         # If any accounts are marked for removal, re-run through them and remove them
         for disc in db[KEYS.MMBR]:
@@ -82,8 +82,6 @@ def main():
                     if prim := battlenet.remove(bnet, disc):
                         message += f"\n\nYour new primary account is {prim}"
                     await channel.send(message)
-
-        database.dump()
 
         print("Update loop complete")
 
