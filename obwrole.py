@@ -162,6 +162,8 @@ async def update(gld: Guild, disc: str, bnet: str) -> None:
         if b != bnet:
             to_remove -= set(db[KEYS.MMBR][disc][KEYS.BNET][b][KEYS.ROLE])
 
+    roles_lost = current_bnet_roles - new_bnet_roles
+
     loudprint(f"Roles in to_remove: {to_remove}")
 
     # Don't increment member count for any roles in to_add, since these are not all the roles that need to be
@@ -182,6 +184,12 @@ async def update(gld: Guild, disc: str, bnet: str) -> None:
 
         await member.add_roles(role_obj)
 
+    for role in new_bnet_roles:
+        db[KEYS.ROLE][role][KEYS.MMBR] += 1
+
+    for role in roles_lost:
+        db[KEYS.ROLE][role][KEYS.MMBR] -= 1
+
     for role in to_remove:  # type: str
         role_obj = await get(gld, role)  # type: Role
         if role_obj is None:
@@ -189,19 +197,9 @@ async def update(gld: Guild, disc: str, bnet: str) -> None:
 
         await member.remove_roles(role_obj)
 
-        # This should theoretically never happen, so 5 seconds of sleep isn't super important wait time
-        if role not in db[KEYS.ROLE]:
-            await sleep(5)  # Give 5 seconds sleep time to confirm that role_obj was updated with member
-            db[KEYS.ROLE][role] = {KEYS.ID: role_obj.id, KEYS.MMBR: len(role_obj.members)}
-        else:
-            db[KEYS.ROLE][role][KEYS.MMBR] -= 1
-
         if not db[KEYS.ROLE][role][KEYS.MMBR]:  # If just removed last member, delete the Role
             loudprint(f"Deleting {str(role_obj)}; Role.members: {[str(m) for m in role_obj.members]}; "
                       f"db: {db[KEYS.ROLE][role][KEYS.MMBR]}")
             await globaldel(role_obj, role)
-
-    for role in new_bnet_roles:
-        db[KEYS.ROLE][role][KEYS.MMBR] += 1
 
     db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.ROLE] = list(new_bnet_roles)
