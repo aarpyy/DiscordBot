@@ -4,7 +4,7 @@ import request
 
 from config import KEYS
 from tools import getkey
-from role import get_bnet_roles
+from obwrole import get_bnet_roles
 
 from typing import Union
 

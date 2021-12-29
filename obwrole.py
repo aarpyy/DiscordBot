@@ -1,6 +1,6 @@
 from replit import db
 
-from discord import Guild, Member, Role, Forbidden, HTTPException
+from discord import Guild, Member, Role, Forbidden, HTTPException, utils
 from asyncio import sleep
 
 from config import KEYS
@@ -16,6 +16,41 @@ no_tag = "--"
 
 
 # Role methods
+
+
+def rolename(role: Role) -> str:
+    if role.mentionable:
+        return mention_tag + str(role)
+    else:
+        return no_tag + str(role)
+
+
+async def globaldel(role: Role, rname: str = None) -> None:
+    if rname is None:
+        rname = rolename(role)
+
+    globalrm(rname)
+    await role.delete()
+
+
+def globalrm(role: str) -> None:
+    for disc in db[KEYS.MMBR]:
+        remove(disc, role)
+    del db[KEYS.ROLE][role]
+
+
+def remove(disc: str, role: str) -> None:
+    for bnet in db[KEYS.MMBR][disc][KEYS.BNET]:
+        if role in db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.ROLE]:
+            db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.ROLE].remove(role)
+
+
+def rename(before: str, after: str) -> None:
+    for disc in db[KEYS.MMBR]:
+        for bnet in db[KEYS.MMBR][disc][KEYS.BNET]:
+            roles = db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.ROLE]
+            updated = list(after if role == before else role for role in roles)
+            db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.ROLE] = updated
 
 
 def get_bnet_roles(disc: str, bnet: str) -> Set[str]:
@@ -48,7 +83,7 @@ def get_bnet_roles(disc: str, bnet: str) -> Set[str]:
     return roles
 
 
-async def get(gld: Guild, rle: str) -> Optional[Role]:
+async def get(gld: Guild, role: str) -> Optional[Role]:
     """
     Helper function that more sufficiently ensures that the Role is returned if it exists. First, it
     checks if the Role is already in the db, getting the Role via Role.id if true. Otherwise,
@@ -56,26 +91,23 @@ async def get(gld: Guild, rle: str) -> Optional[Role]:
     matches were made.
 
     :param gld: Guild
-    :param rle: name of role
+    :param role: name of role
     :return: Optional[Role]
     """
 
-    # Theoretically this will always be true, since the only arguments being passed here are roles
-    # created by Oberwatch bot which are all default stored in the db
-    if rle in db[KEYS.ROLE]:
-        return gld.get_role(db[KEYS.ROLE][rle][KEYS.ID])
+    if role in db[KEYS.ROLE]:
+        return gld.get_role(db[KEYS.ROLE][role][KEYS.ID])
     else:
-        rle = rle[2:]       # If wasn't in db, remove tag to search with actual role name
         try:
-            roles = await gld.fetch_roles()     # type: List[Role]
+            roles = await gld.fetch_roles()
         except HTTPException:
             return None
         else:
-            for r in roles:                     # type: Role
-                if str(r) == rle:
-                    db[KEYS.ROLE][rle] = {KEYS.ID: r.id, KEYS.MMBR: len(r.members)}
-                    return r
-            return None
+            role = role[2:]
+            role_obj = utils.find(lambda rle: rle.name == role, roles)
+            if role_obj is not None:
+                db[KEYS.ROLE][role] = {KEYS.ID: role_obj.id, KEYS.MMBR: len(role_obj.members)}
+            return role_obj
 
 
 async def update(gld: Guild, disc: str, bnet: str) -> None:
@@ -95,21 +127,18 @@ async def update(gld: Guild, disc: str, bnet: str) -> None:
 
     # Use Guild.fetch_member() to ensure that even if member not in cache they are retrieved
     try:
-        mmbr = await gld.fetch_member(user_id)  # type: Member
+        member = await gld.fetch_member(user_id)  # type: Member
     except Forbidden as src:
         raise AttributeError(f"Unable to access Guild {str(gld)}") from src
     except HTTPException as src:
-        raise ValueError(f"Fetching user {disc}({user_id}) failed") from src
+        raise ValueError(f"Fetching user {disc} <id={user_id}> failed") from src
 
-    print(f"Member fetched: {str(mmbr)} ({mmbr.id})")
+    print(f"Member fetched: {str(member)} ({member.id})")
 
     new_roles = get_bnet_roles(disc, bnet)  # Roles battlenet should have
-    current_roles = set()       # Roles discord user currently has
-    for r in mmbr.roles:        # type: Role
-        if r.mentionable:
-            current_roles.add(mention_tag + str(r))
-        else:
-            current_roles.add(no_tag + str(r))
+
+    role: Role
+    current_roles = set(rolename(role) for role in member.roles)       # Roles discord user currently has
 
     to_add = new_roles.difference(current_roles)  # Roles user should have minus roles discord thinks they have
 
@@ -143,10 +172,9 @@ async def update(gld: Guild, disc: str, bnet: str) -> None:
     print(f"Roles in to_remove: {to_remove}")
     # input("ENTER: ")
 
-    for role in to_add:
+    for role in to_add:     # type: str
         role_obj = await get(gld, role)
         if role_obj is None:
-
             if role.startswith(mention_tag):
                 role_obj = await gld.create_role(name=role[2:], mentionable=True)
             else:
@@ -158,18 +186,18 @@ async def update(gld: Guild, disc: str, bnet: str) -> None:
             db[KEYS.ROLE][role] = {KEYS.ID: role_obj.id, KEYS.MMBR: len(role_obj.members)}
 
         db[KEYS.ROLE][role][KEYS.MMBR] += 1
-        await mmbr.add_roles(role_obj)
+        await member.add_roles(role_obj)
 
-    for role in to_remove:
+    for role in to_remove:  # type: str
         role_obj = await get(gld, role)  # type: Role
         if role_obj is None:
             continue
 
-        await mmbr.remove_roles(role_obj)
+        await member.remove_roles(role_obj)
 
         # This should theoretically never happen, so 5 seconds of sleep isn't super important wait time
         if role not in db[KEYS.ROLE]:
-            await sleep(5)      # Give 5 seconds sleep time to confirm that role_obj was updated with mmbr as a member
+            await sleep(5)      # Give 5 seconds sleep time to confirm that role_obj was updated with member
             db[KEYS.ROLE][role] = {KEYS.ID: role_obj.id, KEYS.MMBR: len(role_obj.members)}
         else:
             db[KEYS.ROLE][role][KEYS.MMBR] -= 1
@@ -178,7 +206,6 @@ async def update(gld: Guild, disc: str, bnet: str) -> None:
               f"db: {db[KEYS.ROLE][role][KEYS.MMBR]}")
 
         if not db[KEYS.ROLE][role][KEYS.MMBR]:  # If just removed last member, delete the Role
-            await role_obj.delete()
-            del db[KEYS.ROLE][role]
+            await globaldel(role_obj, role)
 
     db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.ROLE] = list(new_roles)

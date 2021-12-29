@@ -1,10 +1,12 @@
 from replit import db
-from config import KEYS, bot_role_prefix
+from config import KEYS
 from os import system
 from unidecode import unidecode
 from json import load
 from discord.ext.commands import Bot
 from discord import Guild, Role
+from tools import jsondump
+import obwrole
 
 
 def data_categories():
@@ -37,10 +39,11 @@ async def clean_roles(bot: Bot) -> None:
     :param bot: discord bot
     :return: None
     """
-    for gld in bot.guilds:                  # type: Guild
-        for rle in gld.roles:               # type: Role
-            if str(rle).startswith(bot_role_prefix):
-                await rle.delete()
+
+    for guild in bot.guilds:            # type: Guild
+        for role in await guild.fetch_roles():
+            if (rname := obwrole.rolename(role)) in db[KEYS.ROLE]:
+                await obwrole.globaldel(role, rname)
 
 
 def init():
@@ -60,3 +63,8 @@ def refresh():
     db[KEYS.MMBR] = {}
     db[KEYS.ROLE] = {}
     db[KEYS.BNET] = []
+
+
+def dump():
+    with open("userdata.json", "w") as outfile:
+        outfile.write(jsondump(db))
