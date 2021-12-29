@@ -117,8 +117,8 @@ def main():
     @bot.event
     async def on_ready():
         loudprint(f"Logged in as {bot.user}.")
-        database.refresh()
-        await database.clean_roles(bot)
+        # database.refresh()
+        # await database.clean_roles(bot)
 
         # Start loop for updated all users
         update_loop.start()
