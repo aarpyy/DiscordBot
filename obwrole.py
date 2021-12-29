@@ -2,6 +2,7 @@ from replit import db
 
 from discord import Guild, Member, Role, Forbidden, HTTPException, utils, Colour
 from asyncio import sleep
+from functools import reduce
 
 from config import KEYS
 from tools import getkey, loudprint
@@ -138,32 +139,28 @@ async def update(gld: Guild, disc: str, bnet: str) -> None:
 
     loudprint(f"Member fetched: {str(member)} ({member.id})")
 
-    new_roles = get_bnet_roles(disc, bnet)  # Roles battlenet should have
+    # To calculate roles to add, first get all roles that this battlenet should have, then subtract the roles
+    # from that set that the user already has
 
     role: Role
-    current_roles = set(rolename(role) for role in member.roles)  # Roles discord user currently has
-
-    to_add = new_roles.difference(current_roles)  # Roles user should have minus roles discord thinks they have
+    current_discord_roles = set(rolename(role) for role in member.roles)
+    new_bnet_roles = get_bnet_roles(disc, bnet)
+    current_bnet_roles = set(db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.ROLE])
+    to_add = new_bnet_roles.difference(current_discord_roles)
 
     loudprint(f"Roles in to_add: {to_add}")
 
-    # To get roles to remove, first we get roles currently associated with battlenet which have no correlation
-    # to actual roles held. Taking the union of this with roles the user SHOULD have we get the roles
-    # that the user SHOULD have plus the roles that they already have. Taking the intersection of this with
-    # roles that specifically Discord knows they have gives us the roles that the user definitely has in Discord
-    # that are also controlled by the bot (ignoring roles they have that aren't this bot's). Then, taking
-    # the difference of this set with roles they SHOULD have, gives us the roles that they have, that are
-    # controlled by the bot, that they now should NOT have, thus giving us to_remove
+    # To calculate roles to remove, get all roles that the user currently has minus the roles that they are
+    # going to have after the update. The intersection of this set with all roles that the discord user
+    # actually has returns the roles that the user has in discord that should be removed. This set
+    # now needs to be cross referenced with all the other linked battlenets for this discord user, since
+    # if two battlenets give the user the same role, if one battlenet removes the role the user should
+    # still keep the role.
 
-    # All roles associated with battlenet, no correlation to roles held
-    roles_listed = set(db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.ROLE])
-    all_roles = roles_listed.union(new_roles)  # All roles the user currently or previously associated with battlenet
-
-    # roles_held is all roles that the bot could have given the user that they DO have
-    current_bot_roles = all_roles.intersection(current_roles)
-
-    # Thus, to_remove is all the roles bot given roles minus the ones that the user SHOULD have
-    to_remove = current_bot_roles.difference(new_roles)
+    to_remove = (current_bnet_roles - new_bnet_roles) & current_discord_roles
+    for b in db[KEYS.MMBR][disc][KEYS.BNET]:
+        if b != bnet:
+            to_remove -= set(db[KEYS.MMBR][disc][KEYS.BNET][b][KEYS.ROLE])
 
     loudprint(f"Roles in to_remove: {to_remove}")
 
@@ -201,10 +198,10 @@ async def update(gld: Guild, disc: str, bnet: str) -> None:
 
         if not db[KEYS.ROLE][role][KEYS.MMBR]:  # If just removed last member, delete the Role
             loudprint(f"Deleting {str(role_obj)}; Role.members: {[str(m) for m in role_obj.members]}; "
-                  f"db: {db[KEYS.ROLE][role][KEYS.MMBR]}")
+                      f"db: {db[KEYS.ROLE][role][KEYS.MMBR]}")
             await globaldel(role_obj, role)
 
-    for role in new_roles:
+    for role in new_bnet_roles:
         db[KEYS.ROLE][role][KEYS.MMBR] += 1
 
-    db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.ROLE] = list(new_roles)
+    db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.ROLE] = list(new_bnet_roles)
