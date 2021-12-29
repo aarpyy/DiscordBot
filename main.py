@@ -9,6 +9,7 @@ from os import getenv, system
 from os.path import join, exists
 from sys import exit, exc_info, stderr
 from asyncio import sleep
+from traceback import print_exc
 
 import obwrole
 import database
@@ -128,6 +129,7 @@ def main():
         print(f"event: {event}", file=stderr)
         print(f"args: {args}", file=stderr)
         print(f"kwargs: {kwargs}", file=stderr)
+        print_exc(file=stderr)
         await bot.close()
 
     @bot.event
