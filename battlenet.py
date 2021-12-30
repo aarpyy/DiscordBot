@@ -4,9 +4,26 @@ import request
 
 from config import KEYS
 from tools import getkey, loudprint
-from obwrole import get_bnet_roles
 
 from typing import Union
+
+
+# Accessors
+
+def is_active(disc: str, bnet: str):
+    return db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.ACTIVE]
+
+
+def is_hidden(disc: str, bnet: str):
+    return db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.HID]
+
+
+def is_primary(disc: str, bnet: str):
+    return db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.PRIM]
+
+
+def is_private(disc: str, bnet: str):
+    return db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.PRIV]
 
 
 def clear_index(disc: str, bnet: str):
@@ -17,6 +34,17 @@ def clear_index(disc: str, bnet: str):
 def deactivate(disc: str, bnet: str):
     clear_index(disc, bnet)
     db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.ACTIVE] = False
+
+
+def hide(disc: str, bnet: str):
+    db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.HID] = True
+
+
+def show(disc: str, bnet: str):
+    db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.HID] = False
+
+
+# Battlenet methods
 
 
 def create_index(prim: bool, priv: bool, platform: str, rank: dict, stats: dict) -> dict:
@@ -33,6 +61,7 @@ def create_index(prim: bool, priv: bool, platform: str, rank: dict, stats: dict)
     return {KEYS.PRIM: prim,
             KEYS.PRIV: priv,
             KEYS.ACTIVE: True,
+            KEYS.HID: False,
             KEYS.PTFM: platform,
             KEYS.RANK: rank,
             KEYS.STAT: stats,
@@ -66,7 +95,6 @@ def add(disc: str, bnet: str, pf: str) -> None:
         db[KEYS.BNET].append(bnet)
         db[KEYS.MMBR][disc][KEYS.BNET][bnet] = create_index(
             not bool(db[KEYS.MMBR][disc][KEYS.BNET]), False, pf, rank, stats)
-        db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.ROLE] = list(get_bnet_roles(disc, bnet))
 
 
 def update(disc: str, bnet: str) -> None:
@@ -95,7 +123,7 @@ def update(disc: str, bnet: str) -> None:
         db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.RANK] = ranks
 
 
-def remove(bnet: str, disc: str) -> Union[str, int]:
+def remove(bnet: str, disc: str) -> str:
     """
     Removes battlenet from replit database, returning flag of if the user's primary
     account was removed.
@@ -106,12 +134,12 @@ def remove(bnet: str, disc: str) -> Union[str, int]:
     """
 
     db[KEYS.BNET].remove(bnet)                      # Remove from list of all battlenets
-    is_primary = db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.PRIM]
+    primary = db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.PRIM]
     del db[KEYS.MMBR][disc][KEYS.BNET][bnet]
 
-    if is_primary and db[KEYS.MMBR][disc][KEYS.BNET]:       # If it was this user's primary account and they have
+    if primary and db[KEYS.MMBR][disc][KEYS.BNET]:       # If it was this user's primary account and they have
         new_prim = getkey(db[KEYS.MMBR][disc][KEYS.BNET])   # another, make it primary
         db[KEYS.MMBR][disc][KEYS.BNET][new_prim][KEYS.PRIM] = True
         return new_prim
     else:
-        return 0
+        return ""

@@ -1,13 +1,13 @@
 from replit import db
 
 from discord import Guild, Member, Role, Forbidden, HTTPException, utils, Colour
-from asyncio import sleep
-from functools import reduce
+from collections import deque
 
 from config import KEYS
 from tools import getkey, loudprint
+from battlenet import is_active, is_hidden
 
-from typing import Optional, List, Set
+from typing import Optional, Set, Union
 
 categ_short = {"Win Percentage": "W"}
 categ_major = ("Win Percentage", "Time Played")
@@ -18,7 +18,29 @@ no_tag = "--"
 obw_color = Colour.from_rgb(143, 33, 23)
 
 
-# Role methods
+def gettime(stat: int) -> str:
+    hms = deque()
+    for _ in range(3):
+        stat, value = divmod(stat, 60)
+        hms.appendleft(value)
+
+    for v, u in zip(hms, ("h", "m", "s")):
+        if v:
+            return str(v) + u
+    return "0s"
+
+
+def getstat(ctg: str, stat: Union[int, float, str]) -> str:
+    if isinstance(stat, float):
+        return str(stat)
+    elif isinstance(stat, str):
+        return stat
+    elif ctg == "Time Played":
+        return gettime(stat)
+    elif "Accuracy" in ctg or "Percentage" in ctg:
+        return str(stat) + '%'
+    else:
+        return str(stat)
 
 
 def rolename(role: Role) -> str:
@@ -73,15 +95,15 @@ def get_bnet_roles(disc: str, bnet: str) -> Set[str]:
     # For each stat associated with battlenet, add that stat if it is an important one
     for ctg in table:
         if ctg in categ_major:
-            hero = getkey(table[ctg])
-            roles.add(f"{no_tag}{hero}-{table[ctg][hero]}" + categ_short.get(ctg, ""))
+            hero = max(table[ctg], key=lambda x: table[ctg][x])
+            roles.add(f"{no_tag}{hero}-{getstat(ctg, table[ctg][hero])}" + categ_short.get(ctg, ""))
 
     table = db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.RANK]  # Table of battlenet's competitive ranks
 
     for rnk in table:  # type: str
         roles.add(f"{no_tag}{rnk.capitalize()}-{table[rnk]}")
 
-    if db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.ACTIVE]:
+    if is_active(disc, bnet):
         roles.add(mention_tag + bnet)
         roles.add(mention_tag + db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.PTFM])
     return roles
@@ -125,7 +147,12 @@ async def update(gld: Guild, disc: str, bnet: str) -> None:
     :raises ValueError: If Discord API unable to fetch Member
     :return: None
     """
+
     loudprint(f"Updating roles for {disc}[{bnet}]...")
+
+    if is_hidden(disc, bnet):
+        loudprint(f"{disc}[{bnet}] is hidden. No roles given")
+        return
 
     user_id = db[KEYS.MMBR][disc][KEYS.ID]
 

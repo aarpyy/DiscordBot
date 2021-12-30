@@ -92,12 +92,12 @@ def main():
 
         loudinput("All roles should now be updated")
 
-        # If any accounts are marked for removal, re-run through them and remove them
+        # If any accounts were marked for removal, re-run through them and remove them
         for disc in db[KEYS.MMBR]:
             for bnet in db[KEYS.MMBR][disc][KEYS.BNET]:
 
                 # If battlenet is inactive, let user know it's removed
-                if not db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.ACTIVE]:
+                if not battlenet.is_active(disc, bnet):
                     loudprint(f"Removing {disc}[{bnet}]...")
                     user = await getuser(bot, disc)
                     if user is not None:
@@ -197,6 +197,7 @@ def main():
             await ctx.channel.send(f"{bnet} is already linked to another user!")
         else:
             battlenet.add(disc, bnet, platform)
+            db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.ROLE] = list(obwrole.get_bnet_roles(disc, bnet))
             guild = ctx.guild       # type: Guild
             if guild is not None:
                 await roleupdate(guild, disc, bnet)

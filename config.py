@@ -18,6 +18,7 @@ class KEYS:
     ROLE = "roles"          # roles associated with battlenet
     PTFM = "platform"       # battlenet platform
     CTG = "categories"      # PlayOverwatch data categories
+    HID = "hidden"          # if battlenet stats are hidden
 
 
 loud = True

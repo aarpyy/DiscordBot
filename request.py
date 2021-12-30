@@ -3,6 +3,8 @@ from replit import db
 from os import system, remove
 from unidecode import unidecode
 from collections import deque
+
+import database
 from config import KEYS
 
 from typing import Dict, Tuple, Callable
@@ -95,11 +97,11 @@ def main(url: str) -> Tuple[Dict, Dict]:
             lines.append(line)
     remove(stat_file)
 
-    categories = db[KEYS.CTG]
+    # categories = db[KEYS.CTG]
+    categories = database.data_categories()
 
     bnet_stats = {}
     mode, categ = "", ""
-    short = {0: 'hrs', 1: 'mins', 2: 'secs'}
 
     # If first two lines are not a gamemode and a data category then this data can't be used since its in an
     # unexpected format
@@ -130,13 +132,16 @@ def main(url: str) -> Tuple[Dict, Dict]:
             # All time stats are given hrs:mins:secs even if most significant value is days so we can
             # convert time to integer using integer conversion
             if ':' in stat:
-                time_split = stat.split(':')
-                for i in range(len(time_split)):
-                    j = int(time_split[i])
-                    if j:
-                        if i in short:
-                            stat = f"{j} {short[i]}"
-                        break
+                total = 0
+                for unit in stat.split(':'):
+                    total = (total * 60) + int(unit)
+                stat = total
+            elif '.' in stat:
+                stat = float(stat)
+            elif '%' in stat:
+                stat = int(stat.strip('%'))
+            elif stat.isnumeric():
+                stat = int(stat)
 
             bnet_stats[mode][categ][unidecode(line)] = stat
 
