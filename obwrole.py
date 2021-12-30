@@ -99,9 +99,8 @@ def get_bnet_roles(disc: str, bnet: str) -> Set[str]:
             roles.add(f"{no_tag}{hero}-{getstat(ctg, table[ctg][hero])}" + categ_short.get(ctg, ""))
 
     table = db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.RANK]  # Table of battlenet's competitive ranks
-
-    for rnk in table:  # type: str
-        roles.add(f"{no_tag}{rnk.capitalize()}-{table[rnk]}")
+    rank = max(table, key=lambda x: table[x])
+    roles.add(f"{no_tag}{rank.capitalize()}-{table[rank]}")
 
     if is_active(disc, bnet):
         roles.add(mention_tag + bnet)
