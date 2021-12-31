@@ -22,7 +22,6 @@ from tools import loudprint, loudinput
 
 from typing import Dict, Union, List
 
-
 su = "aarpyy#3360"  # Creator of bot
 
 
@@ -41,7 +40,7 @@ async def getuser(bot: Bot, disc: str):
                   f" and has been removed from db", file=stderr)
         user_bnet = set(db[KEYS.MMBR][disc][KEYS.BNET])
         db[KEYS.BNET] = list(set(db[KEYS.BNET]).difference(user_bnet))
-        del db[KEYS.MMBR][disc]     # If not real user no roles to remove anyway so just delete
+        del db[KEYS.MMBR][disc]  # If not real user no roles to remove anyway so just delete
     except HTTPException as src:
         loudprint(f"Failed {getuser.__name__}(): {str(src)}", file=stderr)
 
@@ -119,8 +118,8 @@ def main():
     @bot.event
     async def on_ready():
         loudprint(f"Logged in as {bot.user}.")
-        database.refresh()
-        await database.clean_roles(bot)
+        # database.refresh()
+        # await database.clean_roles(bot)
 
         # Start loop for updated all users
         update_loop.start()
@@ -136,7 +135,7 @@ def main():
 
     @bot.event
     async def on_reaction_add(reaction: Reaction, user: Union[User, Member]):
-        message = reaction.message      # type: Message
+        message = reaction.message  # type: Message
         channel = message.channel
         guild = message.guild
         author = message.author
@@ -145,8 +144,8 @@ def main():
 
         # Check to confirm that reaction was in channel of guild we are interested in
         if isinstance(author, Member) and isinstance(channel, TextChannel) and channel.name in reaction_channels and \
-            isinstance(guild, Guild) and str(reaction) in reaction_scores:
-
+                isinstance(guild, Guild) and str(reaction) in reaction_scores:
+            print("Valid reaction")
 
     @bot.event
     async def on_member_join(member: Member):
@@ -173,7 +172,7 @@ def main():
         # If the role wasn't in db before, not a role we care about
         if bname in db[KEYS.ROLE]:
             del db[KEYS.ROLE][bname]
-            await sleep(5)      # Give some sleep time for after.members to be updated
+            await sleep(5)  # Give some sleep time for after.members to be updated
             db[KEYS.ROLE][aname] = {KEYS.ID: after.id, KEYS.MMBR: len(after.members)}
             obwrole.rename(bname, aname)
 
@@ -207,7 +206,7 @@ def main():
         else:
             battlenet.add(disc, bnet, platform)
             db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.ROLE] = list(obwrole.get_bnet_roles(disc, bnet))
-            guild = ctx.guild       # type: Guild
+            guild = ctx.guild  # type: Guild
             if guild is not None:
                 await roleupdate(guild, disc, bnet)
             await ctx.channel.send(f"Successfully linked {bnet} to your discord!")
@@ -236,7 +235,7 @@ def main():
             await ctx.channel.send(f"{bnet} is not linked to your discord!")
         else:
             battlenet.deactivate(disc, bnet)
-            guild = ctx.guild       # type: Guild
+            guild = ctx.guild  # type: Guild
             if guild is not None:
                 await roleupdate(guild, disc, bnet)
             message = f"You have successfully unlinked {bnet} from your discord!"
