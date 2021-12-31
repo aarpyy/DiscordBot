@@ -2,7 +2,7 @@ from replit import db
 
 from discord import Reaction, Emoji, Message, Member, Guild
 
-from config import KEYS, rank_emojis, nmessages
+from config import KEYS, reaction_scores, nmessages
 from battlenet import get_top
 from obwrole import make_top, change_top
 
@@ -22,8 +22,8 @@ def get_score(message: Message):
     for rxn in reactions:
         if rxn.custom_emoji:
             emoji = rxn.emoji
-            if isinstance(emoji, Emoji) and emoji.name in rank_emojis:
-                score += rank_emojis[emoji.name] * rxn.count
+            if isinstance(emoji, Emoji) and emoji.name in reaction_scores:
+                score += reaction_scores[emoji.name] * rxn.count
                 score_given = True
 
     return score_given, score

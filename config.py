@@ -24,7 +24,7 @@ class KEYS:
     SCORE = "score"         # score of reactions to message
 
 
-rank_emojis = {"Bronze": -2, "Silver": -1, "Gold": 0, "Platinum": 1, "Diamond": 2, "Master": 3, "Grandmaster": 4}
+reaction_scores = {"Bronze": -2, "Silver": -1, "Gold": 0, "Platinum": 1, "Diamond": 2, "Master": 3, "Grandmaster": 4}
 reaction_channels = frozenset(("shitpost", "test"))
 nmessages = 50
 

@@ -17,7 +17,7 @@ import database
 import battlenet
 import reactions
 
-from config import KEYS, rank_emojis, reaction_channels
+from config import KEYS, reaction_scores, reaction_channels
 from tools import loudprint, loudinput
 
 from typing import Dict, Union, List
@@ -135,30 +135,18 @@ def main():
         await bot.close()
 
     @bot.event
-    async def on_message(message: Message):
-        author = message.author
+    async def on_reaction_add(reaction: Reaction, user: Union[User, Member]):
+        message = reaction.message      # type: Message
         channel = message.channel
         guild = message.guild
-        if author == bot.user:
-            return
-        elif isinstance(channel, TextChannel) and channel.name in reaction_channels and isinstance(guild, Guild):
-            await reactions.add_message(guild, author, message)
+        author = message.author
 
-        await bot.process_commands(message)
+        print(f"Reaction added: {repr(reaction)}")
 
-    @bot.event
-    async def on_message_edit(before: Message, after: Message):
-        author = before.author
-        channel = before.channel
-        guild = before.guild
-        if author == bot.user:
-            return
-        elif isinstance(channel, TextChannel) and channel.name in reaction_channels and isinstance(guild, Guild):
-            b_rxn, a_rxn = set(before.reactions), set(after.reactions)
-            for r in (b_rxn ^ a_rxn):       # type: Reaction
-                if r.custom_emoji and isinstance(r.emoji, Emoji) and r.emoji.name in rank_emojis:
-                    await reactions.update_message(guild, author, before, after)
-                    break
+        # Check to confirm that reaction was in channel of guild we are interested in
+        if isinstance(author, Member) and isinstance(channel, TextChannel) and channel.name in reaction_channels and \
+            isinstance(guild, Guild) and str(reaction) in reaction_scores:
+
 
     @bot.event
     async def on_member_join(member: Member):
