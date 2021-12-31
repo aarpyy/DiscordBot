@@ -2,7 +2,8 @@ from replit import db
 
 from discord.ext import tasks
 from discord.ext.commands import Bot, Context
-from discord import Intents, Member, DMChannel, Guild, Role, User, Forbidden, HTTPException, NotFound
+from discord import (Intents, Member, DMChannel, Guild, Role, User, Forbidden, HTTPException,
+                     NotFound, Reaction, Emoji, TextChannel)
 from discord.message import Message
 
 from os import getenv, system
@@ -14,11 +15,12 @@ from traceback import print_exc
 import obwrole
 import database
 import battlenet
+import reactions
 
-from config import KEYS
+from config import KEYS, rank_emojis, reaction_channels
 from tools import loudprint, loudinput
 
-from typing import Dict, Union
+from typing import Dict, Union, List
 
 
 su = "aarpyy#3360"  # Creator of bot
@@ -134,10 +136,29 @@ def main():
 
     @bot.event
     async def on_message(message: Message):
-        if message.author == bot.user:
+        author = message.author
+        channel = message.channel
+        guild = message.guild
+        if author == bot.user:
             return
-        elif str(message.author) == su:
-            await bot.process_commands(message)
+        elif isinstance(channel, TextChannel) and channel.name in reaction_channels and isinstance(guild, Guild):
+            await reactions.add_message(guild, author, message)
+
+        await bot.process_commands(message)
+
+    @bot.event
+    async def on_message_edit(before: Message, after: Message):
+        author = before.author
+        channel = before.channel
+        guild = before.guild
+        if author == bot.user:
+            return
+        elif isinstance(channel, TextChannel) and channel.name in reaction_channels and isinstance(guild, Guild):
+            b_rxn, a_rxn = set(before.reactions), set(after.reactions)
+            for r in (b_rxn ^ a_rxn):       # type: Reaction
+                if r.custom_emoji and isinstance(r.emoji, Emoji) and r.emoji.name in rank_emojis:
+                    await reactions.update_message(guild, author, before, after)
+                    break
 
     @bot.event
     async def on_member_join(member: Member):
@@ -145,7 +166,7 @@ def main():
         if not member.bot:
             disc = str(member)
             if disc not in db[KEYS.MMBR]:
-                db[KEYS.MMBR][disc] = {KEYS.BNET: {}, KEYS.ID: member.id}
+                db[KEYS.MMBR][disc] = {KEYS.BNET: {}, KEYS.ID: member.id, KEYS.RXN: {}, KEYS.SCORE: 0}
 
         database.dump()
 
@@ -189,7 +210,7 @@ def main():
         disc = str(ctx.author)
 
         if disc not in db[KEYS.MMBR]:
-            db[KEYS.MMBR][disc] = {KEYS.BNET: {}, KEYS.ID: ctx.author.id}
+            db[KEYS.MMBR][disc] = {KEYS.BNET: {}, KEYS.ID: ctx.author.id, KEYS.RXN: {}, KEYS.SCORE: 0}
 
         if bnet in db[KEYS.MMBR][disc][KEYS.BNET]:
             await ctx.channel.send(f"{bnet} is already linked to your account!")

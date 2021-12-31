@@ -15,6 +15,8 @@ categ_major = ("Win Percentage", "Time Played")
 mention_tag = "@m"
 no_tag = "--"
 
+shitpost_rname = "Top Shitposter"
+
 obw_color = Colour.from_rgb(143, 33, 23)
 
 
@@ -76,6 +78,22 @@ def rename(before: str, after: str) -> None:
             roles = db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.ROLE]
             updated = list(after if role == before else role for role in roles)
             db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.ROLE] = updated
+
+
+async def make_top(gld: Guild, member: Member) -> None:
+    shitpost_role = await get(gld, shitpost_rname)
+    if shitpost_role is None:
+        shitpost_role = await gld.create_role(name=shitpost_rname, mentionable=True, color=obw_color)
+    await member.add_roles(shitpost_role)
+
+
+async def change_top(gld: Guild, former: Member, new: Member) -> None:
+    shitpost_role = await get(gld, shitpost_rname)
+    if shitpost_role is not None:
+        await former.remove_roles(shitpost_role)
+    else:
+        shitpost_role = await gld.create_role(name=shitpost_rname, mentionable=True, color=obw_color)
+    await new.add_roles(shitpost_role)
 
 
 def get_bnet_roles(disc: str, bnet: str) -> Set[str]:

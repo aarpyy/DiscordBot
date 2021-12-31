@@ -19,6 +19,13 @@ class KEYS:
     PTFM = "platform"       # battlenet platform
     CTG = "categories"      # PlayOverwatch data categories
     HID = "hidden"          # if battlenet stats are hidden
+    RXN = "reactions"       # list of custom emoji reactions
+    TIME = "timestamp"      # timestamp of object
+    SCORE = "score"         # score of reactions to message
 
+
+rank_emojis = {"Bronze": -2, "Silver": -1, "Gold": 0, "Platinum": 1, "Diamond": 2, "Master": 3, "Grandmaster": 4}
+reaction_channels = frozenset(("shitpost", "test"))
+nmessages = 50
 
 loud = True

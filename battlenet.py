@@ -44,6 +44,10 @@ def show(disc: str, bnet: str):
     db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.HID] = False
 
 
+def get_top():
+    return max(db[KEYS.MMBR], key=lambda x: db[KEYS.MMBR][x][KEYS.SCORE])
+
+
 # Battlenet methods
 
 
