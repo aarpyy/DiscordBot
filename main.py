@@ -141,6 +141,13 @@ def main():
         author = message.author
 
         print(f"Reaction added: {repr(reaction)}")
+        print(f"author is Member: {isinstance(author, Member)}")
+        print(f"channel is TextChannel: {isinstance(channel, TextChannel)}")
+        print(f"channel.name in reaction_channels: {channel.name in reaction_channels}")
+        print(f"reaction in reaction_scores: {str(reaction) in reaction_scores}")
+        print(str(reaction))
+        print(reaction_scores)
+        print(f"guild ({type(guild)}): {str(guild)}")
 
         # Check to confirm that reaction was in channel of guild we are interested in
         if isinstance(author, Member) and isinstance(channel, TextChannel) and channel.name in reaction_channels and \
