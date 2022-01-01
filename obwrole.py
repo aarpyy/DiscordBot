@@ -96,20 +96,26 @@ def global_rename(before: str, after: str) -> None:
             db[Key.MMBR][disc][Key.BNET][bnet][Key.ROLE] = updated
 
 
-async def make_leader(guild: Guild, member: Member, role: str) -> None:
-    role_obj = await get_role_obj(guild, role)
-    if role_obj is None:
-        role_obj = await guild.create_role(name=role, mentionable=True, color=obw_color)
-        db[Key.ROLE][role] = {Key.ID: role_obj.id, Key.MMBR: 1}
+async def give_role(guild: Guild, member: Member, role: Union[str, Role]) -> None:
+    if isinstance(role, Role):
+        role_obj = role
+    else:
+        role_obj = await get_role_obj(guild, role)
+        if role_obj is None:
+            role_obj = await guild.create_role(name=role, mentionable=True, color=obw_color)
+            db[Key.ROLE][role] = {Key.ID: role_obj.id, Key.MMBR: 1}
     await member.add_roles(role_obj)
 
 
-async def change_leader(guild: Guild, former: Member, new: Member, role: str) -> None:
-    role_obj = await get_role_obj(guild, role)
-    if role_obj is None:
-        role_obj = await guild.create_role(name=role, mentionable=True, color=obw_color)
-        db[Key.ROLE][role] = {Key.ID: role_obj.id, Key.MMBR: 1}
-    elif role_obj in former.roles:
+async def donate_role(guild: Guild, former: Member, new: Member, role: Union[str, Role]) -> None:
+    if isinstance(role, Role):
+        role_obj = role
+    else:
+        role_obj = await get_role_obj(guild, role)
+        if role_obj is None:
+            role_obj = await guild.create_role(name=role, mentionable=True, color=obw_color)
+            db[Key.ROLE][role] = {Key.ID: role_obj.id, Key.MMBR: 1}
+    if role_obj in former.roles:
         await former.remove_roles(role_obj)
     await new.add_roles(role_obj)
 
@@ -126,7 +132,7 @@ def find_battlenet_roles(disc: str, bnet: str) -> Set[str]:
     roles = set()  # Empty set for roles
 
     # Table of battlenet's statistics; Key.STAT will always exist, but could be empty dict
-    table = db[Key.MMBR][disc][Key.BNET][bnet][Key.STAT].get_role_obj("quickplay", {})
+    table = db[Key.MMBR][disc][Key.BNET][bnet][Key.STAT].get("quickplay", {})
 
     # For each stat associated with battlenet, add that stat if it is an important one
     for ctg in table:

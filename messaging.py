@@ -6,6 +6,7 @@ from discord.ext.commands import Bot
 from config import Key
 from battlenet import get_top
 from request import getuser
+from obwrole import give_role, donate_role
 
 from typing import Union, List, Dict
 
@@ -79,7 +80,8 @@ def pop_reaction(disc: str) -> Dict[str, int]:
     return index
 
 
-def add_reaction(bot: Bot, guild: Guild, author: Member, message: Message, reaction: Reaction):
+async def add_reaction(bot: Bot, guild: Guild, author: Member, reaction: Reaction, message: Message,
+                       channel: TextChannel):
     disc = str(author)
     score = reaction_scores[reaction.emoji.name] * reaction.count
     if message.id in db[Key.MMBR][disc][Key.RXN]:
@@ -93,5 +95,9 @@ def add_reaction(bot: Bot, guild: Guild, author: Member, message: Message, react
     top_user = get_top()
     if db[Key.MMBR][top_user][Key.SCORE] < db[Key.MMBR][disc][Key.SCORE]:
         former = await getuser(bot, disc)
+        if former is None:
+            await give_role(guild, author, superlatives[channel.name])
+        else:
+            await donate_role(guild, former, author, superlatives[channel.name])
 
 

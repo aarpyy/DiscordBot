@@ -34,7 +34,7 @@ def main():
 
     # Loops
 
-    @tasks.loop(seconds=30)
+    @tasks.loop(minutes=1)
     async def dump_loop():
 
         # Print contents of db to userdata.json, only used for testing
@@ -110,6 +110,11 @@ def main():
         channel = message.channel
         guild = message.guild
         author = message.author
+
+        loudprint(f"author is Member {isinstance(author, Member)}")
+        loudprint(f"guild is Guild {isinstance(guild, Guild)}")
+        loudprint(f"reaction is valid {messaging.valid_reaction(reaction)}")
+        loudprint(f"channel is valid {messaging.valid_channel(channel)}")
 
         # Check to confirm that reaction was in channel of guild we are interested in
         if isinstance(author, Member) and isinstance(guild, Guild) and messaging.valid_reaction(reaction) and \

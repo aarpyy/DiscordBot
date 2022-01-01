@@ -4,7 +4,7 @@ from discord import Reaction, Emoji, Message, Member, Guild
 
 from config import Key
 from battlenet import get_top
-from obwrole import make_leader, change_leader
+from obwrole import give_role, donate_role
 
 from typing import List, Dict
 
@@ -16,9 +16,9 @@ async def update_top(guild: Guild, member: Member, disc: str):
     if db[Key.MMBR][top_user][Key.SCORE] < db[Key.MMBR][disc][Key.SCORE]:
         former = guild.get_member_named(top_user)
         if former is None:
-            await make_leader(guild, member, )
+            await give_role(guild, member, )
         else:
-            await change_leader(guild, former, member, )
+            await donate_role(guild, former, member, )
 
 
 async def add_message(guild: Guild, member: Member, message: Message):
