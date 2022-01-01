@@ -111,17 +111,17 @@ def main():
         guild = message.guild
         author = message.author
 
-        loudprint(f"author is Member {isinstance(author, Member)}")
-        loudprint(f"guild is Guild {isinstance(guild, Guild)}")
-        loudprint(f"reaction is valid {messaging.valid_reaction(reaction)}")
-        loudprint(f"channel is valid {messaging.valid_channel(channel)}")
-
         # Check to confirm that reaction was in channel of guild we are interested in
         if isinstance(author, Member) and isinstance(guild, Guild) and messaging.valid_reaction(reaction) and \
                 messaging.valid_channel(channel):
             emoji = reaction.emoji
             loudprint(f"Emoji: {repr(emoji)} (is custom: {reaction.custom_emoji})")
             loudprint(f"Reaction: {repr(reaction)}")
+            await messaging.log_reaction(author, reaction)
+
+        database.dump()
+
+        loudprint("Database dumped")
 
     @bot.event
     async def on_member_join(member: Member):
@@ -129,7 +129,7 @@ def main():
         if not member.bot:
             disc = str(member)
             if disc not in db[Key.MMBR]:
-                db[Key.MMBR][disc] = {Key.ID: member.id, Key.RXN: {}, Key.SCORE: 0, Key.BNET: {}}
+                db[Key.MMBR][disc] = {Key.ID: member.id, Key.RXN: {}, Key.SCORE: {}, Key.BNET: {}}
 
         database.dump()
 
@@ -173,7 +173,7 @@ def main():
         disc = str(ctx.author)
 
         if disc not in db[Key.MMBR]:
-            db[Key.MMBR][disc] = {Key.ID: ctx.author.id, Key.RXN: {}, Key.SCORE: 0, Key.BNET: {}}
+            db[Key.MMBR][disc] = {Key.ID: ctx.author.id, Key.RXN: {}, Key.SCORE: {}, Key.BNET: {}}
 
         if bnet in db[Key.MMBR][disc][Key.BNET]:
             await ctx.channel.send(f"{bnet} is already linked to your account!")

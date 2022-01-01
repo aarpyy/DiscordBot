@@ -63,3 +63,20 @@ async def get_role_obj(guild: Guild, role: str) -> Optional[Role]:
             if role_obj is not None:
                 db[Key.ROLE][role] = {Key.ID: role_obj.id, Key.MMBR: len(role_obj.members)}
             return role_obj
+
+
+async def force_role_obj(guild: Guild, role: str, **kwargs) -> Role:
+    """
+    Shell function for get_role_obj() that, if unable to return Role, instead creates the role.
+
+    :param guild: guild that holds role
+    :param role: rolename
+    :return:
+    """
+
+    role_obj = await get_role_obj(guild, role)
+    if role_obj is None:
+        role_obj = await guild.create_role(**kwargs)
+        db[Key.ROLE][role] = {Key.ID: role_obj.id, Key.MMBR: 0}
+
+    return role_obj

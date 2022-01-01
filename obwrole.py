@@ -7,7 +7,7 @@ from sys import stderr
 from config import Key
 from tools import loudprint
 from battlenet import is_active, is_hidden
-from request import get_role_obj
+from request import get_role_obj, force_role_obj
 
 from typing import Set, Union
 
@@ -102,7 +102,7 @@ async def give_role(guild: Guild, member: Member, role: Union[str, Role]) -> Non
     else:
         role_obj = await get_role_obj(guild, role)
         if role_obj is None:
-            role_obj = await guild.create_role(name=role, mentionable=True, color=obw_color)
+            role_obj = await guild.create_role(name=role[2:], mentionable=role.startswith(mention_tag), color=obw_color)
             db[Key.ROLE][role] = {Key.ID: role_obj.id, Key.MMBR: 1}
     await member.add_roles(role_obj)
 
@@ -113,7 +113,7 @@ async def donate_role(guild: Guild, former: Member, new: Member, role: Union[str
     else:
         role_obj = await get_role_obj(guild, role)
         if role_obj is None:
-            role_obj = await guild.create_role(name=role, mentionable=True, color=obw_color)
+            role_obj = await guild.create_role(name=role[2:], mentionable=role.startswith(mention_tag), color=obw_color)
             db[Key.ROLE][role] = {Key.ID: role_obj.id, Key.MMBR: 1}
     if role_obj in former.roles:
         await former.remove_roles(role_obj)
@@ -211,16 +211,14 @@ async def update_bnet_roles(guild: Guild, disc: str, bnet: str) -> None:
     # incremented. Instead, take care of adding and removing of actual roles/entrance into db and later
     # increment all roles being added directly to user regardless of if the role was just created
     for role in to_add:  # type: str
-        role_obj = await get_role_obj(guild, role)
-        if role_obj is None:
-            if role.startswith(mention_tag):
-                role_obj = await guild.create_role(name=role[2:], mentionable=True, color=obw_color)
-            else:
-                role_obj = await guild.create_role(name=role[2:], color=obw_color)
+        kwargs = dict(
+            name=role[2:],
+            color=obw_color,
+            mentionable=role.startswith(mention_tag)
+        )
+        role_obj = await force_role_obj(guild, role, **kwargs)
 
-            db[Key.ROLE][role] = {Key.ID: role_obj.id, Key.MMBR: 0}
-
-        elif role not in db[Key.ROLE]:
+        if role not in db[Key.ROLE]:
             db[Key.ROLE][role] = {Key.ID: role_obj.id, Key.MMBR: len(role_obj.members)}
 
         await member.add_roles(role_obj)

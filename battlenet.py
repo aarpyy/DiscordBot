@@ -26,8 +26,8 @@ def is_private(disc: str, bnet: str):
     return db[Key.MMBR][disc][Key.BNET][bnet][Key.PRIV]
 
 
-def get_top():
-    return max(db[Key.MMBR], key=lambda x: db[Key.MMBR][x][Key.SCORE])
+def get_top(superlative: str):
+    return max(db[Key.MMBR], key=lambda x: db[Key.MMBR][x][Key.SCORE].get(superlative, 0))
 
 
 # Battlenet methods
