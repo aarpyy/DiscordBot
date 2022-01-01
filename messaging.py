@@ -7,6 +7,7 @@ from config import Key
 from battlenet import get_top
 from request import getuser, get_role_obj, force_role_obj
 from obwrole import give_role, donate_role, mention_tag, obw_color
+import database
 
 from typing import Union, List, Dict
 
@@ -86,12 +87,17 @@ async def log_reaction(author: Member, reaction: Reaction):
     emoji_name = reaction.emoji.name
     superlative = superlatives[channel.name]
 
+    print(f"Message.id: {message.id}")
+
     m_id = message.id
 
     if m_id not in db[Key.MMBR][disc][Key.RXN]:
+        print("Adding index")
         if len(db[Key.MMBR][disc][Key.RXN]) >= nmessages:
             del_reaction(disc)
         add_index(disc, message)
+
+    database.dump()
 
     # Find the change in reaction count whether negative or postiive
     nadded = reaction.count - db[Key.MMBR][disc][Key.RXN][m_id][Key.SCORE].get(emoji_name, 0)
