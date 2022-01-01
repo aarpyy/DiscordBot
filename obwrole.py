@@ -204,6 +204,7 @@ async def update_bnet_roles(guild: Guild, disc: str, bnet: str) -> None:
             to_remove -= set(db[Key.MMBR][disc][Key.BNET][b][Key.ROLE])
 
     roles_lost = current_bnet_roles - new_bnet_roles
+    roles_added = new_bnet_roles - current_bnet_roles
 
     loudprint(f"Roles in to_remove: {to_remove}")
 
@@ -223,7 +224,7 @@ async def update_bnet_roles(guild: Guild, disc: str, bnet: str) -> None:
 
         await member.add_roles(role_obj)
 
-    for role in new_bnet_roles:
+    for role in roles_added:
         db[Key.ROLE][role][Key.MMBR] += 1
 
     for role in roles_lost:

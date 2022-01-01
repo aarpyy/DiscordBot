@@ -86,16 +86,18 @@ async def log_reaction(author: Member, reaction: Reaction):
     emoji_name = reaction.emoji.name
     superlative = superlatives[channel.name]
 
-    if message.id not in db[Key.MMBR][disc][Key.RXN]:
+    m_id = message.id
+
+    if m_id not in db[Key.MMBR][disc][Key.RXN]:
         if len(db[Key.MMBR][disc][Key.RXN]) >= nmessages:
             del_reaction(disc)
         add_index(disc, message)
 
     # Find the change in reaction count whether negative or postiive
-    nadded = reaction.count - db[Key.MMBR][disc][Key.RXN][Key.SCORE].get(emoji_name, 0)
+    nadded = reaction.count - db[Key.MMBR][disc][Key.RXN][m_id][Key.SCORE].get(emoji_name, 0)
 
     # Set this reaction count to new count recorded
-    db[Key.MMBR][disc][Key.RXN][Key.SCORE][emoji_name] = reaction.count
+    db[Key.MMBR][disc][Key.RXN][m_id][Key.SCORE][emoji_name] = reaction.count
 
     # Adjust overall score accordingly
     db[Key.MMBR][disc][Key.SCORE].setdefault(superlative, 0)
