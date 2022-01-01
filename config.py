@@ -1,10 +1,5 @@
-from sys import exit
-from os import system
-from os.path import exists, join
-
-
 # Class for constant database keys to prevent typos in keys that are not user dependant
-class KEYS:
+class Key:
     # Indices for...
     PRIM = "primary"        # discord user's primary battlenet
     ALL = "all"             # dict of all user's battlenets
@@ -23,9 +18,5 @@ class KEYS:
     TIME = "timestamp"      # timestamp of object
     SCORE = "score"         # score of reactions to message
 
-
-reaction_scores = {"Bronze": -2, "Silver": -1, "Gold": 0, "Platinum": 1, "Diamond": 2, "Master": 3, "Grandmaster": 4}
-reaction_channels = frozenset(("shitpost", "test"))
-nmessages = 50
 
 loud = True

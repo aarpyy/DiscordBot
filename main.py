@@ -16,43 +16,15 @@ import obwrole
 import database
 import battlenet
 import reactions
+import request
+import messaging
 
-from config import KEYS, reaction_scores, reaction_channels
+from config import Key
 from tools import loudprint, loudinput
 
 from typing import Dict, Union, List
 
 su = "aarpyy#3360"  # Creator of bot
-
-
-async def getdm(user: Union[User, Member]) -> DMChannel:
-    channel = user.dm_channel
-    if channel is None:
-        channel = await user.create_dm()
-    return channel
-
-
-async def getuser(bot: Bot, disc: str):
-    try:
-        return await bot.fetch_user(db[KEYS.MMBR][disc][KEYS.ID])
-    except NotFound:
-        loudprint(f"User {disc} <id={db[KEYS.MMBR][disc][KEYS.ID]}> does not exist"
-                  f" and has been removed from db", file=stderr)
-        user_bnet = set(db[KEYS.MMBR][disc][KEYS.BNET])
-        db[KEYS.BNET] = list(set(db[KEYS.BNET]).difference(user_bnet))
-        del db[KEYS.MMBR][disc]  # If not real user no roles to remove anyway so just delete
-    except HTTPException as src:
-        loudprint(f"Failed {getuser.__name__}(): {str(src)}", file=stderr)
-
-
-async def roleupdate(guild: Guild, disc: str, bnet: str):
-    try:
-        await obwrole.update(guild, disc, bnet)
-    except Forbidden:
-        await guild.leave()
-        loudprint(f"Left {str(guild)} guild because inaccessible", file=stderr)
-    except HTTPException as src:
-        loudprint(f"Failed {obwrole.update.__name__}(): {str(src)}", file=stderr)
 
 
 def main():
@@ -73,8 +45,8 @@ def main():
     async def update_loop():
 
         # Update stats for all battlenets
-        for disc in db[KEYS.MMBR]:
-            for bnet in db[KEYS.MMBR][disc][KEYS.BNET]:
+        for disc in db[Key.MMBR]:
+            for bnet in db[Key.MMBR][disc][Key.BNET]:
                 battlenet.update(disc, bnet)
 
         database.dump()
@@ -85,25 +57,24 @@ def main():
         for guild in bot.guilds:  # type: Guild
             for mmbr in guild.members:  # type: Member
                 disc = str(mmbr)
-                if disc in db[KEYS.MMBR]:
-                    for bnet in db[KEYS.MMBR][disc][KEYS.BNET]:
-                        await roleupdate(guild, disc, bnet)
+                if disc in db[Key.MMBR]:
+                    for bnet in db[Key.MMBR][disc][Key.BNET]:
+                        await obwrole.update(guild, disc, bnet)
 
         database.dump()
 
         loudinput("All roles should now be updated")
 
         # If any accounts were marked for removal, re-run through them and remove them
-        for disc in db[KEYS.MMBR]:
-            for bnet in db[KEYS.MMBR][disc][KEYS.BNET]:
+        for disc in db[Key.MMBR]:
+            for bnet in db[Key.MMBR][disc][Key.BNET]:
 
                 # If battlenet is inactive, let user know it's removed
                 if not battlenet.is_active(disc, bnet):
                     loudprint(f"Removing {disc}[{bnet}]...")
-                    user = await getuser(bot, disc)
+                    user = await request.getuser(bot, disc)
                     if user is not None:
-                        channel = await getdm(user)
-
+                        channel = await request.getdm(user)
                         message = f"Stats for {bnet} were unable to be updated and the account was unlinked " \
                                   f"from your discord."
 
@@ -140,27 +111,20 @@ def main():
         guild = message.guild
         author = message.author
 
-        loudprint(f"Reaction added: {repr(reaction)}")
-        loudprint(f"author is Member: {isinstance(author, Member)}")
-        loudprint(f"channel is TextChannel: {isinstance(channel, TextChannel)}")
-        loudprint(f"channel.name in reaction_channels: {channel.name in reaction_channels}")
-        loudprint(f"reaction in reaction_scores: {str(reaction) in reaction_scores}")
-        loudprint(str(reaction))
-        loudprint(reaction_scores)
-        loudprint(f"guild ({type(guild)}): {str(guild)}")
-
         # Check to confirm that reaction was in channel of guild we are interested in
-        if isinstance(author, Member) and isinstance(channel, TextChannel) and channel.name in reaction_channels and \
-                isinstance(guild, Guild) and reaction.custom_emoji and reaction.emoji.name in reaction_scores:
-            loudprint("Valid reaction")
+        if isinstance(author, Member) and isinstance(guild, Guild) and messaging.valid_reaction(reaction) and \
+                messaging.valid_channel(channel):
+            emoji = reaction.emoji
+            loudprint(f"Emoji: {repr(emoji)} (is custom: {reaction.custom_emoji})")
+            loudprint(f"Reaction: {repr(reaction)}")
 
     @bot.event
     async def on_member_join(member: Member):
         # If new guild member is a bot, ignore them
         if not member.bot:
             disc = str(member)
-            if disc not in db[KEYS.MMBR]:
-                db[KEYS.MMBR][disc] = {KEYS.BNET: {}, KEYS.ID: member.id, KEYS.RXN: {}, KEYS.SCORE: 0}
+            if disc not in db[Key.MMBR]:
+                db[Key.MMBR][disc] = {Key.BNET: {}, Key.ID: member.id, Key.RXN: {}, Key.SCORE: 0}
 
         database.dump()
 
@@ -169,7 +133,7 @@ def main():
         rname = obwrole.rolename(role)
 
         # If the bot removed this role, then rname will already be deleted, this is just if another user deletes role
-        if rname in db[KEYS.ROLE]:
+        if rname in db[Key.ROLE]:
             obwrole.globalrm(rname)
 
     @bot.event
@@ -177,11 +141,11 @@ def main():
         bname, aname = obwrole.rolename(before), obwrole.rolename(after)
 
         # If the role wasn't in db before, not a role we care about
-        if bname in db[KEYS.ROLE]:
-            del db[KEYS.ROLE][bname]
+        if bname in db[Key.ROLE]:
+            del db[Key.ROLE][bname]
             await sleep(5)  # Give some sleep time for after.members to be updated
-            db[KEYS.ROLE][aname] = {KEYS.ID: after.id, KEYS.MMBR: len(after.members)}
-            obwrole.rename(bname, aname)
+            db[Key.ROLE][aname] = {Key.ID: after.id, Key.MMBR: len(after.members)}
+            obwrole.global_rename(bname, aname)
 
     # Commands
 
@@ -203,19 +167,19 @@ def main():
         """
         disc = str(ctx.author)
 
-        if disc not in db[KEYS.MMBR]:
-            db[KEYS.MMBR][disc] = {KEYS.BNET: {}, KEYS.ID: ctx.author.id, KEYS.RXN: {}, KEYS.SCORE: 0}
+        if disc not in db[Key.MMBR]:
+            db[Key.MMBR][disc] = {Key.BNET: {}, Key.ID: ctx.author.id, Key.RXN: {}, Key.SCORE: 0}
 
-        if bnet in db[KEYS.MMBR][disc][KEYS.BNET]:
+        if bnet in db[Key.MMBR][disc][Key.BNET]:
             await ctx.channel.send(f"{bnet} is already linked to your account!")
-        elif bnet in db[KEYS.BNET]:
+        elif bnet in db[Key.BNET]:
             await ctx.channel.send(f"{bnet} is already linked to another user!")
         else:
             battlenet.add(disc, bnet, platform)
-            db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.ROLE] = list(obwrole.get_bnet_roles(disc, bnet))
+            db[Key.MMBR][disc][Key.BNET][bnet][Key.ROLE] = list(obwrole.find_battlenet_roles(disc, bnet))
             guild = ctx.guild  # type: Guild
             if guild is not None:
-                await roleupdate(guild, disc, bnet)
+                await obwrole.update(guild, disc, bnet)
             await ctx.channel.send(f"Successfully linked {bnet} to your discord!")
 
         database.dump()
@@ -236,7 +200,7 @@ def main():
     async def remove(ctx: Context, bnet: str):
         disc = str(ctx.author)
         try:
-            if bnet not in db[KEYS.MMBR][disc][KEYS.BNET]:
+            if bnet not in db[Key.MMBR][disc][Key.BNET]:
                 raise KeyError
         except KeyError:
             await ctx.channel.send(f"{bnet} is not linked to your discord!")
@@ -244,7 +208,7 @@ def main():
             battlenet.deactivate(disc, bnet)
             guild = ctx.guild  # type: Guild
             if guild is not None:
-                await roleupdate(guild, disc, bnet)
+                await obwrole.update(guild, disc, bnet)
             message = f"You have successfully unlinked {bnet} from your discord!"
             if prim := battlenet.remove(bnet, disc):
                 message += f"\n\nYour new primary account is {prim}"
@@ -256,18 +220,18 @@ def main():
     async def primary(ctx: Context, bnet: str):
         disc = str(ctx.author)
         try:
-            user_battlenets = db[KEYS.MMBR][disc][KEYS.BNET]
+            user_battlenets = db[Key.MMBR][disc][Key.BNET]
             if bnet not in user_battlenets:
                 raise KeyError
         except KeyError:
             await ctx.channel.send(f"{bnet} is not linked to your account!")
         else:
-            if user_battlenets[bnet][KEYS.PRIM]:
+            if user_battlenets[bnet][Key.PRIM]:
                 await ctx.channel.send(f"{bnet} is already your primary linked account!")
             else:
                 for b in user_battlenets:
-                    user_battlenets[b][KEYS.PRIM] = False
-                user_battlenets[bnet][KEYS.PRIM] = True
+                    user_battlenets[b][Key.PRIM] = False
+                user_battlenets[bnet][Key.PRIM] = True
                 await ctx.channel.send(f"{bnet} is your new primary linked account!")
 
         database.dump()

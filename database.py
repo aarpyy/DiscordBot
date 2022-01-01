@@ -1,5 +1,5 @@
 from replit import db
-from config import KEYS
+from config import Key
 from os import system, remove
 from unidecode import unidecode
 from json import load
@@ -42,18 +42,18 @@ async def clean_roles(bot: Bot) -> None:
 
     for guild in bot.guilds:            # type: Guild
         for role in await guild.fetch_roles():
-            if (rname := obwrole.rolename(role)) in db[KEYS.ROLE] or role.color == obwrole.obw_color:
+            if (rname := obwrole.rolename(role)) in db[Key.ROLE] or role.color == obwrole.obw_color:
                 await role.delete()
     loudprint("All roles cleaned")
     dump()
 
 
 def init():
-    db[KEYS.MMBR] = {}
-    db[KEYS.ROLE] = {}
-    db[KEYS.BNET] = []
+    db[Key.MMBR] = {}
+    db[Key.ROLE] = {}
+    db[Key.BNET] = []
     with open("categories.json", "r") as infile:
-        db[KEYS.CTG] = load(infile)
+        db[Key.CTG] = load(infile)
 
 
 def clear():
@@ -62,9 +62,9 @@ def clear():
 
 
 def refresh():
-    db[KEYS.MMBR] = {}
-    db[KEYS.ROLE] = {}
-    db[KEYS.BNET] = []
+    db[Key.MMBR] = {}
+    db[Key.ROLE] = {}
+    db[Key.BNET] = []
 
 
 def dump():

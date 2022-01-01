@@ -1,8 +1,8 @@
 from replit import db
 
-import request
+from scrape import scrape_play_ow, platform_url
 
-from config import KEYS
+from config import Key
 from tools import getkey, loudprint
 
 from typing import Union
@@ -11,41 +11,23 @@ from typing import Union
 # Accessors
 
 def is_active(disc: str, bnet: str):
-    return db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.ACTIVE]
+    return db[Key.MMBR][disc][Key.BNET][bnet][Key.ACTIVE]
 
 
 def is_hidden(disc: str, bnet: str):
-    return db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.HID]
+    return db[Key.MMBR][disc][Key.BNET][bnet][Key.HID]
 
 
 def is_primary(disc: str, bnet: str):
-    return db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.PRIM]
+    return db[Key.MMBR][disc][Key.BNET][bnet][Key.PRIM]
 
 
 def is_private(disc: str, bnet: str):
-    return db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.PRIV]
-
-
-def clear_index(disc: str, bnet: str):
-    db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.STAT] = {}
-    db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.RANK] = {}
-
-
-def deactivate(disc: str, bnet: str):
-    clear_index(disc, bnet)
-    db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.ACTIVE] = False
-
-
-def hide(disc: str, bnet: str):
-    db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.HID] = True
-
-
-def show(disc: str, bnet: str):
-    db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.HID] = False
+    return db[Key.MMBR][disc][Key.BNET][bnet][Key.PRIV]
 
 
 def get_top():
-    return max(db[KEYS.MMBR], key=lambda x: db[KEYS.MMBR][x][KEYS.SCORE])
+    return max(db[Key.MMBR], key=lambda x: db[Key.MMBR][x][Key.SCORE])
 
 
 # Battlenet methods
@@ -62,14 +44,32 @@ def create_index(prim: bool, priv: bool, platform: str, rank: dict, stats: dict)
     :param stats: battlenet's general stats
     :return: battlenet object in db
     """
-    return {KEYS.PRIM: prim,
-            KEYS.PRIV: priv,
-            KEYS.ACTIVE: True,
-            KEYS.HID: False,
-            KEYS.PTFM: platform,
-            KEYS.RANK: rank,
-            KEYS.STAT: stats,
-            KEYS.ROLE: []}
+    return {Key.PRIM: prim,
+            Key.PRIV: priv,
+            Key.ACTIVE: True,
+            Key.HID: False,
+            Key.PTFM: platform,
+            Key.RANK: rank,
+            Key.STAT: stats,
+            Key.ROLE: []}
+
+
+def clear_index(disc: str, bnet: str):
+    db[Key.MMBR][disc][Key.BNET][bnet][Key.STAT] = {}
+    db[Key.MMBR][disc][Key.BNET][bnet][Key.RANK] = {}
+
+
+def deactivate(disc: str, bnet: str):
+    clear_index(disc, bnet)
+    db[Key.MMBR][disc][Key.BNET][bnet][Key.ACTIVE] = False
+
+
+def hide(disc: str, bnet: str):
+    db[Key.MMBR][disc][Key.BNET][bnet][Key.HID] = True
+
+
+def show(disc: str, bnet: str):
+    db[Key.MMBR][disc][Key.BNET][bnet][Key.HID] = False
 
 
 def add(disc: str, bnet: str, pf: str) -> None:
@@ -86,19 +86,19 @@ def add(disc: str, bnet: str, pf: str) -> None:
     """
     # Load bnet information in table - if the battlenet is not in list of all battlenets it gets added here
     try:
-        rank, stats = request.main(request.search_url(pf)(bnet))
+        rank, stats = scrape_play_ow(platform_url(pf)(bnet))
     except AttributeError:      # AttributeError means private account, still add it
-        db[KEYS.BNET].append(bnet)
-        db[KEYS.MMBR][disc][KEYS.BNET][bnet] = create_index(
-            not bool(db[KEYS.MMBR][disc][KEYS.BNET]), True, pf, {}, {})
+        db[Key.BNET].append(bnet)
+        db[Key.MMBR][disc][Key.BNET][bnet] = create_index(
+            not bool(db[Key.MMBR][disc][Key.BNET]), True, pf, {}, {})
     except NameError as src:    # NameError means DNE, don't add it
         raise NameError("unable to add battlenet") from src
     except ValueError as src:   # ValueError means error with data organization or UNIX error
         raise ValueError("unable to add battlenet") from src
     else:
-        db[KEYS.BNET].append(bnet)
-        db[KEYS.MMBR][disc][KEYS.BNET][bnet] = create_index(
-            not bool(db[KEYS.MMBR][disc][KEYS.BNET]), False, pf, rank, stats)
+        db[Key.BNET].append(bnet)
+        db[Key.MMBR][disc][Key.BNET][bnet] = create_index(
+            not bool(db[Key.MMBR][disc][Key.BNET]), False, pf, rank, stats)
 
 
 def update(disc: str, bnet: str) -> None:
@@ -113,18 +113,18 @@ def update(disc: str, bnet: str) -> None:
     """
     ranks, stats = {}, {}
     try:
-        ranks, stats = request.main(request.search_url(db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.PTFM])(bnet))
+        ranks, stats = scrape_play_ow(platform_url(db[Key.MMBR][disc][Key.BNET][bnet][Key.PTFM])(bnet))
     except AttributeError:
-        db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.PRIV] = True
+        db[Key.MMBR][disc][Key.BNET][bnet][Key.PRIV] = True
         loudprint(f"{bnet} marked as private")
     except NameError or ValueError:
-        db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.ACTIVE] = False
+        db[Key.MMBR][disc][Key.BNET][bnet][Key.ACTIVE] = False
         loudprint(f"{bnet} marked as inactive")
     else:
-        db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.PRIV] = False
+        db[Key.MMBR][disc][Key.BNET][bnet][Key.PRIV] = False
     finally:
-        db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.STAT] = stats
-        db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.RANK] = ranks
+        db[Key.MMBR][disc][Key.BNET][bnet][Key.STAT] = stats
+        db[Key.MMBR][disc][Key.BNET][bnet][Key.RANK] = ranks
 
 
 def remove(bnet: str, disc: str) -> str:
@@ -137,13 +137,13 @@ def remove(bnet: str, disc: str) -> str:
     :return: new primary iff account removed was user's old primary, 0 otherwise
     """
 
-    db[KEYS.BNET].remove(bnet)                      # Remove from list of all battlenets
-    primary = db[KEYS.MMBR][disc][KEYS.BNET][bnet][KEYS.PRIM]
-    del db[KEYS.MMBR][disc][KEYS.BNET][bnet]
+    db[Key.BNET].remove_user_role(bnet, )  # Remove from list of all battlenets
+    primary = db[Key.MMBR][disc][Key.BNET][bnet][Key.PRIM]
+    del db[Key.MMBR][disc][Key.BNET][bnet]
 
-    if primary and db[KEYS.MMBR][disc][KEYS.BNET]:       # If it was this user's primary account and they have
-        new_prim = getkey(db[KEYS.MMBR][disc][KEYS.BNET])   # another, make it primary
-        db[KEYS.MMBR][disc][KEYS.BNET][new_prim][KEYS.PRIM] = True
+    if primary and db[Key.MMBR][disc][Key.BNET]:       # If it was this user's primary account and they have
+        new_prim = getkey(db[Key.MMBR][disc][Key.BNET])   # another, make it primary
+        db[Key.MMBR][disc][Key.BNET][new_prim][Key.PRIM] = True
         return new_prim
     else:
         return ""

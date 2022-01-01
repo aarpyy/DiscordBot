@@ -2,55 +2,23 @@ from replit import db
 
 from discord import Reaction, Emoji, Message, Member, Guild
 
-from config import KEYS, reaction_scores, nmessages
+from config import Key
 from battlenet import get_top
-from obwrole import make_top, change_top
+from obwrole import make_leader, change_leader
 
 from typing import List, Dict
 
-# KEYS.RXN: {id1: {KEYS.TIME: tm1, KEYS.SCORE: sc1}}
-
-
-def add_index(disc: str, message: Message, score: int):
-    db[KEYS.MMBR][disc][KEYS.RXN][message.id] = {KEYS.TIME: message.created_at.timestamp(), KEYS.SCORE: score}
-
-
-def get_score(message: Message):
-    reactions = message.reactions  # type: List[Reaction]
-    score = 0
-    score_given = False
-    for rxn in reactions:
-        if rxn.custom_emoji:
-            emoji = rxn.emoji
-            if isinstance(emoji, Emoji) and emoji.name in reaction_scores:
-                score += reaction_scores[emoji.name] * rxn.count
-                score_given = True
-
-    return score_given, score
-
-
-def pop_reaction(disc: str) -> Dict[str, int]:
-    """
-    Pops the oldest message user received a reaction to.
-
-    :param disc: username
-    :return: reaction index
-    """
-
-    oldest_id = max(db[KEYS.MMBR][disc][KEYS.RXN], key=lambda x: db[KEYS.MMBR][disc][KEYS.RXN][x][KEYS.TIME])
-    index = db[KEYS.MMBR][disc][KEYS.RXN][oldest_id]
-    del db[KEYS.MMBR][disc][KEYS.RXN][oldest_id]
-    return index
+# Key.RXN: {id1: {Key.TIME: tm1, Key.SCORE: sc1}}
 
 
 async def update_top(guild: Guild, member: Member, disc: str):
     top_user = get_top()
-    if db[KEYS.MMBR][top_user][KEYS.SCORE] < db[KEYS.MMBR][disc][KEYS.SCORE]:
+    if db[Key.MMBR][top_user][Key.SCORE] < db[Key.MMBR][disc][Key.SCORE]:
         former = guild.get_member_named(top_user)
         if former is None:
-            await make_top(guild, member)
+            await make_leader(guild, member, )
         else:
-            await change_top(guild, former, member)
+            await change_leader(guild, former, member, )
 
 
 async def add_message(guild: Guild, member: Member, message: Message):
@@ -58,10 +26,10 @@ async def add_message(guild: Guild, member: Member, message: Message):
 
     if score_given:
         disc = str(member)
-        if len(db[KEYS.MMBR][disc][KEYS.RXN]) >= nmessages:
+        if len(db[Key.MMBR][disc][Key.RXN]) >= nmessages:
             pop_reaction(disc)
 
-        db[KEYS.MMBR][disc][KEYS.SCORE] += score
+        db[Key.MMBR][disc][Key.SCORE] += score
         add_index(disc, message, score)
         await update_top(guild, member, disc)
 
@@ -70,14 +38,14 @@ async def update_message(guild: Guild, member: Member, before: Message, after: M
     disc = str(member)
     score_given, score = get_score(after)
     if score_given:
-        if before.id in db[KEYS.MMBR][disc][KEYS.RXN]:
-            bscore = db[KEYS.MMBR][disc][KEYS.RXN][before.id][KEYS.SCORE]
+        if before.id in db[Key.MMBR][disc][Key.RXN]:
+            bscore = db[Key.MMBR][disc][Key.RXN][before.id][Key.SCORE]
             if score != bscore:
-                db[KEYS.MMBR][disc][KEYS.SCORE] -= bscore
-                del db[KEYS.MMBR][disc][KEYS.RXN][before.id]
-        elif len(db[KEYS.MMBR][disc][KEYS.RXN]) >= nmessages:
+                db[Key.MMBR][disc][Key.SCORE] -= bscore
+                del db[Key.MMBR][disc][Key.RXN][before.id]
+        elif len(db[Key.MMBR][disc][Key.RXN]) >= nmessages:
             pop_reaction(disc)
 
-        db[KEYS.MMBR][disc][KEYS.SCORE] += score
+        db[Key.MMBR][disc][Key.SCORE] += score
         add_index(disc, after, score)
         await update_top(guild, member, disc)
