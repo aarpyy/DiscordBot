@@ -129,7 +129,7 @@ def main():
         if not member.bot:
             disc = str(member)
             if disc not in db[Key.MMBR]:
-                db[Key.MMBR][disc] = {Key.BNET: {}, Key.ID: member.id, Key.RXN: {}, Key.SCORE: 0}
+                db[Key.MMBR][disc] = {Key.ID: member.id, Key.RXN: {}, Key.SCORE: 0, Key.BNET: {}}
 
         database.dump()
 
@@ -173,7 +173,7 @@ def main():
         disc = str(ctx.author)
 
         if disc not in db[Key.MMBR]:
-            db[Key.MMBR][disc] = {Key.BNET: {}, Key.ID: ctx.author.id, Key.RXN: {}, Key.SCORE: 0}
+            db[Key.MMBR][disc] = {Key.ID: ctx.author.id, Key.RXN: {}, Key.SCORE: 0, Key.BNET: {}}
 
         if bnet in db[Key.MMBR][disc][Key.BNET]:
             await ctx.channel.send(f"{bnet} is already linked to your account!")

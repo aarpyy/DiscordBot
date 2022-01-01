@@ -1,6 +1,6 @@
 from replit import db
 
-from discord import Message, TextChannel, User, Member, DMChannel, GroupChannel, Reaction, Emoji, Guild
+from discord import Message, TextChannel, User, Member, DMChannel, GroupChannel, Reaction, Emoji, Guild, abc
 from discord.ext.commands import Bot
 
 from config import Key
@@ -22,8 +22,8 @@ superlatives = {"shitpost": "Top Shitposter", "test": "Top Tester lol"}
 nmessages = 50
 
 
-def valid_channel(channel: TextChannel) -> bool:
-    return isinstance(channel, GroupChannel) and channel.name in superlatives
+def valid_channel(channel: abc.Messageable) -> bool:
+    return isinstance(channel, TextChannel) and channel.name in superlatives
 
 
 def valid_reaction(reaction: Reaction):
