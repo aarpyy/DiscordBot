@@ -31,7 +31,7 @@ def valid_reaction(reaction: Reaction):
 
 
 def add_index(disc: str, message: Message):
-    db[Key.MMBR][disc][Key.RXN][message.id] = {Key.TIME: message.created_at.timestamp(), Key.SCORE: {}}
+    db[Key.MMBR][disc][Key.RXN][str(message.id)] = {Key.TIME: message.created_at.timestamp(), Key.SCORE: {}}
 
 
 def gen_reactions(reactions: List[Reaction]):
@@ -89,7 +89,7 @@ async def log_reaction(author: Member, reaction: Reaction):
 
     print(f"Message.id: {message.id}")
 
-    m_id = message.id
+    m_id = str(message.id)
 
     if m_id not in db[Key.MMBR][disc][Key.RXN]:
         print("Adding index")
