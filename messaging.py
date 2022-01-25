@@ -97,6 +97,17 @@ async def log_reaction(author: Member, reaction: Reaction):
             del_reaction(disc)
         add_index(disc, message)
 
+        for rxn in message.reactions:   # type: Reaction
+            if valid_reaction(rxn):
+                if str(rxn) in db[Key.MMBR][disc][Key.RXN][str(message.id)][Key.SCORE]:
+                    db[Key.MMBR][disc][Key.RXN][str(message.id)][Key.SCORE][str(rxn)] += reaction_scores[str(rxn)]
+                else:
+                    db[Key.MMBR][disc][Key.RXN][str(message.id)][Key.SCORE][str(rxn)] = reaction_scores[str(rxn)]
+    else:
+        db[Key.MMBR][disc][Key.SCORE] += diff
+        # If message already there, find the difference in score between new score and old, update in database,
+        # adjust global user score in that channel
+
     database.dump()
 
     # Find the change in reaction count whether negative or postiive
@@ -108,6 +119,8 @@ async def log_reaction(author: Member, reaction: Reaction):
     # Adjust overall score accordingly
     db[Key.MMBR][disc][Key.SCORE].setdefault(superlative, 0)
     db[Key.MMBR][disc][Key.SCORE][superlative] += nadded * reaction_scores[emoji_name]
+
+    # Member: {"shitpost": 5
 
     top_user = get_top(superlative)
     if db[Key.MMBR][top_user][Key.SCORE][superlative] < db[Key.MMBR][disc][Key.SCORE][superlative]:

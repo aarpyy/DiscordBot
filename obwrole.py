@@ -184,9 +184,17 @@ async def update_bnet_roles(guild: Guild, disc: str, bnet: str) -> None:
     # from that set that the user already has
 
     role: Role
+
+    # ALL current roles
     current_discord_roles = set(rolename(role) for role in member.roles)
+
+    # Roles the user SHOULD have
     new_bnet_roles = find_battlenet_roles(disc, bnet)
+
+    # Roles that MY BOT thinks they have
     current_bnet_roles = set(db[Key.MMBR][disc][Key.BNET][bnet][Key.ROLE])
+
+    # Roles that user should be adding
     to_add = new_bnet_roles - current_discord_roles
 
     loudprint(f"Roles in to_add: {to_add}")

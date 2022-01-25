@@ -89,6 +89,7 @@ def main():
     @bot.event
     async def on_ready():
         loudprint(f"Logged in as {bot.user}.")
+        # Uncomment these for testing
         # database.refresh()
         # await database.clean_roles(bot)
 
