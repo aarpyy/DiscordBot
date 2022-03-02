@@ -11,6 +11,7 @@ from os.path import join, exists
 from sys import exit, exc_info, stderr
 from asyncio import sleep
 from traceback import print_exc
+from sys import platform
 
 import obwrole
 import database

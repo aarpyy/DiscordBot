@@ -4,9 +4,9 @@ from os import system, remove
 from unidecode import unidecode
 from collections import deque
 
-import database
+from old import database
 
-from config import Key
+from old.config import Key
 
 from typing import Dict, Tuple, Callable
 

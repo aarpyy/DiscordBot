@@ -68,5 +68,5 @@ def refresh():
 
 
 def dump():
-    with open("userdata.json", "w") as outfile:
+    with open("../userdata.json", "w") as outfile:
         outfile.write(jsondump(db))
