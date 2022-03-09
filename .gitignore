@@ -1,7 +1,0 @@
-temp/*.json
-tests
-src/GET/split
-old
-.env
-Pipfile.lock
-Pipfile

@@ -3,11 +3,11 @@ from replit import db
 from os import system, remove
 from unidecode import unidecode
 from collections import deque
-
-from tables import *
-from db import *
+from pathlib import Path
 
 from typing import Dict, Tuple, Callable
+
+from database import data_categories
 
 
 info_file = "player.info"
@@ -45,20 +45,23 @@ def scrape_play_ow(url: str) -> Tuple[Dict, Dict]:
     :raises ValueError: If any errors occur reading the data
     :return: dict of ranks, dict of stats
     """
+
+    root = Path(__file__).parent
     # Get html from url in silent mode, split the file by < to make lines easily readable by sed, then
     # run sed command and format output into key/value pairs
-    system(f"curl -s {url} | ./GET/split.macos > {info_file}")
+    system(f"curl -s {url} | {str(root.joinpath('split/split'))} > {info_file}")
 
     # This try block allows for the errors to be raised and player.info removed regardless of
     # errors thrown
+    GET = root.joinpath("GET/")
     try:
-        if system(f"./GET/is_private {info_file}"):
+        if system(f"{str(GET.joinpath('is_private'))} {info_file}"):
             raise AttributeError("PRIVATE")
-        elif system(f"./GET/dne {info_file}"):
+        elif system(f"{str(GET.joinpath('dne'))} {info_file}"):
             raise NameError("DNE")
         else:
-            system(f"./GET/stats {info_file} > {stat_file}")
-            system(f"./GET/comp {info_file} > {comp_file}")
+            system(f"{str(GET.joinpath('stats'))} {info_file} > {stat_file}")
+            system(f"{str(GET.joinpath('comp'))} {info_file} > {comp_file}")
     finally:
         remove(info_file)
 
@@ -96,7 +99,8 @@ def scrape_play_ow(url: str) -> Tuple[Dict, Dict]:
             lines.append(line)
     remove(stat_file)
 
-    categories = db[CATEG]
+    # categories = db[CATEG]
+    categories = data_categories()
 
     bnet_stats = {}
     mode, categ = "", ""
@@ -147,7 +151,7 @@ def scrape_play_ow(url: str) -> Tuple[Dict, Dict]:
 
 
 if __name__ == "__main__":
-    init_db()
+    print("This is main")
     r, st = scrape_play_ow(platform_url("PC")("Aarpyy#1975"))
     print(r)
     print(st)

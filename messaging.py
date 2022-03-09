@@ -3,11 +3,11 @@ from replit import db
 from discord import Message, TextChannel, User, Member, DMChannel, GroupChannel, Reaction, Emoji, Guild, abc
 from discord.ext.commands import Bot
 
-from old.config import Key
-from old.battlenet import get_top
+from config import Key
+from battlenet import get_top
 from request import getuser, get_role_obj, force_role_obj
 from obwrole import give_role, donate_role, mention_tag, obw_color
-from old import database
+import database
 
 from typing import Union, List, Dict
 

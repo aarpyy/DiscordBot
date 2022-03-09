@@ -32,7 +32,7 @@ su = "aarpyy#3360"  # Creator of bot
 
 def restricted(func):
     @wraps(func)
-    def new_func(ctx: Context, *args):
+    async def new_func(ctx: Context, *args):
         if str(ctx.author) == su:
             return await func(ctx, *args)
         else:
@@ -57,6 +57,7 @@ def main():
 
     @tasks.loop(hours=1)
     async def update_loop():
+        return
 
         # Update stats for all battlenets
         for disc in db[Key.MMBR]:
@@ -207,6 +208,7 @@ def main():
     @restricted
     @bot.command(name="battlenet")
     async def _battlenet(ctx: Context, bnet: str):
+        await ctx.channel.send("Func called")
         await account(ctx, bnet, "PC")
 
     @bot.command()
@@ -258,7 +260,7 @@ def main():
         database.dump()
 
     # Log in to bot using token from replit env and run
-    bot.run(getenv('TOKEN'))
+    bot.run(getenv('DISC_TOKEN'))
 
 
 if __name__ == "__main__":

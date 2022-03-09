@@ -8,7 +8,7 @@ from discord.utils import find
 from sys import stderr
 
 from tools import loudprint
-from old.config import Key
+from config import Key
 
 from typing import Union, Optional
 

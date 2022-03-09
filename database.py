@@ -6,11 +6,13 @@ from json import load
 from discord.ext.commands import Bot
 from discord import Guild
 from tools import jsondump, loudprint
+from pathlib import Path
 import obwrole
 
 
 def data_categories():
-    if not system("./get/category > categories"):
+    GET = Path(__file__).parent.joinpath("GET")
+    if not system(f"{str(GET.joinpath('category'))} > categories"):
         categ_id = {}
         with open("categories", "r") as infile:
             lines = infile.readlines()
@@ -18,9 +20,7 @@ def data_categories():
         for line in lines:
             line = line.strip('\n')
             # Only read categories that start with data-id
-            if not line.startswith("0x"):
-                continue
-            else:
+            if line.startswith("0x"):
                 _id, name = line.split('|')
                 name = unidecode(name)
                 categ_id[_id] = name

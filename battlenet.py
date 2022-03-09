@@ -3,7 +3,7 @@ from replit import db
 from scrape import scrape_play_ow, platform_url
 
 from config import Key
-from tools import getkey, loudprint
+from tools import loudprint
 
 from typing import Union
 
@@ -142,7 +142,7 @@ def remove(bnet: str, disc: str) -> str:
     del db[Key.MMBR][disc][Key.BNET][bnet]
 
     if primary and db[Key.MMBR][disc][Key.BNET]:       # If it was this user's primary account and they have
-        new_prim = getkey(db[Key.MMBR][disc][Key.BNET])   # another, make it primary
+        new_prim = next(iter(db[Key.MMBR][disc][Key.BNET]))   # another, make it primary
         db[Key.MMBR][disc][Key.BNET][new_prim][Key.PRIM] = True
         return new_prim
     else:
