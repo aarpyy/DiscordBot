@@ -3,6 +3,21 @@ from collections.abc import MutableMapping, MutableSequence
 from typing import Union
 
 
+loud = False
+
+
+def loudprint(*args, **kwargs):
+    global loud
+    if loud:
+        print(*args, **kwargs)
+
+
+def loudinput(*args, **kwargs):
+    global loud
+    if loud:
+        input(*args, **kwargs)
+
+
 def jsonify(o: object) -> str:
     """
     Attempts to convert object into JSON readable format.

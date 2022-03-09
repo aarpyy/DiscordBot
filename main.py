@@ -12,6 +12,7 @@ from sys import exit, exc_info, stderr
 from asyncio import sleep
 from traceback import print_exc
 from sys import platform
+from functools import wraps
 
 import obwrole
 import database
@@ -26,6 +27,17 @@ from tools import loudprint, loudinput
 from typing import Dict, Union, List
 
 su = "aarpyy#3360"  # Creator of bot
+
+
+def restricted(func):
+    @wraps(func)
+    def new_func(ctx: Context, *args):
+        if str(ctx.author) == su:
+            return await func(ctx, *args)
+        else:
+            await ctx.channel.send(f"That command is currently disabled!")
+
+    return new_func
 
 
 def main():
@@ -191,6 +203,7 @@ def main():
 
         database.dump()
 
+    @restricted
     @bot.command(name="battlenet")
     async def _battlenet(ctx: Context, bnet: str):
         await account(ctx, bnet, "PC")

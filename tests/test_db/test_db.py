@@ -1,26 +1,8 @@
-from functools import wraps
-from warnings import simplefilter
-
-import pytest
-
 from src.db import *
-from src.tools import jsondump
+from tools import jsondump
 
 
 outfile = "../temp/out.json"
-
-
-def deprecated(func):
-    """This is a decorator which can be used to mark functions
-    as deprecated. It will result in a warning being emitted
-    when the function is used."""
-
-    @wraps(func)
-    def new_func(ctx, *args):
-        if ctx.author
-        return func(ctx, *args)
-
-    return new_func
 
 
 def write_db():
