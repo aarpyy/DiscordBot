@@ -2,29 +2,6 @@ from collections.abc import MutableMapping, MutableSequence
 
 from typing import Union
 
-from old.config import loud
-from discord import Reaction, Emoji
-
-
-def loudprint(*args, **kwargs):
-    if loud:
-        print(*args, **kwargs)
-
-
-def loudinput(*args, **kwargs):
-    if loud:
-        input(*args, **kwargs)
-
-
-def getkey(d: dict) -> str:
-    """
-    Gives first key of dictionary in order of iteration.
-
-    :param d: dictionary
-    :return: dictionary key
-    """
-    return next(iter(d))
-
 
 def jsonify(o: object) -> str:
     """

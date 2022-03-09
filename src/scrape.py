@@ -4,9 +4,8 @@ from os import system, remove
 from unidecode import unidecode
 from collections import deque
 
-from old import database
-
-from old.config import Key
+from tables import *
+from db import *
 
 from typing import Dict, Tuple, Callable
 
@@ -48,18 +47,18 @@ def scrape_play_ow(url: str) -> Tuple[Dict, Dict]:
     """
     # Get html from url in silent mode, split the file by < to make lines easily readable by sed, then
     # run sed command and format output into key/value pairs
-    system(f"curl -s {url} | ./split > {info_file}")
+    system(f"curl -s {url} | ./GET/split.macos > {info_file}")
 
     # This try block allows for the errors to be raised and player.info removed regardless of
     # errors thrown
     try:
-        if system(f"./get/is_private {info_file}"):
+        if system(f"./GET/is_private {info_file}"):
             raise AttributeError("PRIVATE")
-        elif system(f"./get/dne {info_file}"):
+        elif system(f"./GET/dne {info_file}"):
             raise NameError("DNE")
         else:
-            system(f"./get/stats {info_file} > {stat_file}")
-            system(f"./get/comp {info_file} > {comp_file}")
+            system(f"./GET/stats {info_file} > {stat_file}")
+            system(f"./GET/comp {info_file} > {comp_file}")
     finally:
         remove(info_file)
 
@@ -97,8 +96,7 @@ def scrape_play_ow(url: str) -> Tuple[Dict, Dict]:
             lines.append(line)
     remove(stat_file)
 
-    categories = db[Key.CTG]
-    # categories = database.data_categories()
+    categories = db[CATEG]
 
     bnet_stats = {}
     mode, categ = "", ""
@@ -146,3 +144,10 @@ def scrape_play_ow(url: str) -> Tuple[Dict, Dict]:
             bnet_stats[mode][categ][unidecode(line)] = stat
 
     return comp_ranks, bnet_stats
+
+
+if __name__ == "__main__":
+    init_db()
+    r, st = scrape_play_ow(platform_url("PC")("Aarpyy#1975"))
+    print(r)
+    print(st)

@@ -1,4 +1,7 @@
-player.info
-categories.json
-userdata.json
-split
+temp/*.json
+tests
+src/GET/split
+old
+.env
+Pipfile.lock
+Pipfile
