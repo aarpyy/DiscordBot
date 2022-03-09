@@ -6,7 +6,8 @@ from discord import (Intents, Member, DMChannel, Guild, Role, User, Forbidden, H
                      NotFound, Reaction, Emoji, TextChannel)
 from discord.message import Message
 
-from os import getenv, system
+from os import getenv, system, chdir
+from pathlib import Path
 from os.path import join, exists
 from sys import exit, exc_info, stderr
 from asyncio import sleep
@@ -261,11 +262,13 @@ def main():
 
 
 if __name__ == "__main__":
+    root = Path(__file__).parent
     for f in ("comp", "dne", "is_private", "stats"):
-        if not exists(join("get", f)):
+        if not root.joinpath(f"GET/{f}").is_file():
             exit(1)
 
-    if not exists("split"):
+    if not root.joinpath("split/split"):
+        chdir("split")
         system("make split")
 
     main()
