@@ -1,4 +1,4 @@
-# Class for constant database keys to prevent typos in keys that are not user dependant
+from pathlib import Path
 
 # Indices for...
 PRIM = "primary"        # discord user's primary battlenet
@@ -18,5 +18,8 @@ RXN = "reactions"       # list of custom emoji reactions
 TIME = "timestamp"      # timestamp of object
 SCORE = "score"         # score of reactions to message
 
+SRC = Path(__file__).parent
+GET = SRC.joinpath("GET")
+SPLIT = SRC.joinpath("split/split")
 
 loud = True

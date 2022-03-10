@@ -11,7 +11,6 @@ import obwrole
 
 
 def data_categories():
-    GET = Path(__file__).parent.joinpath("GET")
     if not system(f"{str(GET.joinpath('category'))} > categories"):
         categ_id = {}
         with open("categories", "r") as infile:

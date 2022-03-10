@@ -31,7 +31,7 @@ class Session:
             for role in guild.roles:
                 self._roles[role.id] = role.members
 
-    async def end(self):
+    async def clear(self):
         from replit import db
         for key, value in self._db.items():
             db[key] = value

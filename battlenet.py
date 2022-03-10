@@ -91,10 +91,10 @@ def add(disc: str, bnet: str, pf: str) -> None:
         db[BNET].append(bnet)
         db[MMBR][disc][BNET][bnet] = create_index(
             not bool(db[MMBR][disc][BNET]), True, pf, {}, {})
-    except NameError as src:    # NameError means DNE, don't add it
-        raise NameError("unable to add battlenet") from src
-    except ValueError as src:   # ValueError means error with data organization or UNIX error
-        raise ValueError("unable to add battlenet") from src
+    except NameError as exc:    # NameError means DNE, don't add it
+        raise NameError("unable to add battlenet") from exc
+    except ValueError as exc:   # ValueError means error with data organization or UNIX error
+        raise ValueError("unable to add battlenet") from exc
     else:
         db[BNET].append(bnet)
         db[MMBR][disc][BNET][bnet] = create_index(

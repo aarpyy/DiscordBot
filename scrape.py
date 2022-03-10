@@ -7,13 +7,13 @@ from pathlib import Path
 
 from typing import Dict, Tuple, Callable
 
-from database import data_categories
-from config import CTG
+from config import CTG, SRC, SPLIT, GET
 
 
-info_file = "player.info"
-comp_file = "player.comp"
-stat_file = "player.stats"
+temp = SRC.joinpath("temp")
+info_file = str(temp.joinpath("player.info"))
+comp_file = str(temp.joinpath("player.comp"))
+stat_file = str(temp.joinpath("player.stats"))
 
 
 # Given a platform of overwatch, returns a function that accepts a username of that platform
@@ -27,11 +27,11 @@ def platform_url(platform: str) -> Callable[[str], str]:
     :return: function that accepts username and returns url
     """
     if platform.lower() == 'xbox':
-        return lambda x: 'https://playoverwatch.com/en-us/career/xbl/{0}/'.format(x)
+        return lambda x: f'https://playoverwatch.com/en-us/career/xbl/{x}/'
     elif platform.lower() == 'playstation':
-        return lambda x: 'https://playoverwatch.com/en-us/career/psn/{0}/'.format(x)
+        return lambda x: f'https://playoverwatch.com/en-us/career/psn/{x}/'
     else:
-        return lambda x: 'https://playoverwatch.com/en-us/career/pc/{0}/'.format(x.replace('#', '-'))
+        return lambda x: f'https://playoverwatch.com/en-us/career/pc/{x.replace("#", "-")}/'
 
 
 def scrape_play_ow(url: str) -> Tuple[Dict, Dict]:
@@ -47,14 +47,12 @@ def scrape_play_ow(url: str) -> Tuple[Dict, Dict]:
     :return: dict of ranks, dict of stats
     """
 
-    root = Path(__file__).parent
     # Get html from url in silent mode, split the file by < to make lines easily readable by sed, then
     # run sed command and format output into key/value pairs
-    system(f"curl -s {url} | {str(root.joinpath('split/split'))} > {info_file}")
+    system(f"curl -s {url} | {str(SPLIT)} > {info_file}")
 
     # This try block allows for the errors to be raised and player.info removed regardless of
     # errors thrown
-    GET = root.joinpath("GET/")
     try:
         if system(f"{str(GET.joinpath('is_private'))} {info_file}"):
             raise AttributeError("PRIVATE")
@@ -74,15 +72,16 @@ def scrape_play_ow(url: str) -> Tuple[Dict, Dict]:
 
     with open(comp_file, "r") as infile:
         while line := infile.readline():
-            lines.append(line)
-            ranks_found += 1
+            rnk = line.strip('\n') + "|" + infile.readline().strip('\n')
+            if rnk not in lines:
+                lines.append(rnk)
+                ranks_found += 1
     remove(comp_file)
 
     url_prefix = "https://static.playoverwatch.com/img/pages/career/icon-"
 
-    ranks_found //= 4   # Two lines per rank, ranks always appear twice
     for _ in range(ranks_found):
-        role_url, ow_rank = lines.popleft().strip('\n'), lines.popleft().strip('\n')
+        role_url, ow_rank = lines.popleft().split("|")
 
         # Confirm that role and rank are what is expected
         ow_role = role_url.split(url_prefix)[1]

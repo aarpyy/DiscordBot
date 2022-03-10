@@ -182,6 +182,7 @@ def main():
     # Commands
 
     @bot.command(name="eval")
+    @restrict()
     async def _eval(ctx, *args):
         tmp = globals()
         tmp.update(locals())
@@ -230,6 +231,7 @@ def main():
         await account(ctx, bnet, "Playstation")
 
     @bot.command()
+    @restrict()
     async def remove(ctx: Context, bnet: str):
         disc = str(ctx.author)
         try:
@@ -250,6 +252,7 @@ def main():
         database.dump()
 
     @bot.command()
+    @restrict()
     async def primary(ctx: Context, bnet: str):
         disc = str(ctx.author)
         try:
@@ -268,6 +271,18 @@ def main():
                 await ctx.channel.send(f"{bnet} is your new primary linked account!")
 
         database.dump()
+
+    @bot.command()
+    @restrict()
+    async def init(ctx: Context):
+        database.init()
+
+    @bot.command(name="logout")
+    @restrict()
+    async def _logout(ctx: Context):
+
+        # Undoes all changes recently made on server's bot is a part of
+        await test_session.clear()
 
     # Log in to bot using token from replit env and run
     bot.run(getenv('DISC_TOKEN'))

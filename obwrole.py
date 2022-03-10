@@ -267,5 +267,5 @@ async def update(guild: Guild, disc: str, bnet: str):
     except Forbidden:
         await guild.leave()
         loudprint(f"Left {str(guild)} guild because inaccessible", file=stderr)
-    except HTTPException as src:
-        loudprint(f"Failed {update_bnet_roles.__name__}(): {str(src)}", file=stderr)
+    except HTTPException as exc:
+        loudprint(f"Failed {update_bnet_roles.__name__}(): {str(exc)}", file=stderr)
