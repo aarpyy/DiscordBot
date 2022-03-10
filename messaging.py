@@ -3,7 +3,7 @@ from replit import db
 from discord import Message, TextChannel, User, Member, DMChannel, GroupChannel, Reaction, Emoji, Guild, abc
 from discord.ext.commands import Bot
 
-from config import Key
+from config import *
 from battlenet import get_top
 from request import getuser, get_role_obj, force_role_obj
 from obwrole import give_role, donate_role, mention_tag, obw_color
@@ -31,7 +31,7 @@ def valid_reaction(reaction: Reaction):
 
 
 def add_index(disc: str, message: Message):
-    db[Key.MMBR][disc][Key.RXN][str(message.id)] = {Key.TIME: message.created_at.timestamp(), Key.SCORE: {}}
+    db[MMBR][disc][RXN][str(message.id)] = {TIME: message.created_at.timestamp(), SCORE: {}}
 
 
 def gen_reactions(reactions: List[Reaction]):
@@ -62,8 +62,8 @@ def del_reaction(disc: str) -> None:
     :return: None
     """
 
-    oldest_id = min(db[Key.MMBR][disc][Key.RXN], key=lambda x: db[Key.MMBR][disc][Key.RXN][x][Key.TIME])
-    del db[Key.MMBR][disc][Key.RXN][oldest_id]
+    oldest_id = min(db[MMBR][disc][RXN], key=lambda x: db[MMBR][disc][RXN][x][TIME])
+    del db[MMBR][disc][RXN][oldest_id]
 
 
 def pop_reaction(disc: str) -> Dict[str, int]:
@@ -74,9 +74,9 @@ def pop_reaction(disc: str) -> Dict[str, int]:
     :return: reaction index
     """
 
-    oldest_id = min(db[Key.MMBR][disc][Key.RXN], key=lambda x: db[Key.MMBR][disc][Key.RXN][x][Key.TIME])
-    index = db[Key.MMBR][disc][Key.RXN][oldest_id]
-    del db[Key.MMBR][disc][Key.RXN][oldest_id]
+    oldest_id = min(db[MMBR][disc][RXN], key=lambda x: db[MMBR][disc][RXN][x][TIME])
+    index = db[MMBR][disc][RXN][oldest_id]
+    del db[MMBR][disc][RXN][oldest_id]
     return index
 
 
@@ -91,39 +91,39 @@ async def log_reaction(author: Member, reaction: Reaction):
 
     m_id = str(message.id)
 
-    if m_id not in db[Key.MMBR][disc][Key.RXN]:
+    if m_id not in db[MMBR][disc][RXN]:
         print("Adding index")
-        if len(db[Key.MMBR][disc][Key.RXN]) >= nmessages:
+        if len(db[MMBR][disc][RXN]) >= nmessages:
             del_reaction(disc)
         add_index(disc, message)
 
         for rxn in message.reactions:   # type: Reaction
             if valid_reaction(rxn):
-                if str(rxn) in db[Key.MMBR][disc][Key.RXN][str(message.id)][Key.SCORE]:
-                    db[Key.MMBR][disc][Key.RXN][str(message.id)][Key.SCORE][str(rxn)] += reaction_scores[str(rxn)]
+                if str(rxn) in db[MMBR][disc][RXN][str(message.id)][SCORE]:
+                    db[MMBR][disc][RXN][str(message.id)][SCORE][str(rxn)] += reaction_scores[str(rxn)]
                 else:
-                    db[Key.MMBR][disc][Key.RXN][str(message.id)][Key.SCORE][str(rxn)] = reaction_scores[str(rxn)]
+                    db[MMBR][disc][RXN][str(message.id)][SCORE][str(rxn)] = reaction_scores[str(rxn)]
     else:
-        db[Key.MMBR][disc][Key.SCORE] += diff
+        db[MMBR][disc][SCORE] += diff
         # If message already there, find the difference in score between new score and old, update in database,
         # adjust global user score in that channel
 
     database.dump()
 
     # Find the change in reaction count whether negative or postiive
-    nadded = reaction.count - db[Key.MMBR][disc][Key.RXN][m_id][Key.SCORE].get(emoji_name, 0)
+    nadded = reaction.count - db[MMBR][disc][RXN][m_id][SCORE].get(emoji_name, 0)
 
     # Set this reaction count to new count recorded
-    db[Key.MMBR][disc][Key.RXN][m_id][Key.SCORE][emoji_name] = reaction.count
+    db[MMBR][disc][RXN][m_id][SCORE][emoji_name] = reaction.count
 
     # Adjust overall score accordingly
-    db[Key.MMBR][disc][Key.SCORE].setdefault(superlative, 0)
-    db[Key.MMBR][disc][Key.SCORE][superlative] += nadded * reaction_scores[emoji_name]
+    db[MMBR][disc][SCORE].setdefault(superlative, 0)
+    db[MMBR][disc][SCORE][superlative] += nadded * reaction_scores[emoji_name]
 
     # Member: {"shitpost": 5
 
     top_user = get_top(superlative)
-    if db[Key.MMBR][top_user][Key.SCORE][superlative] < db[Key.MMBR][disc][Key.SCORE][superlative]:
+    if db[MMBR][top_user][SCORE][superlative] < db[MMBR][disc][SCORE][superlative]:
         kwargs = dict(
             name=superlative,
             color=obw_color,

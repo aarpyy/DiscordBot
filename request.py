@@ -8,7 +8,7 @@ from discord.utils import find
 from sys import stderr
 
 from tools import loudprint
-from config import Key
+from config import *
 
 from typing import Union, Optional
 
@@ -18,14 +18,14 @@ async def getdm(user: Union[User, Member]) -> DMChannel:
 
 
 async def getuser(bot: Bot, disc: str, guild: Guild = None):
-    if disc in db[Key.MMBR]:
+    if disc in db[MMBR]:
         try:
-            return await bot.fetch_user(db[Key.MMBR][disc][Key.ID])
+            return await bot.fetch_user(db[MMBR][disc][ID])
         except NotFound:
-            loudprint(f"User {disc} <id={db[Key.MMBR][disc][Key.ID]}> does not exist"
+            loudprint(f"User {disc} <id={db[MMBR][disc][ID]}> does not exist"
                       f" and has been removed from db", file=stderr)
-            db[Key.BNET] = [k for k in db[Key.BNET] if k not in set(db[Key.MMBR][disc][Key.BNET])]
-            del db[Key.MMBR][disc]  # If not real user no roles to remove anyway so just delete
+            db[BNET] = [k for k in db[BNET] if k not in set(db[MMBR][disc][BNET])]
+            del db[MMBR][disc]  # If not real user no roles to remove anyway so just delete
         except HTTPException as src:
             loudprint(f"Failed {getuser.__name__}(): {str(src)}", file=stderr)
     elif isinstance(guild, Guild):
@@ -50,8 +50,8 @@ async def get_role_obj(guild: Guild, role: str) -> Optional[Role]:
     :return: Role object if it exists in the guild
     """
 
-    if role in db[Key.ROLE]:
-        return guild.get_role(db[Key.ROLE][role][Key.ID])
+    if role in db[ROLE]:
+        return guild.get_role(db[ROLE][role][ID])
     else:
         try:
             roles = await guild.fetch_roles()
@@ -61,7 +61,7 @@ async def get_role_obj(guild: Guild, role: str) -> Optional[Role]:
             role = role[2:]
             role_obj = find(lambda r: r.name == role, roles)
             if role_obj is not None:
-                db[Key.ROLE][role] = {Key.ID: role_obj.id, Key.MMBR: len(role_obj.members)}
+                db[ROLE][role] = {ID: role_obj.id, MMBR: len(role_obj.members)}
             return role_obj
 
 
@@ -77,6 +77,6 @@ async def force_role_obj(guild: Guild, role: str, **kwargs) -> Role:
     role_obj = await get_role_obj(guild, role)
     if role_obj is None:
         role_obj = await guild.create_role(**kwargs)
-        db[Key.ROLE][role] = {Key.ID: role_obj.id, Key.MMBR: 0}
+        db[ROLE][role] = {ID: role_obj.id, MMBR: 0}
 
     return role_obj

@@ -2,7 +2,7 @@ from replit import db
 
 from scrape import scrape_play_ow, platform_url
 
-from config import Key
+from config import *
 from tools import loudprint
 
 from typing import Union
@@ -11,23 +11,23 @@ from typing import Union
 # Accessors
 
 def is_active(disc: str, bnet: str):
-    return db[Key.MMBR][disc][Key.BNET][bnet][Key.ACTIVE]
+    return db[MMBR][disc][BNET][bnet][ACTIVE]
 
 
 def is_hidden(disc: str, bnet: str):
-    return db[Key.MMBR][disc][Key.BNET][bnet][Key.HID]
+    return db[MMBR][disc][BNET][bnet][HID]
 
 
 def is_primary(disc: str, bnet: str):
-    return db[Key.MMBR][disc][Key.BNET][bnet][Key.PRIM]
+    return db[MMBR][disc][BNET][bnet][PRIM]
 
 
 def is_private(disc: str, bnet: str):
-    return db[Key.MMBR][disc][Key.BNET][bnet][Key.PRIV]
+    return db[MMBR][disc][BNET][bnet][PRIV]
 
 
 def get_top(superlative: str):
-    return max(db[Key.MMBR], key=lambda x: db[Key.MMBR][x][Key.SCORE].get(superlative, 0))
+    return max(db[MMBR], key=lambda x: db[MMBR][x][SCORE].get(superlative, 0))
 
 
 # Battlenet methods
@@ -44,32 +44,32 @@ def create_index(prim: bool, priv: bool, platform: str, rank: dict, stats: dict)
     :param stats: battlenet's general stats
     :return: battlenet object in db
     """
-    return {Key.PRIM: prim,
-            Key.PRIV: priv,
-            Key.ACTIVE: True,
-            Key.HID: False,
-            Key.PTFM: platform,
-            Key.RANK: rank,
-            Key.STAT: stats,
-            Key.ROLE: []}
+    return {PRIM: prim,
+            PRIV: priv,
+            ACTIVE: True,
+            HID: False,
+            PTFM: platform,
+            RANK: rank,
+            STAT: stats,
+            ROLE: []}
 
 
 def clear_index(disc: str, bnet: str):
-    db[Key.MMBR][disc][Key.BNET][bnet][Key.STAT] = {}
-    db[Key.MMBR][disc][Key.BNET][bnet][Key.RANK] = {}
+    db[MMBR][disc][BNET][bnet][STAT] = {}
+    db[MMBR][disc][BNET][bnet][RANK] = {}
 
 
 def deactivate(disc: str, bnet: str):
     clear_index(disc, bnet)
-    db[Key.MMBR][disc][Key.BNET][bnet][Key.ACTIVE] = False
+    db[MMBR][disc][BNET][bnet][ACTIVE] = False
 
 
 def hide(disc: str, bnet: str):
-    db[Key.MMBR][disc][Key.BNET][bnet][Key.HID] = True
+    db[MMBR][disc][BNET][bnet][HID] = True
 
 
 def show(disc: str, bnet: str):
-    db[Key.MMBR][disc][Key.BNET][bnet][Key.HID] = False
+    db[MMBR][disc][BNET][bnet][HID] = False
 
 
 def add(disc: str, bnet: str, pf: str) -> None:
@@ -88,17 +88,17 @@ def add(disc: str, bnet: str, pf: str) -> None:
     try:
         rank, stats = scrape_play_ow(platform_url(pf)(bnet))
     except AttributeError:      # AttributeError means private account, still add it
-        db[Key.BNET].append(bnet)
-        db[Key.MMBR][disc][Key.BNET][bnet] = create_index(
-            not bool(db[Key.MMBR][disc][Key.BNET]), True, pf, {}, {})
+        db[BNET].append(bnet)
+        db[MMBR][disc][BNET][bnet] = create_index(
+            not bool(db[MMBR][disc][BNET]), True, pf, {}, {})
     except NameError as src:    # NameError means DNE, don't add it
         raise NameError("unable to add battlenet") from src
     except ValueError as src:   # ValueError means error with data organization or UNIX error
         raise ValueError("unable to add battlenet") from src
     else:
-        db[Key.BNET].append(bnet)
-        db[Key.MMBR][disc][Key.BNET][bnet] = create_index(
-            not bool(db[Key.MMBR][disc][Key.BNET]), False, pf, rank, stats)
+        db[BNET].append(bnet)
+        db[MMBR][disc][BNET][bnet] = create_index(
+            not bool(db[MMBR][disc][BNET]), False, pf, rank, stats)
 
 
 def update(disc: str, bnet: str) -> None:
@@ -113,18 +113,18 @@ def update(disc: str, bnet: str) -> None:
     """
     ranks, stats = {}, {}
     try:
-        ranks, stats = scrape_play_ow(platform_url(db[Key.MMBR][disc][Key.BNET][bnet][Key.PTFM])(bnet))
+        ranks, stats = scrape_play_ow(platform_url(db[MMBR][disc][BNET][bnet][PTFM])(bnet))
     except AttributeError:
-        db[Key.MMBR][disc][Key.BNET][bnet][Key.PRIV] = True
+        db[MMBR][disc][BNET][bnet][PRIV] = True
         loudprint(f"{bnet} marked as private")
     except NameError or ValueError:
-        db[Key.MMBR][disc][Key.BNET][bnet][Key.ACTIVE] = False
+        db[MMBR][disc][BNET][bnet][ACTIVE] = False
         loudprint(f"{bnet} marked as inactive")
     else:
-        db[Key.MMBR][disc][Key.BNET][bnet][Key.PRIV] = False
+        db[MMBR][disc][BNET][bnet][PRIV] = False
     finally:
-        db[Key.MMBR][disc][Key.BNET][bnet][Key.STAT] = stats
-        db[Key.MMBR][disc][Key.BNET][bnet][Key.RANK] = ranks
+        db[MMBR][disc][BNET][bnet][STAT] = stats
+        db[MMBR][disc][BNET][bnet][RANK] = ranks
 
 
 def remove(bnet: str, disc: str) -> str:
@@ -137,13 +137,13 @@ def remove(bnet: str, disc: str) -> str:
     :return: new primary iff account removed was user's old primary, 0 otherwise
     """
 
-    db[Key.BNET].remove_user_role(bnet, )  # Remove from list of all battlenets
-    primary = db[Key.MMBR][disc][Key.BNET][bnet][Key.PRIM]
-    del db[Key.MMBR][disc][Key.BNET][bnet]
+    db[BNET].remove_user_role(bnet, )  # Remove from list of all battlenets
+    primary = db[MMBR][disc][BNET][bnet][PRIM]
+    del db[MMBR][disc][BNET][bnet]
 
-    if primary and db[Key.MMBR][disc][Key.BNET]:       # If it was this user's primary account and they have
-        new_prim = next(iter(db[Key.MMBR][disc][Key.BNET]))   # another, make it primary
-        db[Key.MMBR][disc][Key.BNET][new_prim][Key.PRIM] = True
+    if primary and db[MMBR][disc][BNET]:       # If it was this user's primary account and they have
+        new_prim = next(iter(db[MMBR][disc][BNET]))   # another, make it primary
+        db[MMBR][disc][BNET][new_prim][PRIM] = True
         return new_prim
     else:
         return ""

@@ -8,11 +8,9 @@ from discord.message import Message
 
 from os import getenv, system, chdir
 from pathlib import Path
-from os.path import join, exists
 from sys import exit, exc_info, stderr
 from asyncio import sleep
 from traceback import print_exc
-from sys import platform
 from functools import wraps
 
 import obwrole
@@ -22,7 +20,9 @@ import reactions
 import request
 import messaging
 
-from config import Key
+from session import Session
+
+from config import *
 from tools import loudprint, loudinput
 
 from typing import Dict, Union, List
@@ -30,15 +30,25 @@ from typing import Dict, Union, List
 su = "aarpyy#3360"  # Creator of bot
 
 
-def restricted(func):
-    @wraps(func)
-    async def new_func(ctx: Context, *args):
-        if str(ctx.author) == su:
-            return await func(ctx, *args)
-        else:
-            await ctx.channel.send(f"That command is currently disabled!")
+def restrict(users=None):
+    if users is None:
+        global su
+        users = [su]
 
-    return new_func
+    def decorator(f):
+
+        global su
+
+        @wraps(f)
+        async def restricted(ctx: Context, *args):
+            if str(ctx.author) in users:
+                return await f(ctx, *args)
+            else:
+                await ctx.channel.send(f"This command is currently disabled!")
+
+        return restricted
+
+    return decorator
 
 
 def main():
@@ -60,8 +70,8 @@ def main():
         return
 
         # Update stats for all battlenets
-        for disc in db[Key.MMBR]:
-            for bnet in db[Key.MMBR][disc][Key.BNET]:
+        for disc in db[MMBR]:
+            for bnet in db[MMBR][disc][BNET]:
                 battlenet.update(disc, bnet)
 
         database.dump()
@@ -72,8 +82,8 @@ def main():
         for guild in bot.guilds:  # type: Guild
             for mmbr in guild.members:  # type: Member
                 disc = str(mmbr)
-                if disc in db[Key.MMBR]:
-                    for bnet in db[Key.MMBR][disc][Key.BNET]:
+                if disc in db[MMBR]:
+                    for bnet in db[MMBR][disc][BNET]:
                         await obwrole.update(guild, disc, bnet)
 
         database.dump()
@@ -81,8 +91,8 @@ def main():
         loudinput("All roles should now be updated")
 
         # If any accounts were marked for removal, re-run through them and remove them
-        for disc in db[Key.MMBR]:
-            for bnet in db[Key.MMBR][disc][Key.BNET]:
+        for disc in db[MMBR]:
+            for bnet in db[MMBR][disc][BNET]:
 
                 # If battlenet is inactive, let user know it's removed
                 if not battlenet.is_active(disc, bnet):
@@ -144,8 +154,8 @@ def main():
         # If new guild member is a bot, ignore them
         if not member.bot:
             disc = str(member)
-            if disc not in db[Key.MMBR]:
-                db[Key.MMBR][disc] = {Key.ID: member.id, Key.RXN: {}, Key.SCORE: {}, Key.BNET: {}}
+            if disc not in db[MMBR]:
+                db[MMBR][disc] = {ID: member.id, RXN: {}, SCORE: {}, BNET: {}}
 
         database.dump()
 
@@ -154,7 +164,7 @@ def main():
         rname = obwrole.rolename(role)
 
         # If the bot removed this role, then rname will already be deleted, this is just if another user deletes role
-        if rname in db[Key.ROLE]:
+        if rname in db[ROLE]:
             obwrole.globalrm(rname)
 
     @bot.event
@@ -162,10 +172,10 @@ def main():
         bname, aname = obwrole.rolename(before), obwrole.rolename(after)
 
         # If the role wasn't in db before, not a role we care about
-        if bname in db[Key.ROLE]:
-            del db[Key.ROLE][bname]
+        if bname in db[ROLE]:
+            del db[ROLE][bname]
             await sleep(5)  # Give some sleep time for after.members to be updated
-            db[Key.ROLE][aname] = {Key.ID: after.id, Key.MMBR: len(after.members)}
+            db[ROLE][aname] = {ID: after.id, MMBR: len(after.members)}
             obwrole.global_rename(bname, aname)
 
     # Commands
@@ -188,16 +198,16 @@ def main():
         """
         disc = str(ctx.author)
 
-        if disc not in db[Key.MMBR]:
-            db[Key.MMBR][disc] = {Key.ID: ctx.author.id, Key.RXN: {}, Key.SCORE: {}, Key.BNET: {}}
+        if disc not in db[MMBR]:
+            db[MMBR][disc] = {ID: ctx.author.id, RXN: {}, SCORE: {}, BNET: {}}
 
-        if bnet in db[Key.MMBR][disc][Key.BNET]:
+        if bnet in db[MMBR][disc][BNET]:
             await ctx.channel.send(f"{bnet} is already linked to your account!")
-        elif bnet in db[Key.BNET]:
+        elif bnet in db[BNET]:
             await ctx.channel.send(f"{bnet} is already linked to another user!")
         else:
             battlenet.add(disc, bnet, platform)
-            db[Key.MMBR][disc][Key.BNET][bnet][Key.ROLE] = list(obwrole.find_battlenet_roles(disc, bnet))
+            db[MMBR][disc][BNET][bnet][ROLE] = list(obwrole.find_battlenet_roles(disc, bnet))
             guild = ctx.guild  # type: Guild
             if guild is not None:
                 await obwrole.update(guild, disc, bnet)
@@ -205,7 +215,7 @@ def main():
 
         database.dump()
 
-    @restricted
+    @restrict()
     @bot.command(name="battlenet")
     async def _battlenet(ctx: Context, bnet: str):
         await ctx.channel.send("Func called")
@@ -223,7 +233,7 @@ def main():
     async def remove(ctx: Context, bnet: str):
         disc = str(ctx.author)
         try:
-            if bnet not in db[Key.MMBR][disc][Key.BNET]:
+            if bnet not in db[MMBR][disc][BNET]:
                 raise KeyError
         except KeyError:
             await ctx.channel.send(f"{bnet} is not linked to your discord!")
@@ -243,18 +253,18 @@ def main():
     async def primary(ctx: Context, bnet: str):
         disc = str(ctx.author)
         try:
-            user_battlenets = db[Key.MMBR][disc][Key.BNET]
+            user_battlenets = db[MMBR][disc][BNET]
             if bnet not in user_battlenets:
                 raise KeyError
         except KeyError:
             await ctx.channel.send(f"{bnet} is not linked to your account!")
         else:
-            if user_battlenets[bnet][Key.PRIM]:
+            if user_battlenets[bnet][PRIM]:
                 await ctx.channel.send(f"{bnet} is already your primary linked account!")
             else:
                 for b in user_battlenets:
-                    user_battlenets[b][Key.PRIM] = False
-                user_battlenets[bnet][Key.PRIM] = True
+                    user_battlenets[b][PRIM] = False
+                user_battlenets[bnet][PRIM] = True
                 await ctx.channel.send(f"{bnet} is your new primary linked account!")
 
         database.dump()
@@ -262,11 +272,13 @@ def main():
     # Log in to bot using token from replit env and run
     bot.run(getenv('DISC_TOKEN'))
 
+    test_session = Session(bot)
+
 
 if __name__ == "__main__":
     root = Path(__file__).parent
-    for f in ("comp", "dne", "is_private", "stats"):
-        if not root.joinpath(f"GET/{f}").is_file():
+    for file in ("comp", "dne", "is_private", "stats"):
+        if not root.joinpath(f"GET/{file}").is_file():
             exit(1)
 
     if not root.joinpath("split/split"):

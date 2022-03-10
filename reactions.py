@@ -2,18 +2,18 @@ from replit import db
 
 from discord import Reaction, Emoji, Message, Member, Guild
 
-from config import Key
+from config import *
 from battlenet import get_top
 from obwrole import give_role, donate_role
 
 from typing import List, Dict
 
-# Key.RXN: {id1: {Key.TIME: tm1, Key.SCORE: sc1}}
+# RXN: {id1: {TIME: tm1, SCORE: sc1}}
 
 
 async def update_top(guild: Guild, member: Member, disc: str):
     top_user = get_top()
-    if db[Key.MMBR][top_user][Key.SCORE] < db[Key.MMBR][disc][Key.SCORE]:
+    if db[MMBR][top_user][SCORE] < db[MMBR][disc][SCORE]:
         former = guild.get_member_named(top_user)
         if former is None:
             await give_role(guild, member, )
@@ -26,10 +26,10 @@ async def add_message(guild: Guild, member: Member, message: Message):
 
     if score_given:
         disc = str(member)
-        if len(db[Key.MMBR][disc][Key.RXN]) >= nmessages:
+        if len(db[MMBR][disc][RXN]) >= nmessages:
             pop_reaction(disc)
 
-        db[Key.MMBR][disc][Key.SCORE] += score
+        db[MMBR][disc][SCORE] += score
         add_index(disc, message, score)
         await update_top(guild, member, disc)
 
@@ -38,14 +38,14 @@ async def update_message(guild: Guild, member: Member, before: Message, after: M
     disc = str(member)
     score_given, score = get_score(after)
     if score_given:
-        if before.id in db[Key.MMBR][disc][Key.RXN]:
-            bscore = db[Key.MMBR][disc][Key.RXN][before.id][Key.SCORE]
+        if before.id in db[MMBR][disc][RXN]:
+            bscore = db[MMBR][disc][RXN][before.id][SCORE]
             if score != bscore:
-                db[Key.MMBR][disc][Key.SCORE] -= bscore
-                del db[Key.MMBR][disc][Key.RXN][before.id]
-        elif len(db[Key.MMBR][disc][Key.RXN]) >= nmessages:
+                db[MMBR][disc][SCORE] -= bscore
+                del db[MMBR][disc][RXN][before.id]
+        elif len(db[MMBR][disc][RXN]) >= nmessages:
             pop_reaction(disc)
 
-        db[Key.MMBR][disc][Key.SCORE] += score
+        db[MMBR][disc][SCORE] += score
         add_index(disc, after, score)
         await update_top(guild, member, disc)

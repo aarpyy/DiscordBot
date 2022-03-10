@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Dict, Tuple, Callable
 
 from database import data_categories
+from config import CTG
 
 
 info_file = "player.info"
@@ -99,8 +100,7 @@ def scrape_play_ow(url: str) -> Tuple[Dict, Dict]:
             lines.append(line)
     remove(stat_file)
 
-    # categories = db[CATEG]
-    categories = data_categories()
+    categories = db[CTG]
 
     bnet_stats = {}
     mode, categ = "", ""
