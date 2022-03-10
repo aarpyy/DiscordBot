@@ -1,6 +1,7 @@
 temp/
 tests/
 venv/
+.idea/
 Pipfile
 Pipfile.lock
 poetry.lock
