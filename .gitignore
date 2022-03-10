@@ -5,3 +5,4 @@ Pipfile
 Pipfile.lock
 poetry.lock
 pyproject.toml
+__pycache__
