@@ -324,4 +324,5 @@ if __name__ == "__main__":
         chdir("split")
         system("make split")
 
+    database.map_compositions()
     main()

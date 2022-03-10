@@ -3,28 +3,28 @@
     "offense": ["reinhardt", "dva", "symmetra", "mei", "baptiste", "lucio"],
     "defense": ["orisa", "sigma", "hanzo", "ashe", "baptiste", "zenyatta"]
   },
-  "temple of anubis": {
+  "temple-of-anubis": {
     "offense": ["winston", "dva", "reaper", "echo", "moira", "lucio"],
     "defense": ["orisa", "sigma", "hanzo", "torbjorn", "baptiste", "zenyatta"]
   },
-  "volskaya industries": {
+  "volskaya-industries": {
     "offense": ["reinhardt", "dva", "echo", "tracer", "ana", "mercy"],
     "defense": ["orisa", "sigma", "torbjorn", "ashe", "baptiste", "zenyatta"]
   },
   "busan": {
     "downtown": ["winston", "dva", "sombra", "reaper", "lucio", "moira"],
     "sanctuary": ["wrecking-ball", "sigma", "echo", "tracer", "zenyatta", "brigitte"],
-    "meka base": ["reinhardt", "dva", "cassidy", "mei", "lucio", "baptiste"]
+    "meka-base": ["reinhardt", "dva", "cassidy", "mei", "lucio", "baptiste"]
   },
   "ilios": {
     "well": ["orisa", "roadhog", "pharah", "cassidy", "baptiste", "mercy"],
     "ruins": ["wrecking-ball", "sigma", "echo", "tracer", "zenyatta", "brigitte"],
     "lighthouse": ["winston", "dva", "tracer", "reaper", "lucio", "moira"]
   },
-  "lijiang tower": {
+  "lijiang-tower": {
     "garden": ["winston", "dva", "sombra", "reaper", "lucio", "moira"],
-    "control center": ["reinhardt", "dva", "symmetra", "junkrat", "baptiste", "lucio"],
-    "night market": ["wrecking-ball", "roadhog", "tracer", "pharah", "zenyatta", "mercy"]
+    "control-center": ["reinhardt", "dva", "symmetra", "junkrat", "baptiste", "lucio"],
+    "night-market": ["wrecking-ball", "roadhog", "tracer", "pharah", "zenyatta", "mercy"]
   },
   "nepal": {
     "village": ["reinhardt", "zarya", "soldier-76", "hanzo", "lucio", "baptiste"],
@@ -34,7 +34,7 @@
   "oasis": {
     "university": ["reinhardt", "dva", "symmetra", "reaper", "lucio", "baptiste"],
     "garden": ["wrecking-ball", "dva", "soldier-76", "tracer", "zenyatta", "brigitte"],
-    "city center": ["winston", "dva", "soldier-76", "tracer", "ana", "brigitte"]
+    "city-center": ["winston", "dva", "soldier-76", "tracer", "ana", "brigitte"]
   },
   "dorado": {
     "offense": ["winston", "dva", "echo", "cassidy", "ana", "mercy"],
@@ -52,11 +52,11 @@
     "offense": ["wrecking-ball", "dva", "pharah", "ashe", "zenyatta", "mercy"],
     "defense": ["reinhardt", "dva", "torbjorn", "ashe", "baptiste", "lucio"]
   },
-  "wachpoint: gibraltar": {
+  "wachpoint-gibraltar": {
     "offense": ["winston", "dva", "echo", "soldier", "ana", "mercy"],
-    "defense": ["winston", "dva", "torb", "soldier", "brigitte", "ana"]
+    "defense": ["winston", "dva", "torbjorn", "soldier-76", "brigitte", "ana"]
   },
-  "blizzard world": {
+  "blizzard-world": {
     "offense": ["wrecking-ball", "roadhog", "ashe", "tracer", "zenyatta", "mercy"],
     "defense": ["reinhardt", "dva", "torbjorn", "ashe", "baptiste", "lucio"]
   },
@@ -68,7 +68,7 @@
     "offense": ["reinhardt", "dva", "echo", "tracer", "baptiste", "lucio"],
     "defense": ["reinhardt", "dva", "mei", "tracer", "baptiste", "lucio"]
   },
-  "kings row": {
+  "kings-row": {
     "offense": ["reinhardt", "dva", "mei", "cassidy", "baptiste", "lucio"],
     "defense": ["reinhardt", "dva", "mei", "cassidy", "baptiste", "lucio"]
   },
