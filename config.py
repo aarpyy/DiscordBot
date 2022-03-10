@@ -17,6 +17,7 @@ HID = "hidden"          # if battlenet stats are hidden
 RXN = "reactions"       # list of custom emoji reactions
 TIME = "timestamp"      # timestamp of object
 SCORE = "score"         # score of reactions to message
+MAP = "maps"            # data set for each map's composition
 
 SRC = Path(__file__).parent
 GET = SRC.joinpath("GET")

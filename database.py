@@ -30,6 +30,11 @@ def data_categories():
         raise ValueError("UNIX ERROR")
 
 
+def map_compositions():
+    with open(str(SRC.joinpath("maps.json")), "r") as maps:
+        db[MAP] = load(maps)
+
+
 async def clean_roles(bot: Bot) -> None:
     """
     Deletes all roles given by Bot. Identifies these roles by a specific prefix. Only applicable

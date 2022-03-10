@@ -181,6 +181,30 @@ def main():
 
     # Commands
 
+    @bot.command()
+    async def comp(ctx: Context, _map: str, _round: str = None):
+        if _map in db[MAP]:
+            if _round is not None and _round in db[MAP][_map]:
+                heroes = db[MAP][_map][_round]
+                emojis = {}
+                guild = ctx.guild           # type: Guild
+                for emoji in guild.emojis:  # type: Emoji
+                    if emoji.name in heroes:
+                        emojis[emoji.name] = str(emoji)
+
+                await ctx.channel.send(", ".join(emojis.values()))
+            else:
+                message = ""
+                for rnd in db[MAP][_map]:
+                    heroes = db[MAP][_map][rnd]
+                    emojis = {}
+                    guild = ctx.guild  # type: Guild
+                    for emoji in guild.emojis:  # type: Emoji
+                        if emoji.name in heroes:
+                            emojis[emoji.name] = str(emoji)
+                    message += f"{rnd}: " + ", ".join(emojis.values()) + "\n"
+                await ctx.channel.send(message)
+
     @bot.command(name="eval")
     @restrict()
     async def _eval(ctx, *args):
