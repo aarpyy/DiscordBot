@@ -44,6 +44,7 @@ def restrict(users=None):
             if str(ctx.author) in users:
                 return await f(ctx, *args)
             else:
+                print(f"{str(ctx.author)} ran {f.__name__} and was blocked.", file=stderr)
                 await ctx.channel.send(f"This command is currently disabled!")
 
         return restricted
@@ -187,6 +188,7 @@ def main():
         res = eval(' '.join(args), tmp)
         await ctx.channel.send(f"Eval: {res}")
 
+    @restrict()
     async def account(ctx: Context, bnet: str, platform: str):
         """
         Attempts to link battlenet accunt to user's discord.
@@ -215,10 +217,8 @@ def main():
 
         database.dump()
 
-    @restrict()
     @bot.command(name="battlenet")
     async def _battlenet(ctx: Context, bnet: str):
-        await ctx.channel.send("Func called")
         await account(ctx, bnet, "PC")
 
     @bot.command()
