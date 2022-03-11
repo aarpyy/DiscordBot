@@ -187,9 +187,7 @@ def main():
         if len(args) > 1:
             if first in ("lijiang-tower", "lijiang", "lijaing"):
                 _map = "lijiang-tower"
-                if len(args) == 2:
-                    second = None
-                elif args[1].lower() == "tower":
+                if len(args) == 2 and args[1].lower() == "tower":
                     second = args[2].lower()
                 else:
                     second = args[1].lower()
@@ -341,13 +339,13 @@ def main():
         str_emoji = {emoji.name: str(emoji) for emoji in ctx.guild.emojis}
         if _round is not None and _round in db[MAP][_map]:
             heroes = db[MAP][_map][_round]
-            composition = [str_emoji[e] for e in heroes]
+            composition = [str_emoji.get(e, '') for e in heroes]
             await ctx.channel.send(", ".join(composition))
         else:
             message = ""
             for rnd in db[MAP][_map]:           # type: str
-                heroes = db[MAP][_map][_round]
-                composition = [str_emoji[e] for e in heroes]
+                heroes = db[MAP][_map][rnd]
+                composition = [str_emoji.get(e, '') for e in heroes]
                 message += f"{rnd.replace('-', ' ').capitalize()}: " + ", ".join(composition) + "\n"
             await ctx.channel.send(message)
 
