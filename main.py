@@ -203,7 +203,8 @@ def main():
                     _round = "control-center"
                 elif second in ("night", "market", "night-market", "nightmarket"):
                     _round = "night-market"
-
+                elif second in ("garden", "gardens"):
+                    _round = "garden"
         elif first in (
                 "watchpoint-gibraltar", "watchpoint-gibralter", "watchpoint",
                 "watchpoint:", "gibraltar", "gibralter"
