@@ -318,8 +318,25 @@ def main():
             _map = first
             _round = None
         else:
-            await ctx.channel.send("Not a recognized map!")
-            return
+            _round = None
+            if first in ("lijiang-tower", "lijiang", "lijaing"):
+                _map = "lijiang-tower"
+            elif first in (
+                    "watchpoint-gibraltar", "watchpoint-gibralter", "watchpoint",
+                    "watchpoint:", "gibraltar", "gibralter"
+            ):
+                _map = "watchpoint-gibraltar"
+            elif first in ("volskaya-industries", "volskaya"):
+                _map = "volskaya-industries"
+            elif first in ("temple-of-anubis", "temple", "anubis", "aboobis"):
+                _map = "temple-of-anubis"
+            elif first in ("blizzard-world", "blizzard", "bliz", "blizz"):
+                _map = "blizzard-world"
+            elif first in ("kings-row", "kings", "king's", "kr"):
+                _map = "kings-row"
+            else:
+                await ctx.channel.send("Not a recognized map!")
+                return
 
         str_emoji = {emoji.name: str(emoji) for emoji in ctx.guild.emojis}
         if _round is not None and _round in db[MAP][_map]:
