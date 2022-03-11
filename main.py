@@ -328,10 +328,10 @@ def main():
             await ctx.channel.send(", ".join(composition))
         else:
             message = ""
-            for rnd in db[MAP][_map]:
+            for rnd in db[MAP][_map]:           # type: str
                 heroes = db[MAP][_map][_round]
                 composition = [str_emoji[e] for e in heroes]
-                message += f"{rnd}: " + ", ".join(composition) + "\n"
+                message += f"{rnd.replace('-', ' ').capitalize()}: " + ", ".join(composition) + "\n"
             await ctx.channel.send(message)
 
     @bot.command(name="eval")

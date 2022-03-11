@@ -35,6 +35,7 @@ def map_compositions():
         db[MAP] = load(maps)
 
 
+
 async def clean_roles(bot: Bot) -> None:
     """
     Deletes all roles given by Bot. Identifies these roles by a specific prefix. Only applicable

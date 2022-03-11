@@ -52,7 +52,7 @@
     "offense": ["wrecking-ball", "dva", "pharah", "ashe", "zenyatta", "mercy"],
     "defense": ["reinhardt", "dva", "torbjorn", "ashe", "baptiste", "lucio"]
   },
-  "wachpoint-gibraltar": {
+  "watchpoint-gibraltar": {
     "offense": ["winston", "dva", "echo", "soldier", "ana", "mercy"],
     "defense": ["winston", "dva", "torbjorn", "soldier-76", "brigitte", "ana"]
   },
