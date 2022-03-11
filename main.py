@@ -182,28 +182,157 @@ def main():
     # Commands
 
     @bot.command()
-    async def comp(ctx: Context, _map: str, _round: str = None):
-        if _map in db[MAP]:
-            if _round is not None and _round in db[MAP][_map]:
-                heroes = db[MAP][_map][_round]
-                emojis = {}
-                guild = ctx.guild           # type: Guild
-                for emoji in guild.emojis:  # type: Emoji
-                    if emoji.name in heroes:
-                        emojis[emoji.name] = str(emoji)
+    async def comp(ctx: Context, *args):
+        first = args[0].lower()
+        if len(args) > 1:
+            if first in ("lijiang-tower", "lijiang", "lijaing"):
+                _map = "lijiang-tower"
+                if len(args) == 2:
+                    second = None
+                elif args[1].lower() == "tower":
+                    second = args[2].lower()
+                else:
+                    second = args[1].lower()
 
-                await ctx.channel.send(", ".join(emojis.values()))
+                if second is None:
+                    _round = None
+                elif second in db[MAP][_map]:
+                    _round = second
+                elif second in ("control", "control-center", "controlcenter"):
+                    _round = "control-center"
+                elif second in ("night", "market", "night-market", "nightmarket"):
+                    _round = "night-market"
+                else:
+                    _round = None
+            elif first in (
+                    "watchpoint-gibraltar", "watchpoint-gibralter", "watchpoint",
+                    "watchpoint:", "gibraltar", "gibralter"
+            ):
+                _map = "watchpoint-gibraltar"
+                second = args[1].lower()
+                if second in ("offense", "off", "o"):
+                    _round = "offense"
+                elif second in ("defense", "def", "d"):
+                    _round = "defense"
+                elif second in ("gibraltar", "gibralter") and len(args) > 2:
+                    third = args[2].lower()
+                    if third in ("offense", "off", "o"):
+                        _round = "offense"
+                    elif third in ("defense", "def", "d"):
+                        _round = "defense"
+                    else:
+                        _round = None
+                else:
+                    _round = None
+            elif first in ("volskaya-industries", "volskaya"):
+                _map = "volskaya-industries"
+                second = args[1].lower()
+                if second in ("offense", "off", "o"):
+                    _round = "offense"
+                elif second in ("defense", "def", "d"):
+                    _round = "defense"
+                elif second == "industries" and len(args) > 2:
+                    third = args[2].lower()
+                    if third in ("offense", "off", "o"):
+                        _round = "offense"
+                    elif third in ("defense", "def", "d"):
+                        _round = "defense"
+                    else:
+                        _round = None
+                else:
+                    _round = None
+            elif first in ("temple-of-anubis", "temple", "anubis", "aboobis"):
+                _map = "temple-of-anubis"
+                second = args[1].lower()
+                if second in ("offense", "off", "o"):
+                    _round = "offense"
+                elif second in ("defense", "def", "d"):
+                    _round = "defense"
+                elif len(args) > 2:
+                    i = 2
+                    while args[i].lower() in ("of", "anubis", "aboobis"):
+                        i += 1
+                        if i >= len(args):
+                            _round = None
+                            break
+                    if second in ("offense", "off", "o"):
+                        _round = "offense"
+                    elif second in ("defense", "def", "d"):
+                        _round = "defense"
+                    else:
+                        _round = None
+                else:
+                    _round = None
+            elif first in ("blizzard-world", "blizzard", "bliz", "blizz"):
+                _map = "blizzard-world"
+                second = args[1].lower()
+                if second in ("offense", "off", "o"):
+                    _round = "offense"
+                elif second in ("defense", "def", "d"):
+                    _round = "defense"
+                elif second == "world" and len(args) > 2:
+                    third = args[2].lower()
+                    if third in ("offense", "off", "o"):
+                        _round = "offense"
+                    elif third in ("defense", "def", "d"):
+                        _round = "defense"
+                    else:
+                        _round = None
+                else:
+                    _round = None
+            elif first in ("kings-row", "kings", "king's", "kr"):
+                _map = "kings-row"
+                second = args[1].lower()
+                if second in ("offense", "off", "o"):
+                    _round = "offense"
+                elif second in ("defense", "def", "d"):
+                    _round = "defense"
+                elif second == "row" and len(args) > 2:
+                    third = args[2].lower()
+                    if third in ("offense", "off", "o"):
+                        _round = "offense"
+                    elif third in ("defense", "def", "d"):
+                        _round = "defense"
+                    else:
+                        _round = None
+                else:
+                    _round = None
+            elif first in db[MAP]:
+                second = args[1].lower()
+                if second in db[MAP][first]:
+                    _round = second
+                elif second in ("offense", "off", "o"):
+                    _round = "offense"
+                elif second in ("defense", "def", "d"):
+                    _round = "defense"
+                else:
+                    _round = None
+                _map = first
             else:
-                message = ""
-                for rnd in db[MAP][_map]:
-                    heroes = db[MAP][_map][rnd]
-                    emojis = {}
-                    guild = ctx.guild  # type: Guild
-                    for emoji in guild.emojis:  # type: Emoji
-                        if emoji.name in heroes:
-                            emojis[emoji.name] = str(emoji)
-                    message += f"{rnd}: " + ", ".join(emojis.values()) + "\n"
-                await ctx.channel.send(message)
+                await ctx.channel.send("Not a recognized map!")
+                return
+        elif len(args) == 0:
+            await ctx.channel.send("Must provide a map!")
+            return
+        elif first in db[MAP]:
+            _map = first
+            _round = None
+        else:
+            await ctx.channel.send("Not a recognized map!")
+            return
+
+        str_emoji = {emoji.name: str(emoji) for emoji in ctx.guild.emojis}
+        if _round is not None and _round in db[MAP][_map]:
+            heroes = db[MAP][_map][_round]
+            composition = [str_emoji[e] for e in heroes]
+            await ctx.channel.send(", ".join(composition))
+        else:
+            message = ""
+            for rnd in db[MAP][_map]:
+                heroes = db[MAP][_map][_round]
+                composition = [str_emoji[e] for e in heroes]
+                message += f"{rnd}: " + ", ".join(composition) + "\n"
+            await ctx.channel.send(message)
 
     @bot.command(name="eval")
     @restrict()
