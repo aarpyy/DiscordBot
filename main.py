@@ -5,8 +5,10 @@ from discord.ext.commands import Bot, Context
 from discord import (Intents, Member, DMChannel, Guild, Role, User, Forbidden, HTTPException,
                      NotFound, Reaction, Emoji, TextChannel)
 from discord.message import Message
+from discord_slash import SlashContext, SlashCommand
 
-from os import getenv, system, chdir
+from os import getenv
+import subprocess as sp
 from pathlib import Path
 from sys import exit, exc_info, stderr
 from asyncio import sleep
@@ -421,14 +423,11 @@ def main():
 
 
 if __name__ == "__main__":
-    root = Path(__file__).parent
-    for file in ("comp", "dne", "is_private", "stats"):
-        if not root.joinpath(f"GET/{file}").is_file():
-            exit(1)
-
-    if not root.joinpath("split/split"):
-        chdir("split")
-        system("make split")
+    root = Path(__file__).parent.absolute()
+    if any(f not in set(root.joinpath("GET").iterdir()) for f in ("comp", "dne", "is_private", "stats")):
+        raise FileNotFoundError(f"{str(root.joinpath('GET'))} is missing one or more required files!")
+    elif not root.joinpath("split/split").is_file():
+        sp.run(["make", "split"], shell=True, cwd=root.joinpath("split"))
 
     database.map_compositions()
     main()

@@ -1,6 +1,7 @@
 from replit import db
 
 from os import system, remove
+import subprocess as sp
 from unidecode import unidecode
 from collections import deque
 from pathlib import Path
@@ -8,6 +9,7 @@ from pathlib import Path
 from typing import Dict, Tuple, Callable
 
 from config import CTG, SRC, SPLIT, GET
+from errors import PrivateProfileError, ProfileNotFoundError
 
 
 temp = SRC.joinpath("temp")
@@ -34,33 +36,37 @@ def platform_url(platform: str) -> Callable[[str], str]:
         return lambda x: f'https://playoverwatch.com/en-us/career/pc/{x.replace("#", "-")}/'
 
 
-def scrape_play_ow(url: str) -> Tuple[Dict, Dict]:
+def scrape_play_ow(bnet: str, pf: str = "PC") -> Tuple[Dict, Dict]:
     """
     Requests from playoverwatch.com user data for a given overwatch username, returning
     Python dictionaries containing competitive rank and general statistics. On average
     takes ~5.05s to complete.
 
-    :param url: url to request from
+    :param bnet: Player's overwatch name
+    :param pf: Platform of overwatch account (PC, Xbox, or PS)
     :raises AttributeError: If url requested is for a private battlenet
     :raises NameError: If url requested is for a battlenet that does not exist
     :raises ValueError: If any errors occur reading the data
     :return: dict of ranks, dict of stats
     """
 
+    url = platform_url(pf)(bnet)
+
     # Get html from url in silent mode, split the file by < to make lines easily readable by sed, then
     # run sed command and format output into key/value pairs
-    system(f"curl -s {url} | {str(SPLIT)} > {info_file}")
+    sp.run(["curl", "-s", url], stdout=sp.PIPE)
+    sp.run(str(SPLIT), stdin=sp.PIPE, stdout=open(info_file, "w"))
 
     # This try block allows for the errors to be raised and player.info removed regardless of
     # errors thrown
     try:
-        if system(f"{str(GET.joinpath('is_private'))} {info_file}"):
-            raise AttributeError("PRIVATE")
-        elif system(f"{str(GET.joinpath('dne'))} {info_file}"):
-            raise NameError("DNE")
+        if sp.run([str(GET.joinpath("is_private")), info_file]).returncode:
+            raise PrivateProfileError(profile=(bnet, pf))
+        elif sp.run([str(GET.joinpath("dne")), info_file]).returncode:
+            raise ProfileNotFoundError(profile=(bnet, pf))
         else:
-            system(f"{str(GET.joinpath('stats'))} {info_file} > {stat_file}")
-            system(f"{str(GET.joinpath('comp'))} {info_file} > {comp_file}")
+            sp.run([str(GET.joinpath("stats")), info_file], stdout=open(stat_file, "w"))
+            sp.run([str(GET.joinpath("comp")), info_file], stdout=open(comp_file, "w"))
     finally:
         remove(info_file)
 
@@ -86,7 +92,7 @@ def scrape_play_ow(url: str) -> Tuple[Dict, Dict]:
         # Confirm that role and rank are what is expected
         ow_role = role_url.split(url_prefix)[1]
         if ow_role.startswith("https") or not ow_rank.strip().isnumeric():
-            raise ValueError
+            raise ValueError("User data loaded not recognizable. Overwatch may have changed it's HTML structure!")
 
         # End of url is user specific data, split by / to get end, then split by - to get specific data
         ow_role = ow_role.split('-')[0]
@@ -107,7 +113,7 @@ def scrape_play_ow(url: str) -> Tuple[Dict, Dict]:
     # If first two lines are not a gamemode and a data category then this data can't be used since its in an
     # unexpected format
     if not lines[0].startswith('|') or not lines[1].startswith("0x"):
-        raise ValueError
+        raise ValueError("User data loaded not recognizable. Overwatch may have changed it's stats categories")
 
     while lines:
         line = lines.popleft().strip('\n')
@@ -151,6 +157,6 @@ def scrape_play_ow(url: str) -> Tuple[Dict, Dict]:
 
 if __name__ == "__main__":
     print("This is main")
-    r, st = scrape_play_ow(platform_url("PC")("Aarpyy#1975"))
+    r, st = scrape_play_ow("Aarpyy#1975")
     print(r)
     print(st)

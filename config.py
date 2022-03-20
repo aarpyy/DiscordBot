@@ -19,7 +19,7 @@ TIME = "timestamp"      # timestamp of object
 SCORE = "score"         # score of reactions to message
 MAP = "maps"            # data set for each map's composition
 
-SRC = Path(__file__).parent
+SRC = Path(__file__).parent.absolute()
 GET = SRC.joinpath("GET")
 SPLIT = SRC.joinpath("split/split")
 
