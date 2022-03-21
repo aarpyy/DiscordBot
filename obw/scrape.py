@@ -1,9 +1,11 @@
+from flask import g
 from replit import db
 
 from os import remove
 import subprocess as sp
 from unidecode import unidecode
 from collections import deque
+import re
 
 from typing import Dict, Tuple, Callable
 
@@ -53,14 +55,37 @@ def scrape_play_ow(bnet: str, pf: str = "PC") -> Tuple[Dict, Dict]:
 
     # path_get html from url in silent mode, split the file by < to make lines easily readable by sed, then
     # run sed command and format output into key/value pairs
-    cmd = []
-    if not is_unix:
-        cmd.append("bash")
-    cmd.extend(["curl", "-s", url])
-    sp.run(cmd, stdout=sp.PIPE)
-    with open(info_file, "w") as infoIO:
-        sp.run(str(path_split), stdin=sp.PIPE, stdout=infoIO)
-    
+    if is_unix:
+        cURL = "curl"
+    else:
+        cURL = "C:\\cygwin64\\bin\\curl.exe"
+
+    # sp.run(str(cwd.joinpath("split.exe")), stdin=open(str(cwd.joinpath('temp.txt')), "r"), capture_output=True, text=True)
+    ps_cURL = sp.Popen([cURL, "-s", url], stdout=sp.PIPE, text=True, encoding="utf-8")
+    ps = sp.run(str(path_split), stdin=ps_cURL.stdout, capture_output=True, text=True, encoding="utf-8")
+    ps_cURL.terminate()
+
+    stat_title = re.compile(
+        (
+            "^.*"                       # Everything up until next match
+            "ProgressBar-title\">"      # Match progress bar title
+            "([^:]+)"                   # Capture title in group 1
+            ".*$"                       # Match rest of line (was in original sed command, probably not important)
+        )
+    )
+    stat_description = re.compile(
+        (
+            "^.*"
+            "ProgressBar-description\">"    # Match description tag
+            "(.*)$"                         # Group everything after
+        )
+    )
+    stat_id = re.compile(
+        "^.*data-category-id=\"(.*)\".*$"   # Match category id tag, grouping everything inside quotes
+    )
+    stat_gamemode = re.compile(
+        "^<div id=\"(.*)\" data-js=\"career-category\" data-mode=\".*\">.*$"    # Match name of category
+    )
 
     # This try block allows for the errors to be raised and player.info removed regardless of
     # errors thrown
@@ -68,18 +93,52 @@ def scrape_play_ow(bnet: str, pf: str = "PC") -> Tuple[Dict, Dict]:
         cmd = []
         if not is_unix:
             cmd.append("bash")
-        if sp.run(cmd + [str(path_get.joinpath("is_private.sh")), info_file]).returncode:
+
+        if ps.stdout.find("this profile is currently private") != -1:
             raise PrivateProfileError(profile=(bnet, pf))
-        elif sp.run(cmd + [str(path_get.joinpath("dne.sh")), info_file]).returncode:
+        elif ps.stdout.find("profile not found") != -1:
             raise ProfileNotFoundError(url, profile=(bnet, pf))
         else:
-            with open(stat_file, "w") as statIO:
-                sp.run(cmd + [str(path_get.joinpath("stats.sh")), info_file], stdout=statIO)
-            with open(comp_file, "w") as compIO:
-                sp.run(cmd + [str(path_get.joinpath("comp.sh")), info_file], stdout=compIO)
+
+            player_stats = {}
+
+            lines = ps.stdout.split('\n')
+            hero = value = id0x = gamemode = ""
+            for line in lines:
+                if (m := stat_title.match(line)) is not None:
+                    hero, = m.groups()
+                    # print(f"title match: {m}; {m.groups()}")
+                elif (m := stat_description.match(line)) is not None:
+                    player_stats[gamemode][id0x][hero] = value
+                    value, = m.groups()
+                    # print(f"desc match: {m}; {m.groups()}")
+                elif (m := stat_id.match(line)) is not None:
+                    id0x, = m.groups()
+                    if id0x.startswith("0x02"):
+                        break
+                    player_stats[gamemode][id0x] = {}
+                    # print(f"id match: {m}; {m.groups()}")
+                elif (m := stat_gamemode.match(line)) is not None:
+                    gamemode, = m.groups()
+                    player_stats[gamemode] = {}
+                    # print(f"categ match: {m}; {m.groups()}")
+            print(player_stats)
+                
+        # cmd = []
+        # if not is_unix:
+        #     cmd.append("bash")
+        # if sp.run(cmd + [str(path_get.joinpath("is_private.sh")), info_file]).returncode:
+        #     raise PrivateProfileError(profile=(bnet, pf))
+        # elif sp.run(cmd + [str(path_get.joinpath("dne.sh")), info_file]).returncode:
+        #     raise ProfileNotFoundError(url, profile=(bnet, pf))
+        # else:
+        #     with open(stat_file, "w") as statIO:
+        #         sp.run(cmd + [str(path_get.joinpath("stats.sh")), info_file], stdout=statIO)
+        #     with open(comp_file, "w") as compIO:
+        #         sp.run(cmd + [str(path_get.joinpath("comp.sh")), info_file], stdout=compIO)
     finally:
         # remove(info_file)
-        pass
+        exit(1)
 
     # Python dictionaries for ranks and time played data
     comp_ranks = {}

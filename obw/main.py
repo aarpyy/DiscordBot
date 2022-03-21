@@ -1,6 +1,4 @@
-from .tools import validate_env
-validate_env()  # Load .env if not already loaded via replit
-
+from .config import *
 from replit import db
 
 from discord.ext import tasks

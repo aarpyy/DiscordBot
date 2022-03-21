@@ -7,7 +7,7 @@ from replit import db
 
 def test_scrape(user="Aarpyy#1975"):
     from obw.database import data_categories, map_compositions
-    data_categories()
+    print(data_categories())
     map_compositions()
     
     assert db is not None
