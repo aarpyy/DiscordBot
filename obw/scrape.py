@@ -8,14 +8,13 @@ from collections import deque
 from typing import Dict, Tuple, Callable
 
 from .db_keys import CTG
-from .config import SRC, SPLIT, GET
+from .config import root, path_split, path_get, path_temp
 from .obw_errors import PrivateProfileError, ProfileNotFoundError
 
 
-temp = SRC.joinpath("temp")
-info_file = str(temp.joinpath("player.info"))
-comp_file = str(temp.joinpath("player.comp"))
-stat_file = str(temp.joinpath("player.stats"))
+info_file = str(path_temp.joinpath("player.info"))
+comp_file = str(path_temp.joinpath("player.comp"))
+stat_file = str(path_temp.joinpath("player.stats"))
 
 
 # Given a platform of overwatch, returns a function that accepts a username of that platform
@@ -52,25 +51,25 @@ def scrape_play_ow(bnet: str, pf: str = "PC") -> Tuple[Dict, Dict]:
 
     url = platform_url(pf)(bnet)
 
-    # Get html from url in silent mode, split the file by < to make lines easily readable by sed, then
+    # path_get html from url in silent mode, split the file by < to make lines easily readable by sed, then
     # run sed command and format output into key/value pairs
     sp.run(["curl", "-s", url], stdout=sp.PIPE)
     with open(info_file, "w") as infoIO:
-        sp.run(str(SPLIT), stdin=sp.PIPE, stdout=infoIO)
+        sp.run(str(path_split), stdin=sp.PIPE, stdout=infoIO)
     
 
     # This try block allows for the errors to be raised and player.info removed regardless of
     # errors thrown
     try:
-        if sp.run([str(GET.joinpath("is_private")), info_file]).returncode:
+        if sp.run([str(path_get.joinpath("is_private.sh")), info_file]).returncode:
             raise PrivateProfileError(profile=(bnet, pf))
-        elif sp.run([str(GET.joinpath("dne")), info_file]).returncode:
+        elif sp.run([str(path_get.joinpath("dne")), info_file]).returncode:
             raise ProfileNotFoundError(profile=(bnet, pf))
         else:
             with open(stat_file, "w") as statIO:
-                sp.run([str(GET.joinpath("stats")), info_file], stdout=statIO)
+                sp.run([str(path_get.joinpath("stats.sh")), info_file], stdout=statIO)
             with open(comp_file, "w") as compIO:
-                sp.run([str(GET.joinpath("comp")), info_file], stdout=compIO)
+                sp.run([str(path_get.joinpath("comp.sh")), info_file], stdout=compIO)
     finally:
         remove(info_file)
 
@@ -98,7 +97,7 @@ def scrape_play_ow(bnet: str, pf: str = "PC") -> Tuple[Dict, Dict]:
         if ow_role.startswith("https") or not ow_rank.strip().isnumeric():
             raise ValueError("User data loaded not recognizable. Overwatch may have changed it's HTML structure!")
 
-        # End of url is user specific data, split by / to get end, then split by - to get specific data
+        # End of url is user specific data, split by / to path_get end, then split by - to path_get specific data
         ow_role = ow_role.split('-')[0]
         comp_ranks[ow_role] = int(ow_rank)
 

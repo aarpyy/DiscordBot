@@ -2,7 +2,7 @@ Point A
 Orisa holds on small stairs in front of choke with bap, hanzo right behind and zen back on
 smaller high ground left of point (POV looking towards choke from point). Sig/ashe hold top right high
 ground holding top right window/choke with dynamite and rock. In rotation, horse back up
-and meet zen to turn to point if touch by tank needed and sig can't get there. Sig and ashe rotate back towards
+and meet zen to turn to point if touch by tank needed and sig can't path_get there. Sig and ashe rotate back towards
 point, around bell to meet zen. Zen can play high ground as well with bap.
 
 Point B

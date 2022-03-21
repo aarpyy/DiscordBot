@@ -199,7 +199,7 @@ def round_name(args: list[str]) -> Round:
         return Round.All
 
 
-def get_map(args: list[str]) -> tuple[Map, Round]:
+def path_get_map(args: list[str]) -> tuple[Map, Round]:
     """Returns map and round name of list of arguments
 
     :param args: command arguments

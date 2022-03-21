@@ -13,11 +13,11 @@ from .db_keys import *
 from typing import Union, Optional
 
 
-async def getdm(user: User) -> DMChannel:
+async def path_getdm(user: User) -> DMChannel:
     return user.dm_channel or await user.create_dm()
 
 
-async def getuser(bot: Bot, disc: str, guild: Guild = None):
+async def path_getuser(bot: Bot, disc: str, guild: Guild = None):
     if disc in db[MMBR]:
         try:
             return await bot.fetch_user(db[MMBR][disc][ID])
@@ -26,22 +26,22 @@ async def getuser(bot: Bot, disc: str, guild: Guild = None):
                       f" and has been removed from db", file=stderr)
             db[BNET] = [k for k in db[BNET] if k not in set(db[MMBR][disc][BNET])]
             del db[MMBR][disc]  # If not real user no roles to remove anyway so just delete
-        except HTTPException as src:
-            loudprint(f"Failed {getuser.__name__}(): {str(src)}", file=stderr)
+        except HTTPException as root:
+            loudprint(f"Failed {path_getuser.__name__}(): {str(root)}", file=stderr)
     elif isinstance(guild, Guild):
-        return guild.get_member_named(disc)
+        return guild.path_get_member_named(disc)
     else:
         for guild in bot.guilds:        # type: Guild
-            user = guild.get_member_named(disc)
+            user = guild.path_get_member_named(disc)
             if user is not None:
                 return user
         return None
 
 
-async def get_role_obj(guild: Guild, role: str) -> Optional[Role]:
+async def path_get_role_obj(guild: Guild, role: str) -> Optional[Role]:
     """
     Helper function that more sufficiently ensures that the Role is returned if it exists. First, it
-    checks if the Role is already in the db, getting the Role via Role.id if true. Otherwise,
+    checks if the Role is already in the db, path_getting the Role via Role.id if true. Otherwise,
     it iterates through all Roles in Guild, attempting to match via string, returning None if no
     matches were made.
 
@@ -51,7 +51,7 @@ async def get_role_obj(guild: Guild, role: str) -> Optional[Role]:
     """
 
     if role in db[ROLE]:
-        return guild.get_role(db[ROLE][role][ID])
+        return guild.path_get_role(db[ROLE][role][ID])
     else:
         try:
             roles = await guild.fetch_roles()
@@ -67,14 +67,14 @@ async def get_role_obj(guild: Guild, role: str) -> Optional[Role]:
 
 async def force_role_obj(guild: Guild, role: str, **kwargs) -> Role:
     """
-    Shell function for get_role_obj() that, if unable to return Role, instead creates the role.
+    Shell function for path_get_role_obj() that, if unable to return Role, instead creates the role.
 
     :param guild: guild that holds role
     :param role: rolename
     :return:
     """
 
-    role_obj = await get_role_obj(guild, role)
+    role_obj = await path_get_role_obj(guild, role)
     if role_obj is None:
         role_obj = await guild.create_role(**kwargs)
         db[ROLE][role] = {ID: role_obj.id, MMBR: 0}

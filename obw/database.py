@@ -1,59 +1,41 @@
 from replit import db
-from .db_keys import *
-from os import system, remove
+from .db_keys import MAP
 from unidecode import unidecode
-from json import load
-from discord.ext.commands import Bot
-from discord import Guild
-from .tools import jsondump, loudprint
-from pathlib import Path
-from . import obwrole
-from .config import GET, SRC
+from .tools import jsondump
+from .config import path_get, root, path_split
+import subprocess as sp
+
 
 def data_categories():
-    if not system(f"{str(GET.joinpath('category'))} > categories"):
-        categ_id = {}
-        with open("categories", "r") as infile:
-            lines = infile.readlines()
+    # Open process, sending output of category.sh to pipe
+    cp = sp.Popen([str(path_get.joinpath("category.sh")), str(path_split)], stdout=sp.PIPE)
 
+    # If successful and bytes were read, then read them in as lines
+    if not cp.returncode and cp.stdout is not None:
+        categories = {}
+        lines = list(cp.stdout.readlines())
+        # print(lines)
         for line in lines:
-            line = line.strip('\n')
+            line = line.decode().strip('\n')    # Convert to string with utf-8 (default)
+
             # Only read categories that start with data-id
             if line.startswith("0x"):
                 _id, name = line.split('|')
                 name = unidecode(name)
-                categ_id[_id] = name
-
-        remove("categories")
-        return categ_id
+                categories[_id] = name
+        return categories
     else:
-        raise ValueError("UNIX ERROR")
+        raise ValueError(f"Subprocess error code: {cp.returncode}")
 
 
 def map_compositions():
-    with open(str(SRC.joinpath("maps.json")), "r") as maps:
-        db[MAP] = load(maps)
-
-
-
-async def clean_roles(bot: Bot) -> None:
-    """
-    Deletes all roles given by Bot. Identifies these roles by a specific prefix. Only applicable
-    during testing when the prefix is given.
-
-    :param bot: discord bot
-    :return: None
-    """
-
-    for guild in bot.guilds:            # type: Guild
-        for role in await guild.fetch_roles():
-            if (rname := obwrole.rolename(role)) in db[ROLE] or role.color == obwrole.obw_color:
-                await role.delete()
-    loudprint("All roles cleaned")
-    dump()
-
+    if db is not None:
+        from json import load
+        with open(str(root.joinpath("resources/maps.json")), "r") as maps:
+            db[MAP] = load(maps)
 
 
 def dump():
-    with open("userdata.json", "w") as outfile:
-        outfile.write(jsondump(db))
+    if db is not None:
+        with open("userdata.json", "w") as outfile:
+            outfile.write(jsondump(db))

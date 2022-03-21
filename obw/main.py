@@ -26,7 +26,7 @@ from . import messaging
 
 from .db_keys import *
 from .tools import loudprint, loudinput
-from .compositions import Map, Round, get_map
+from .compositions import Map, Round, path_get_map
 
 from typing import Dict, Union, List
 
@@ -66,7 +66,7 @@ def restrict(users=None):
 def init_paths():
     root = Path(__file__).parent.absolute()
     for file in ("comp", "dne", "is_private", "stats"):
-        if not root.joinpath(f"GET/{file}").is_file():
+        if not root.joinpath(f"path_get/{file}").is_file():
             exit(1)
 
     if not root.joinpath("split/split").is_file():
@@ -128,9 +128,9 @@ def main():
                 # If battlenet is inactive, let user know it's removed
                 if not battlenet.is_active(disc, bnet):
                     loudprint(f"Removing {disc}[{bnet}]...")
-                    user = await request.getuser(bot, disc)
+                    user = await request.path_getuser(bot, disc)
                     if user is not None:
-                        channel = await request.getdm(user)
+                        channel = await request.path_getdm(user)
                         message = f"Stats for {bnet} were unable to be updated and the account was unlinked " \
                                   f"from your discord."
 
@@ -217,7 +217,7 @@ def main():
             await ctx.channel.send("Must provide a map!")
             return
         else:
-            M, R = get_map(args)
+            M, R = path_get_map(args)
             if M == Map.NoMap:
                 await ctx.channel.send(f"{args[0]} is not a recognizable map!")
                 return
@@ -225,15 +225,15 @@ def main():
             str_emoji = {emoji.name: str(emoji) for emoji in ctx.guild.emojis}
             if R != Round.All:
                 heroes = db[MAP][M.value][R.value]
-                composition = [str_emoji.get(e, '') for e in heroes]
+                composition = [str_emoji.path_get(e, '') for e in heroes]
                 await ctx.channel.send(", ".join(composition))
             else:
                 message = ""
                 for r in db[MAP][M.value]:           # type: str
 
-                    # Get current team composition and its readable string (with emojis)
+                    # path_get current team composition and its readable string (with emojis)
                     heroes = db[MAP][M.value][r]
-                    composition = [str_emoji.get(e, '') for e in heroes]
+                    composition = [str_emoji.path_get(e, '') for e in heroes]
 
                     # Convert round name into nicer string
                     round_name = " ".join(s.capitalize() for s in r.split('-'))
@@ -327,7 +327,7 @@ def main():
         database.dump()
 
     # Log in to bot using token from replit env and run
-    bot.run(getenv('DISC_TOKEN'))
+    bot.run(path_getenv('DISC_TOKEN'))
 
 
 if __name__ == "__main__":

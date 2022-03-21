@@ -7,7 +7,7 @@ from sys import stderr
 from .config import *
 from .tools import loudprint
 from .battlenet import is_active, is_hidden
-from .request import get_role_obj, force_role_obj
+from .request import path_get_role_obj, force_role_obj
 from .db_keys import *
 
 from typing import Set, Union
@@ -21,7 +21,7 @@ no_tag = "--"
 obw_color = Colour.from_rgb(143, 33, 23)
 
 
-def gettime(stat: int) -> str:
+def path_gettime(stat: int) -> str:
     hms = deque()
     for _ in range(3):
         stat, value = divmod(stat, 60)
@@ -33,13 +33,13 @@ def gettime(stat: int) -> str:
     return "0s"
 
 
-def getstat(ctg: str, stat: Union[int, float, str]) -> str:
+def path_getstat(ctg: str, stat: Union[int, float, str]) -> str:
     if isinstance(stat, float):
         return str(stat)
     elif isinstance(stat, str):
         return stat
     elif ctg == "Time Played":
-        return gettime(stat)
+        return path_gettime(stat)
     elif "Accuracy" in ctg or "Percentage" in ctg:
         return str(stat) + '%'
     else:
@@ -101,7 +101,7 @@ async def give_role(guild: Guild, member: Member, role: Union[str, Role]) -> Non
     if isinstance(role, Role):
         role_obj = role
     else:
-        role_obj = await get_role_obj(guild, role)
+        role_obj = await path_get_role_obj(guild, role)
         if role_obj is None:
             role_obj = await guild.create_role(name=role[2:], mentionable=role.startswith(mention_tag), color=obw_color)
             db[ROLE][role] = {ID: role_obj.id, MMBR: 1}
@@ -112,7 +112,7 @@ async def donate_role(guild: Guild, former: Member, new: Member, role: Union[str
     if isinstance(role, Role):
         role_obj = role
     else:
-        role_obj = await get_role_obj(guild, role)
+        role_obj = await path_get_role_obj(guild, role)
         if role_obj is None:
             role_obj = await guild.create_role(name=role[2:], mentionable=role.startswith(mention_tag), color=obw_color)
             db[ROLE][role] = {ID: role_obj.id, MMBR: 1}
@@ -123,7 +123,7 @@ async def donate_role(guild: Guild, former: Member, new: Member, role: Union[str
 
 def find_battlenet_roles(disc: str, bnet: str) -> Set[str]:
     """
-    Gets all roles associated with given battlenet based on stats.
+    path_gets all roles associated with given battlenet based on stats.
 
     :param disc: discord username
     :param bnet: battlenet
@@ -133,13 +133,13 @@ def find_battlenet_roles(disc: str, bnet: str) -> Set[str]:
     roles = set()  # Empty set for roles
 
     # Table of battlenet's statistics; STAT will always exist, but could be empty dict
-    table = db[MMBR][disc][BNET][bnet][STAT].get("quickplay", {})
+    table = db[MMBR][disc][BNET][bnet][STAT].path_get("quickplay", {})
 
     # For each stat associated with battlenet, add that stat if it is an important one
     for ctg in table:
         if ctg in categ_major:
             hero = max(table[ctg], key=lambda x: table[ctg][x])
-            roles.add(f"{no_tag}{hero}-{getstat(ctg, table[ctg][hero])}" + categ_short.get(ctg, ""))
+            roles.add(f"{no_tag}{hero}-{path_getstat(ctg, table[ctg][hero])}" + categ_short.path_get(ctg, ""))
 
     table = db[MMBR][disc][BNET][bnet][RANK]  # Table of battlenet's competitive ranks
     rank = max(table, key=lambda x: table[x])
@@ -174,14 +174,14 @@ async def update_bnet_roles(guild: Guild, disc: str, bnet: str) -> None:
     # Use Guild.fetch_member() to ensure that even if member not in cache they are retrieved
     try:
         member = await guild.fetch_member(user_id)  # type: Member
-    except Forbidden as src:
-        raise AttributeError(f"Unable to access Guild {str(guild)}") from src
-    except HTTPException as src:
-        raise ValueError(f"Fetching user {disc} <id={user_id}> failed") from src
+    except Forbidden as root:
+        raise AttributeError(f"Unable to access Guild {str(guild)}") from root
+    except HTTPException as root:
+        raise ValueError(f"Fetching user {disc} <id={user_id}> failed") from root
 
     loudprint(f"Member fetched: {str(member)} ({member.id})")
 
-    # To calculate roles to add, first get all roles that this battlenet should have, then subtract the roles
+    # To calculate roles to add, first path_get all roles that this battlenet should have, then subtract the roles
     # from that set that the user already has
 
     role: Role
@@ -200,7 +200,7 @@ async def update_bnet_roles(guild: Guild, disc: str, bnet: str) -> None:
 
     loudprint(f"Roles in to_add: {to_add}")
 
-    # To calculate roles to remove, get all roles that the user currently has minus the roles that they are
+    # To calculate roles to remove, path_get all roles that the user currently has minus the roles that they are
     # going to have after the update. The intersection of this set with all roles that the discord user
     # actually has returns the roles that the user has in discord that should be removed. This set
     # now needs to be cross referenced with all the other linked battlenets for this discord user, since
@@ -240,7 +240,7 @@ async def update_bnet_roles(guild: Guild, disc: str, bnet: str) -> None:
         db[ROLE][role][MMBR] -= 1
 
     for role in to_remove:  # type: str
-        role_obj = await get_role_obj(guild, role)  # type: Role
+        role_obj = await path_get_role_obj(guild, role)  # type: Role
         if role_obj is None:
             continue
 

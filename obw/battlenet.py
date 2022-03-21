@@ -24,8 +24,8 @@ def is_private(disc: str, bnet: str):
     return db[MMBR][disc][BNET][bnet][PRIV]
 
 
-def get_top(superlative: str):
-    return max(db[MMBR], key=lambda x: db[MMBR][x][SCORE].get(superlative, 0))
+def path_get_top(superlative: str):
+    return max(db[MMBR], key=lambda x: db[MMBR][x][SCORE].path_get(superlative, 0))
 
 
 # Battlenet methods
@@ -82,7 +82,7 @@ def add(disc: str, bnet: str, pf: str) -> None:
     :raises ValueError: If any other error occurred in loading battlenet data
     :return: None
     """
-    # Load bnet information in table - if the battlenet is not in list of all battlenets it gets added here
+    # Load bnet information in table - if the battlenet is not in list of all battlenets it path_gets added here
     try:
         rank, stats = scrape_play_ow(platform_url(pf)(bnet))
     except AttributeError:      # AttributeError means private account, still add it

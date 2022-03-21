@@ -6,15 +6,6 @@ from typing import Union
 loud = False
 
 
-def validate_env():
-    from os import getenv
-
-    # If .env not already loaded, then we are not on repl.it, so load .env and then import db
-    if not getenv("REPLIT_DB_URL"):
-        from dotenv import load_dotenv
-        load_dotenv(".env")
-
-
 def loudprint(*args, **kwargs):
     global loud
     if loud:

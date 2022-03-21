@@ -1,14 +1,19 @@
 from pathlib import Path
-
-SRC = Path(__file__).parent
-GET = SRC.joinpath("GET")
-
+from os import getenv
 from platform import system
+
+root = Path(__file__).parent.parent.absolute()
+path_get = root.joinpath("GET")
 if system() == "Windows":
     x = "split.exe"
 else:
     x = "split"
 
-SPLIT = SRC.joinpath(f"split/{x}")
+path_split = root.joinpath(f"split/{x}")
+path_temp = root.joinpath("temp")
 
-loud = True
+
+# If .env not already loaded, then we are not on repl.it, so load .env and then import db
+if not getenv("REPLIT_DB_URL"):
+    from dotenv import load_dotenv
+    load_dotenv(root.joinpath(".env"))
