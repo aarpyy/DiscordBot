@@ -1,13 +1,13 @@
+from obw.config import *
 from obw.scrape import scrape_play_ow
 from obw.obw_errors import PrivateProfileError, ProfileNotFoundError
 from sys import stderr
-from obw.config import *
 from replit import db
 
 
 def test_scrape(user="Aarpyy#1975"):
     from obw.database import data_categories, map_compositions
-    print(data_categories())
+    data_categories()
     map_compositions()
     
     assert db is not None

@@ -37,6 +37,7 @@ def data_categories():
                 # id's that start with 0x are all category id's, but if it starts with 0x02 then its a hero, not general category, so we just want 0x08...
                 if ID.startswith("0x08"):   
                     categories[ID] = unidecode(NAME)
+        return categories
     else:
         raise ValueError(f"Subprocess error code: {ps.returncode}")
 

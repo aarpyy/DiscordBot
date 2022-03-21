@@ -139,7 +139,7 @@ def map_name(args: list[str]) -> tuple[Map, list[str]]:
             rem = args[1:]
         else:
             rem = []
-        return Map.KingsRow
+        return Map.KingsRow, rem
     elif s == "numbani":
         return Map.Numbani, args[1:]
     
