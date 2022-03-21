@@ -70,7 +70,7 @@ def scrape_play_ow(bnet: str, pf: str = "PC") -> Tuple[Dict, Dict]:
             cmd.append("bash")
         if sp.run(cmd + [str(path_get.joinpath("is_private.sh")), info_file]).returncode:
             raise PrivateProfileError(profile=(bnet, pf))
-        elif sp.run(cmd + [str(path_get.joinpath("dne")), info_file]).returncode:
+        elif sp.run(cmd + [str(path_get.joinpath("dne.sh")), info_file]).returncode:
             raise ProfileNotFoundError(url, profile=(bnet, pf))
         else:
             with open(stat_file, "w") as statIO:
@@ -93,7 +93,6 @@ def scrape_play_ow(bnet: str, pf: str = "PC") -> Tuple[Dict, Dict]:
             if rnk not in lines:
                 lines.append(rnk)
                 ranks_found += 1
-    remove(comp_file)
 
     url_prefix = "https://static.playoverwatch.com/img/pages/career/icon-"
 

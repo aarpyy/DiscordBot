@@ -9,7 +9,7 @@
  */
 int main() {
     int c;
-    while ((c = path_getchar()) != EOF) {
+    while ((c = getchar()) != EOF) {
         if (c == LEFTCHEVRON) putchar(NEWLINE);
         putchar(c);
     }
