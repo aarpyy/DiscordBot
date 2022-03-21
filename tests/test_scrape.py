@@ -16,7 +16,8 @@ def test_scrape(user="Aarpyy#1975"):
         _, st = scrape_play_ow(user)
     except PrivateProfileError as exc:
         print(f"{exc.profile} is private", file=stderr)
-    except ProfileNotFoundError:
+    except ProfileNotFoundError as exc:
+        print(str(exc))
         assert False
     except ValueError as exc:
         raise ValueError(f"{test_scrape.__name__} failed") from exc

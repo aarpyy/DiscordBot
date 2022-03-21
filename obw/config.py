@@ -5,11 +5,13 @@ from platform import system
 root = Path(__file__).parent.parent.absolute()
 path_get = root.joinpath("GET")
 if system() == "Windows":
-    x = "split.exe"
+    sp = "split.exe"
+    is_unix = False
 else:
-    x = "split"
+    sp = "split"
+    is_unix = True
 
-path_split = root.joinpath(f"split/{x}")
+path_split = root.joinpath(f"split/{sp}")
 path_temp = root.joinpath("temp")
 
 

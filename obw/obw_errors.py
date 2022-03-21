@@ -1,7 +1,7 @@
 class PrivateProfileError(Exception):
 
     def __init__(self, message="", *, profile=None):
-        super(message)
+        super().__init__(message)
         self._profile = profile
 
     @property
@@ -12,7 +12,7 @@ class PrivateProfileError(Exception):
 class ProfileNotFoundError(Exception):
 
     def __init__(self, message="", *, profile=None):
-        super(message)
+        super().__init__(message)
         self._profile = profile
 
     @property

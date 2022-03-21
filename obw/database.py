@@ -2,13 +2,17 @@ from replit import db
 from .db_keys import MAP
 from unidecode import unidecode
 from .tools import jsondump
-from .config import path_get, root, path_split
+from .config import path_get, root, path_split, is_unix
 import subprocess as sp
 
 
 def data_categories():
     # Open process, sending output of category.sh to pipe
-    cp = sp.Popen([str(path_get.joinpath("category.sh")), str(path_split)], stdout=sp.PIPE)
+    cmd = []
+    if not is_unix:
+        cmd.append("bash")
+    cmd.extend([str(path_get.joinpath("category.sh")), str(path_split)])
+    cp = sp.Popen(cmd, stdout=sp.PIPE)
 
     # If successful and bytes were read, then read them in as lines
     if not cp.returncode and cp.stdout is not None:
@@ -23,8 +27,10 @@ def data_categories():
                 _id, name = line.split('|')
                 name = unidecode(name)
                 categories[_id] = name
+        cp.terminate()
         return categories
     else:
+        cp.terminate()
         raise ValueError(f"Subprocess error code: {cp.returncode}")
 
 

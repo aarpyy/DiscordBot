@@ -8,7 +8,7 @@ from collections import deque
 from typing import Dict, Tuple, Callable
 
 from .db_keys import CTG
-from .config import root, path_split, path_get, path_temp
+from .config import root, path_split, path_get, path_temp, is_unix
 from .obw_errors import PrivateProfileError, ProfileNotFoundError
 
 
@@ -53,7 +53,11 @@ def scrape_play_ow(bnet: str, pf: str = "PC") -> Tuple[Dict, Dict]:
 
     # path_get html from url in silent mode, split the file by < to make lines easily readable by sed, then
     # run sed command and format output into key/value pairs
-    sp.run(["curl", "-s", url], stdout=sp.PIPE)
+    cmd = []
+    if not is_unix:
+        cmd.append("bash")
+    cmd.extend(["curl", "-s", url])
+    sp.run(cmd, stdout=sp.PIPE)
     with open(info_file, "w") as infoIO:
         sp.run(str(path_split), stdin=sp.PIPE, stdout=infoIO)
     
@@ -61,17 +65,21 @@ def scrape_play_ow(bnet: str, pf: str = "PC") -> Tuple[Dict, Dict]:
     # This try block allows for the errors to be raised and player.info removed regardless of
     # errors thrown
     try:
-        if sp.run([str(path_get.joinpath("is_private.sh")), info_file]).returncode:
+        cmd = []
+        if not is_unix:
+            cmd.append("bash")
+        if sp.run(cmd + [str(path_get.joinpath("is_private.sh")), info_file]).returncode:
             raise PrivateProfileError(profile=(bnet, pf))
-        elif sp.run([str(path_get.joinpath("dne")), info_file]).returncode:
-            raise ProfileNotFoundError(profile=(bnet, pf))
+        elif sp.run(cmd + [str(path_get.joinpath("dne")), info_file]).returncode:
+            raise ProfileNotFoundError(url, profile=(bnet, pf))
         else:
             with open(stat_file, "w") as statIO:
-                sp.run([str(path_get.joinpath("stats.sh")), info_file], stdout=statIO)
+                sp.run(cmd + [str(path_get.joinpath("stats.sh")), info_file], stdout=statIO)
             with open(comp_file, "w") as compIO:
-                sp.run([str(path_get.joinpath("comp.sh")), info_file], stdout=compIO)
+                sp.run(cmd + [str(path_get.joinpath("comp.sh")), info_file], stdout=compIO)
     finally:
-        remove(info_file)
+        # remove(info_file)
+        pass
 
     # Python dictionaries for ranks and time played data
     comp_ranks = {}
