@@ -2,9 +2,9 @@ from replit import db
 
 from discord import Reaction, Emoji, Message, Member, Guild
 
-from config import *
-from battlenet import get_top
-from obwrole import give_role, donate_role
+from .db_keys import *
+from .battlenet import get_top
+from .obwrole import give_role, donate_role
 
 from typing import List, Dict
 

@@ -1,3 +1,6 @@
+from .tools import validate_env
+validate_env()  # Load .env if not already loaded via replit
+
 from replit import db
 
 from discord.ext import tasks
@@ -5,27 +8,25 @@ from discord.ext.commands import Bot, Context
 from discord import (Intents, Member, DMChannel, Guild, Role, User, Forbidden, HTTPException,
                      NotFound, Reaction, Emoji, TextChannel)
 from discord.message import Message
-from discord_slash import SlashContext, SlashCommand
 
-from os import getenv
-import subprocess as sp
+from os import system, chdir
 from pathlib import Path
 from sys import exit, exc_info, stderr
 from asyncio import sleep
 from traceback import print_exc
 from functools import wraps
+from json import load
+import subprocess as sp
 
-import obwrole
-import database
-import battlenet
-import reactions
-import request
-import messaging
+from . import obwrole
+from . import database
+from . import battlenet
+from . import request
+from . import messaging
 
-from session import Session
-
-from config import *
-from tools import loudprint, loudinput
+from .db_keys import *
+from .tools import loudprint, loudinput
+from .compositions import Map, Round, get_map
 
 from typing import Dict, Union, List
 
@@ -33,6 +34,14 @@ su = "aarpyy#3360"  # Creator of bot
 
 
 def restrict(users=None):
+    """Given a list of users, returns a wrapper that restricts
+    the use of a discord command except for the given users.
+
+    :param users: List of users with permission to use function, defaults to super user (aarpyy)
+    :type users: list[str], optional
+    :return: wrapper, restricting bot.command()
+    :rtype: function
+    """
     if users is None:
         global su
         users = [su]
@@ -54,7 +63,29 @@ def restrict(users=None):
     return decorator
 
 
+def init_paths():
+    root = Path(__file__).parent.absolute()
+    for file in ("comp", "dne", "is_private", "stats"):
+        if not root.joinpath(f"GET/{file}").is_file():
+            exit(1)
+
+    if not root.joinpath("split/split").is_file():
+
+        # Make sure to use the correct compiler
+        from platform import system
+        if system() == "Windows":
+            cc = "C:\\cygwin64\\bin\\gcc.exe"
+        else:
+            cc = "gcc"
+        sp.run([cc, "-o", "split", "split.c"], cwd=root.joinpath("split"))
+
+
 def main():
+
+    # Makes sure that all files required for scraping from playoverwatch.com exist
+    init_paths()
+
+    # Normal intents, including managing members
     intents = Intents.default()
     intents.members = True
     bot = Bot(command_prefix='/', intents=intents, case_insensitive=True)
@@ -66,16 +97,13 @@ def main():
 
         # Print contents of db to userdata.json, only used for testing
         database.dump()
-        loudprint("Database dumped")
 
     @tasks.loop(hours=1)
     async def update_loop():
-        return
 
         # Update stats for all battlenets
-        for disc in db[MMBR]:
-            for bnet in db[MMBR][disc][BNET]:
-                battlenet.update(disc, bnet)
+        for disc in db[BNET]:
+            battlenet.update(disc, bnet)
 
         database.dump()
 
@@ -116,7 +144,7 @@ def main():
 
     @bot.event
     async def on_ready():
-        loudprint(f"Logged in as {bot.user}.")
+        print(f"Logged in as {bot.user}.")
         # Uncomment these for testing
         # database.refresh()
         # await database.clean_roles(bot)
@@ -188,138 +216,31 @@ def main():
         if not args:
             await ctx.channel.send("Must provide a map!")
             return
-
-        first = args[0].lower()
-        _round = None
-        if first in ("lijiang-tower", "lijiang", "lijaing"):
-            _map = "lijiang-tower"
-            if len(args) > 2 and args[1].lower() == "tower":
-                second = args[2].lower()
-            elif len(args) > 1:
-                second = args[1].lower()
-            else:
-                second = None
-
-            if second is not None:
-                if second in ("control", "control-center", "controlcenter"):
-                    _round = "control-center"
-                elif second in ("night", "market", "night-market", "nightmarket"):
-                    _round = "night-market"
-                elif second in ("garden", "gardens"):
-                    _round = "garden"
-        elif first in (
-                "watchpoint-gibraltar", "watchpoint-gibralter", "watchpoint",
-                "watchpoint:", "gibraltar", "gibralter"
-        ):
-            _map = "watchpoint-gibraltar"
-            if len(args) > 1:
-                second = args[1].lower()
-                if second in ("offense", "off", "o"):
-                    _round = "offense"
-                elif second in ("defense", "def", "d"):
-                    _round = "defense"
-                elif second in ("gibraltar", "gibralter") and len(args) > 2:
-                    third = args[2].lower()
-                    if third in ("offense", "off", "o"):
-                        _round = "offense"
-                    elif third in ("defense", "def", "d"):
-                        _round = "defense"
-        elif first in ("volskaya-industries", "volskaya"):
-            _map = "volskaya-industries"
-            if len(args) > 1:
-                second = args[1].lower()
-                if second in ("offense", "off", "o"):
-                    _round = "offense"
-                elif second in ("defense", "def", "d"):
-                    _round = "defense"
-                elif second == "industries" and len(args) > 2:
-                    third = args[2].lower()
-                    if third in ("offense", "off", "o"):
-                        _round = "offense"
-                    elif third in ("defense", "def", "d"):
-                        _round = "defense"
-        elif first in ("temple-of-anubis", "temple", "anubis", "aboobis"):
-            _map = "temple-of-anubis"
-            if len(args) > 1:
-                second = args[1].lower()
-                if second in ("offense", "off", "o"):
-                    _round = "offense"
-                elif second in ("defense", "def", "d"):
-                    _round = "defense"
-                elif len(args) > 2:
-                    i = 2
-                    while args[i].lower() in ("of", "anubis", "aboobis"):
-                        i += 1
-                        if i >= len(args):
-                            _round = None
-                            break
-                    if second in ("offense", "off", "o"):
-                        _round = "offense"
-                    elif second in ("defense", "def", "d"):
-                        _round = "defense"
-        elif first in ("blizzard-world", "blizzard", "bliz", "blizz"):
-            _map = "blizzard-world"
-            if len(args) > 1:
-                second = args[1].lower()
-                if second in ("offense", "off", "o"):
-                    _round = "offense"
-                elif second in ("defense", "def", "d"):
-                    _round = "defense"
-                elif second == "world" and len(args) > 2:
-                    third = args[2].lower()
-                    if third in ("offense", "off", "o"):
-                        _round = "offense"
-                    elif third in ("defense", "def", "d"):
-                        _round = "defense"
-        elif first in ("kings-row", "kings", "king's", "kr"):
-            _map = "kings-row"
-            if len(args) > 1:
-                second = args[1].lower()
-                if second in ("offense", "off", "o"):
-                    _round = "offense"
-                elif second in ("defense", "def", "d"):
-                    _round = "defense"
-                elif second == "row" and len(args) > 2:
-                    third = args[2].lower()
-                    if third in ("offense", "off", "o"):
-                        _round = "offense"
-                    elif third in ("defense", "def", "d"):
-                        _round = "defense"
-        elif first in db[MAP]:
-            _map = first
-            if len(args) > 1:
-                second = args[1].lower()
-                if second in ("offense", "off", "o"):
-                    _round = "offense"
-                elif second in ("defense", "def", "d"):
-                    _round = "defense"
-                elif second in db[MAP][_map]:
-                    _round = second
         else:
-            await ctx.channel.send("Not a recognized map!")
-            return
+            M, R = get_map(args)
+            if M == Map.NoMap:
+                await ctx.channel.send(f"{args[0]} is not a recognizable map!")
+                return
 
-        str_emoji = {emoji.name: str(emoji) for emoji in ctx.guild.emojis}
-        if _round is not None and _round in db[MAP][_map]:
-            heroes = db[MAP][_map][_round]
-            composition = [str_emoji.get(e, '') for e in heroes]
-            await ctx.channel.send(", ".join(composition))
-        else:
-            message = ""
-            for rnd in db[MAP][_map]:           # type: str
-                heroes = db[MAP][_map][rnd]
+            str_emoji = {emoji.name: str(emoji) for emoji in ctx.guild.emojis}
+            if R != Round.All:
+                heroes = db[MAP][M.value][R.value]
                 composition = [str_emoji.get(e, '') for e in heroes]
-                round_name = " ".join(s.capitalize() for s in rnd.split('-'))
-                message += f"{round_name}:  " + " ".join(composition) + "\n"
-            await ctx.channel.send(message)
+                await ctx.channel.send(", ".join(composition))
+            else:
+                message = ""
+                for r in db[MAP][M.value]:           # type: str
 
-    @bot.command(name="eval")
-    @restrict()
-    async def _eval(ctx, *args):
-        tmp = globals()
-        tmp.update(locals())
-        res = eval(' '.join(args), tmp)
-        await ctx.channel.send(f"Eval: {res}")
+                    # Get current team composition and its readable string (with emojis)
+                    heroes = db[MAP][M.value][r]
+                    composition = [str_emoji.get(e, '') for e in heroes]
+
+                    # Convert round name into nicer string
+                    round_name = " ".join(s.capitalize() for s in r.split('-'))
+
+                    # Append to message
+                    message += f"{round_name}:  " + " ".join(composition) + "\n"
+                await ctx.channel.send(message)
 
     @restrict()
     async def account(ctx: Context, bnet: str, platform: str):
@@ -333,6 +254,7 @@ def main():
         """
         disc = str(ctx.author)
 
+        # If user not in database, add them
         if disc not in db[MMBR]:
             db[MMBR][disc] = {ID: ctx.author.id, RXN: {}, SCORE: {}, BNET: {}}
 
@@ -404,30 +326,9 @@ def main():
 
         database.dump()
 
-    @bot.command()
-    @restrict()
-    async def init(ctx: Context):
-        database.init()
-
-    @bot.command(name="logout")
-    @restrict()
-    async def _logout(ctx: Context):
-
-        # Undoes all changes recently made on server's bot is a part of
-        await test_session.clear()
-
     # Log in to bot using token from replit env and run
     bot.run(getenv('DISC_TOKEN'))
 
-    test_session = Session(bot)
-
 
 if __name__ == "__main__":
-    root = Path(__file__).parent.absolute()
-    if any(f not in set(root.joinpath("GET").iterdir()) for f in ("comp", "dne", "is_private", "stats")):
-        raise FileNotFoundError(f"{str(root.joinpath('GET'))} is missing one or more required files!")
-    elif not root.joinpath("split/split").is_file():
-        sp.run(["make", "split"], shell=True, cwd=root.joinpath("split"))
-
-    database.map_compositions()
     main()

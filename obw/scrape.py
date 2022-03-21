@@ -1,15 +1,15 @@
 from replit import db
 
-from os import system, remove
+from os import remove
 import subprocess as sp
 from unidecode import unidecode
 from collections import deque
-from pathlib import Path
 
 from typing import Dict, Tuple, Callable
 
-from config import CTG, SRC, SPLIT, GET
-from errors import PrivateProfileError, ProfileNotFoundError
+from .db_keys import CTG
+from .config import SRC, SPLIT, GET
+from .obw_errors import PrivateProfileError, ProfileNotFoundError
 
 
 temp = SRC.joinpath("temp")
@@ -55,7 +55,9 @@ def scrape_play_ow(bnet: str, pf: str = "PC") -> Tuple[Dict, Dict]:
     # Get html from url in silent mode, split the file by < to make lines easily readable by sed, then
     # run sed command and format output into key/value pairs
     sp.run(["curl", "-s", url], stdout=sp.PIPE)
-    sp.run(str(SPLIT), stdin=sp.PIPE, stdout=open(info_file, "w"))
+    with open(info_file, "w") as infoIO:
+        sp.run(str(SPLIT), stdin=sp.PIPE, stdout=infoIO)
+    
 
     # This try block allows for the errors to be raised and player.info removed regardless of
     # errors thrown
@@ -65,8 +67,10 @@ def scrape_play_ow(bnet: str, pf: str = "PC") -> Tuple[Dict, Dict]:
         elif sp.run([str(GET.joinpath("dne")), info_file]).returncode:
             raise ProfileNotFoundError(profile=(bnet, pf))
         else:
-            sp.run([str(GET.joinpath("stats")), info_file], stdout=open(stat_file, "w"))
-            sp.run([str(GET.joinpath("comp")), info_file], stdout=open(comp_file, "w"))
+            with open(stat_file, "w") as statIO:
+                sp.run([str(GET.joinpath("stats")), info_file], stdout=statIO)
+            with open(comp_file, "w") as compIO:
+                sp.run([str(GET.joinpath("comp")), info_file], stdout=compIO)
     finally:
         remove(info_file)
 
@@ -153,10 +157,3 @@ def scrape_play_ow(bnet: str, pf: str = "PC") -> Tuple[Dict, Dict]:
             bnet_stats[mode][categ][unidecode(line)] = stat
 
     return comp_ranks, bnet_stats
-
-
-if __name__ == "__main__":
-    print("This is main")
-    r, st = scrape_play_ow("Aarpyy#1975")
-    print(r)
-    print(st)

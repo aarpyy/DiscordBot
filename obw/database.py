@@ -1,14 +1,14 @@
 from replit import db
-from config import *
+from .db_keys import *
 from os import system, remove
 from unidecode import unidecode
 from json import load
 from discord.ext.commands import Bot
 from discord import Guild
-from tools import jsondump, loudprint
+from .tools import jsondump, loudprint
 from pathlib import Path
-import obwrole
-
+from . import obwrole
+from .config import GET, SRC
 
 def data_categories():
     if not system(f"{str(GET.joinpath('category'))} > categories"):
@@ -53,25 +53,7 @@ async def clean_roles(bot: Bot) -> None:
     dump()
 
 
-def init():
-    db[MMBR] = {}
-    db[ROLE] = {}
-    db[BNET] = []
-    with open("categories.json", "r") as infile:
-        db[CTG] = load(infile)
-
-
-def clear():
-    for key in db:
-        del db[key]
-
-
-def refresh():
-    db[MMBR] = {}
-    db[ROLE] = {}
-    db[BNET] = []
-
 
 def dump():
-    with open("../userdata.json", "w") as outfile:
+    with open("userdata.json", "w") as outfile:
         outfile.write(jsondump(db))

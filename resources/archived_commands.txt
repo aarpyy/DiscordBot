@@ -1,0 +1,79 @@
+    @bot.event
+    async def on_reaction_add(reaction: Reaction, user: Union[User, Member]):
+        message = reaction.message  # type: Message
+        channel = message.channel
+        guild = message.guild
+        author = message.author
+
+        # Check to confirm that reaction was in channel of guild we are interested in
+        if isinstance(author, Member) and isinstance(guild, Guild) and messaging.valid_reaction(reaction) and \
+                messaging.valid_channel(channel):
+            emoji = reaction.emoji
+            loudprint(f"Emoji: {repr(emoji)} (is custom: {reaction.custom_emoji})")
+            loudprint(f"Reaction: {repr(reaction)}")
+            await messaging.log_reaction(author, reaction)
+
+        database.dump()
+
+        loudprint("Database dumped")
+
+
+    @bot.event
+    async def on_error(event: str, *args, **kwargs):
+        print(f"event: {event}", file=stderr)
+        print(f"args: {args}", file=stderr)
+        print(f"kwargs: {kwargs}", file=stderr)
+        print_exc(file=stderr)
+        await bot.close()
+
+    @bot.event
+    async def on_member_join(member: Member):
+        # If new guild member is a bot, ignore them
+        if not member.bot:
+            disc = str(member)
+            if disc not in db[MMBR]:
+                db[MMBR][disc] = {ID: member.id, RXN: {}, SCORE: {}, BNET: {}}
+
+        database.dump()
+
+    @bot.event
+    async def on_guild_role_delete(role: Role):
+        rname = obwrole.rolename(role)
+
+        # If the bot removed this role, then rname will already be deleted, this is just if another user deletes role
+        if rname in db[ROLE]:
+            obwrole.globalrm(rname)
+
+    @bot.event
+    async def on_guild_role_update(before: Role, after: Role):
+        bname, aname = obwrole.rolename(before), obwrole.rolename(after)
+
+        # If the role wasn't in db before, not a role we care about
+        if bname in db[ROLE]:
+            del db[ROLE][bname]
+            await sleep(5)  # Give some sleep time for after.members to be updated
+            db[ROLE][aname] = {ID: after.id, MMBR: len(after.members)}
+            obwrole.global_rename(bname, aname)
+
+    # Commands
+
+    @bot.command(name="eval")
+    @restrict()
+    async def _eval(ctx, *args):
+        tmp = globals()
+        tmp.update(locals())
+        res = eval(' '.join(args), tmp)
+        await ctx.channel.send(f"Eval: {res}")
+
+
+    @bot.command(name="logout")
+    @restrict()
+    async def _logout(ctx: Context):
+
+        # Undoes all changes recently made on server's bot is a part of
+        await test_session.clear()
+
+    @bot.command()
+    @restrict()
+    async def init(ctx: Context):
+        database.init()

@@ -1,13 +1,10 @@
-from replit import db
-
-from scrape import scrape_play_ow, platform_url
-
-from config import *
-from errors import PrivateProfileError, ProfileNotFoundError
-from tools import loudprint
-
 from typing import Union
 
+from replit import db
+
+from .db_keys import *
+from .scrape import platform_url, scrape_play_ow
+from .tools import loudprint
 
 # Accessors
 
@@ -87,15 +84,15 @@ def add(disc: str, bnet: str, pf: str) -> None:
     """
     # Load bnet information in table - if the battlenet is not in list of all battlenets it gets added here
     try:
-        rank, stats = scrape_play_ow(bnet, pf)
-    except PrivateProfileError:
+        rank, stats = scrape_play_ow(platform_url(pf)(bnet))
+    except AttributeError:      # AttributeError means private account, still add it
         db[BNET].append(bnet)
         db[MMBR][disc][BNET][bnet] = create_index(
             not bool(db[MMBR][disc][BNET]), True, pf, {}, {})
-    except ProfileNotFoundError as exc:
-        raise NameError(f"{exc.profile} is not a valid Overwatch profile") from exc
+    except NameError as exc:    # NameError means DNE, don't add it
+        raise NameError("unable to add battlenet") from exc
     except ValueError as exc:   # ValueError means error with data organization or UNIX error
-        raise ValueError(f"Failure to load valid profile: {bnet}") from exc
+        raise ValueError("unable to add battlenet") from exc
     else:
         db[BNET].append(bnet)
         db[MMBR][disc][BNET][bnet] = create_index(
@@ -114,18 +111,19 @@ def update(disc: str, bnet: str) -> None:
     """
     ranks, stats = {}, {}
     try:
-        ranks, stats = scrape_play_ow(bnet, db[MMBR][disc][BNET][bnet][PTFM])
-    except PrivateProfileError:
-        db[MMBR][disc][BNET][bnet][PRIV] = True
+        # Try to scrape, 
+        ranks, stats = scrape_play_ow(platform_url(db[MMBR][disc][BNET][bnet][PTFM])(bnet))
+    except AttributeError:
+        db[BNET][bnet][PRIV] = True
         loudprint(f"{bnet} marked as private")
-    except ProfileNotFoundError or ValueError:
-        db[MMBR][disc][BNET][bnet][ACTIVE] = False
+    except NameError or ValueError:
+        db[BNET][bnet][ACTIVE] = False
         loudprint(f"{bnet} marked as inactive")
     else:
-        db[MMBR][disc][BNET][bnet][PRIV] = False
+        db[BNET][bnet][PRIV] = False
     finally:
-        db[MMBR][disc][BNET][bnet][STAT] = stats
-        db[MMBR][disc][BNET][bnet][RANK] = ranks
+        db[BNET][bnet][STAT] = stats
+        db[BNET][bnet][RANK] = ranks
 
 
 def remove(bnet: str, disc: str) -> str:

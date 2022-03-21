@@ -1,7 +1,5 @@
 class PrivateProfileError(Exception):
 
-    __slots__ = "_profile"
-
     def __init__(self, message="", *, profile=None):
         super(message)
         self._profile = profile
@@ -12,8 +10,6 @@ class PrivateProfileError(Exception):
 
 
 class ProfileNotFoundError(Exception):
-
-    __slots__ = "_profile"
 
     def __init__(self, message="", *, profile=None):
         super(message)

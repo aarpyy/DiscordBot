@@ -4,10 +4,11 @@ from discord import Guild, Member, Role, Forbidden, HTTPException, Colour
 from collections import deque
 from sys import stderr
 
-from config import *
-from tools import loudprint
-from battlenet import is_active, is_hidden
-from request import get_role_obj, force_role_obj
+from .config import *
+from .tools import loudprint
+from .battlenet import is_active, is_hidden
+from .request import get_role_obj, force_role_obj
+from .db_keys import *
 
 from typing import Set, Union
 

@@ -7,13 +7,13 @@ from discord import NotFound, HTTPException, User, Member, DMChannel, Role, Guil
 from discord.utils import find
 from sys import stderr
 
-from tools import loudprint
-from config import *
+from .tools import loudprint
+from .db_keys import *
 
 from typing import Union, Optional
 
 
-async def getdm(user: Union[User, Member]) -> DMChannel:
+async def getdm(user: User) -> DMChannel:
     return user.dm_channel or await user.create_dm()
 
 
