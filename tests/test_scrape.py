@@ -6,9 +6,9 @@ from replit import db
 
 
 def test_scrape(user="Aarpyy#1975"):
-    from obw.database import data_categories, map_compositions
-    data_categories()
-    map_compositions()
+    from obw.database import load_data_categories, load_map_compositions
+    load_data_categories()
+    load_map_compositions()
     
     assert db is not None
 
@@ -23,15 +23,11 @@ def test_scrape(user="Aarpyy#1975"):
         raise ValueError(f"{test_scrape.__name__} failed") from exc
     else:
         assert bool(st)
-    
-    for k, v in db.items():
-        print(f"{k}: {v}")
 
 
-def test_all():
-    test_scrape()
-
-
-if __name__ == "__main__":
-    test_all()
+def test_scrape_average(user="Aarpyy#1975"):
+    from timeit import timeit
+    i = 5
+    t = timeit(lambda: scrape_play_ow(user), number=i)
+    print(f"Average scrape time: {t / i :.2f}s")
     

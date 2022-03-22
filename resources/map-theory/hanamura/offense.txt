@@ -3,6 +3,6 @@ TP straight to point, rein holds choke and bap sits on stairs, focus is on letti
 For subsequent fights, TP to top left highground and hold until a pick. For dps swaps, go to cass/reaper.
 
 Point B
-If still on sym, mei: rush top right using mei wall and ults to take high ground. Use TP to path_get to top of
+If still on sym, mei: rush top right using mei wall and ults to take high ground. Use TP to  to top of
 point so that anyone can hold that. D.va drops to contest/force point, sym and rein follow. If on reaper/cass,
 rush top right but cass and d.va take bridge and look to poke in a pincer style. Swap to monkey here if needed.

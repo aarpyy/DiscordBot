@@ -1,3 +1,3 @@
-from .database import data_categories
+from .database import load_data_categories
 
-data_categories()
+load_data_categories()

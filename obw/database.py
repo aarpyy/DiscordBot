@@ -1,19 +1,15 @@
-from replit import db
-from .db_keys import MAP
+from replit import db, Database
+from .db_keys import MAP, BNET, MMBR
 from unidecode import unidecode
 from .tools import jsondump
-from .config import root, path_split, is_unix
+from .config import root, path_split, cURL
 import subprocess as sp
 import re
 
+db: Database
 
-def data_categories():
-    # Open process, sending output of category.sh to pipe
-    if is_unix:
-        cURL = "curl"
-    else:
-        cURL = "C:\\cygwin64\\bin\\curl.exe"
 
+def load_data_categories():
     # Open process getting html from playoverwatch.com, pipe output into split command
     ps_cURL = sp.Popen([cURL, "-s", "https://playoverwatch.com/en-us/career/pc/Aarpyy-1975/"], stdout=sp.PIPE, text=True, encoding="utf-8")
 
@@ -39,10 +35,10 @@ def data_categories():
                     categories[ID] = unidecode(NAME)
         return categories
     else:
-        raise ValueError(f"Subprocess error code: {ps.returncode}")
+        raise ValueError(f"Subprocess return code: {ps.returncode}")
 
 
-def map_compositions():
+def load_map_compositions():
     if db is not None:
         from json import load
         with open(str(root.joinpath("resources/maps.json")), "r") as maps:
@@ -53,3 +49,9 @@ def dump():
     if db is not None:
         with open("userdata.json", "w") as outfile:
             outfile.write(jsondump(db))
+
+
+def clear_user_data():
+    for key in (BNET, MMBR):
+        del db[key]
+        

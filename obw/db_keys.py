@@ -3,6 +3,7 @@ PRIM = "primary"        # discord user's primary battlenet
 ALL = "all"             # dict of all user's battlenets
 BNET = "battlenets"     # list of all battlenets
 MMBR = "members"        # dict of members (in ROLE index MMBR refers to member count of Role)
+GLD = "guilds"          # dict of guilds
 STAT = "stats"          # battlenet specific stats
 PRIV = "private"        # if battlenet is private
 ACTIVE = "active"       # if battlenet is active (only False right before removal)

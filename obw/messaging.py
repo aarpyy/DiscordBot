@@ -1,11 +1,12 @@
-from replit import db
+from .config import *
+from replit import db, Database
+db: Database
 
 from discord import Message, TextChannel, User, Member, DMChannel, GroupChannel, Reaction, Emoji, Guild, abc
 from discord.ext.commands import Bot
 
-from .config import *
-from .battlenet import path_get_top
-from .request import path_getuser, path_get_role_obj, force_role_obj
+from .battlenet import _top
+from .request import get_user, get_role_obj, force_role_obj
 from .obwrole import give_role, donate_role, mention_tag, obw_color
 from .db_keys import *
 from . import database
@@ -105,14 +106,15 @@ async def log_reaction(author: Member, reaction: Reaction):
                 else:
                     db[MMBR][disc][RXN][str(message.id)][SCORE][str(rxn)] = reaction_scores[str(rxn)]
     else:
-        db[MMBR][disc][SCORE] += diff
+        # db[MMBR][disc][SCORE] += diff
+        pass
         # If message already there, find the difference in score between new score and old, update in database,
         # adjust global user score in that channel
 
     database.dump()
 
     # Find the change in reaction count whether negative or postiive
-    nadded = reaction.count - db[MMBR][disc][RXN][m_id][SCORE].path_get(emoji_name, 0)
+    nadded = reaction.count - db[MMBR][disc][RXN][m_id][SCORE].get(emoji_name, 0)
 
     # Set this reaction count to new count recorded
     db[MMBR][disc][RXN][m_id][SCORE][emoji_name] = reaction.count
@@ -123,7 +125,7 @@ async def log_reaction(author: Member, reaction: Reaction):
 
     # Member: {"shitpost": 5
 
-    top_user = path_get_top(superlative)
+    top_user = _top(superlative)
     if db[MMBR][top_user][SCORE][superlative] < db[MMBR][disc][SCORE][superlative]:
         kwargs = dict(
             name=superlative,

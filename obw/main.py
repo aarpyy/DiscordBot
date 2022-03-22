@@ -1,5 +1,11 @@
 from .config import *
-from replit import db
+from replit import db, Database
+from sys import exit, exc_info, stderr
+if db is None:
+    print(f"Database failed to load", file=stderr)
+    exit(1)
+
+db: Database
 
 from discord.ext import tasks
 from discord.ext.commands import Bot, Context
@@ -9,7 +15,6 @@ from discord.message import Message
 
 from os import system, chdir
 from pathlib import Path
-from sys import exit, exc_info, stderr
 from asyncio import sleep
 from traceback import print_exc
 from functools import wraps
@@ -24,9 +29,9 @@ from . import messaging
 
 from .db_keys import *
 from .tools import loudprint, loudinput
-from .compositions import Map, Round, path_get_map
+from .compositions import Map, Round, get_map
 
-from typing import Dict, Union, List
+from typing import Union
 
 su = "aarpyy#3360"  # Creator of bot
 
@@ -54,34 +59,14 @@ def restrict(users=None):
                 return await f(ctx, *args)
             else:
                 print(f"{str(ctx.author)} ran {f.__name__} and was blocked.", file=stderr)
-                await ctx.channel.send(f"This command is currently disabled!")
+                await ctx.channel.send(f"This command is currently disabled!")  # type: ignore
 
         return restricted
 
     return decorator
 
 
-def init_paths():
-    root = Path(__file__).parent.absolute()
-    for file in ("comp", "dne", "is_private", "stats"):
-        if not root.joinpath(f"path_get/{file}").is_file():
-            exit(1)
-
-    if not root.joinpath("split/split").is_file():
-
-        # Make sure to use the correct compiler
-        from platform import system
-        if system() == "Windows":
-            cc = "C:\\cygwin64\\bin\\gcc.exe"
-        else:
-            cc = "gcc"
-        sp.run([cc, "-o", "split", "split.c"], cwd=root.joinpath("split"))
-
-
 def main():
-
-    # Makes sure that all files required for scraping from playoverwatch.com exist
-    init_paths()
 
     # Normal intents, including managing members
     intents = Intents.default()
@@ -100,8 +85,8 @@ def main():
     async def update_loop():
 
         # Update stats for all battlenets
-        for disc in db[BNET]:
-            battlenet.update(disc, bnet)
+        for bnet in db[BNET]:
+            battlenet.update(bnet)
 
         database.dump()
 
@@ -124,11 +109,11 @@ def main():
             for bnet in db[MMBR][disc][BNET]:
 
                 # If battlenet is inactive, let user know it's removed
-                if not battlenet.is_active(disc, bnet):
+                if not battlenet.is_active(bnet):
                     loudprint(f"Removing {disc}[{bnet}]...")
-                    user = await request.path_getuser(bot, disc)
+                    user = await request.get_user(bot, disc)  # type: ignore
                     if user is not None:
-                        channel = await request.path_getdm(user)
+                        channel = await request.get_dm(user)  # type: ignore
                         message = f"Stats for {bnet} were unable to be updated and the account was unlinked " \
                                   f"from your discord."
 
@@ -179,7 +164,7 @@ def main():
         loudprint("Database dumped")
 
     @bot.event
-    async def on_member_join(member: Member):
+    async def on_member_join(member: User):
         # If new guild member is a bot, ignore them
         if not member.bot:
             disc = str(member)
@@ -212,33 +197,33 @@ def main():
     @bot.command()
     async def comp(ctx: Context, *args):
         if not args:
-            await ctx.channel.send("Must provide a map!")
+            await ctx.channel.send("Must provide a map!")  # type: ignore
             return
         else:
-            M, R = path_get_map(args)
+            M, R = get_map(list(args))
             if M == Map.NoMap:
-                await ctx.channel.send(f"{args[0]} is not a recognizable map!")
+                await ctx.channel.send(f"{args[0]} is not a recognizable map!")  # type: ignore
                 return
 
-            str_emoji = {emoji.name: str(emoji) for emoji in ctx.guild.emojis}
+            str_emoji = {emoji.name: str(emoji) for emoji in ctx.guild.emojis}  # type: ignore
             if R != Round.All:
                 heroes = db[MAP][M.value][R.value]
-                composition = [str_emoji.path_get(e, '') for e in heroes]
-                await ctx.channel.send(", ".join(composition))
+                composition = [str_emoji.get(e, '') for e in heroes]
+                await ctx.channel.send(", ".join(composition))  # type: ignore
             else:
                 message = ""
                 for r in db[MAP][M.value]:           # type: str
 
-                    # path_get current team composition and its readable string (with emojis)
+                    #  current team composition and its readable string (with emojis)
                     heroes = db[MAP][M.value][r]
-                    composition = [str_emoji.path_get(e, '') for e in heroes]
+                    composition = [str_emoji.get(e, '') for e in heroes]
 
                     # Convert round name into nicer string
                     round_name = " ".join(s.capitalize() for s in r.split('-'))
 
                     # Append to message
                     message += f"{round_name}:  " + " ".join(composition) + "\n"
-                await ctx.channel.send(message)
+                await ctx.channel.send(message)  # type: ignore
 
     @restrict()
     async def account(ctx: Context, bnet: str, platform: str):
@@ -254,19 +239,19 @@ def main():
 
         # If user not in database, add them
         if disc not in db[MMBR]:
-            db[MMBR][disc] = {ID: ctx.author.id, RXN: {}, SCORE: {}, BNET: {}}
+            db[MMBR][disc] = {ID: ctx.author.id, RXN: {}, SCORE: {}, BNET: {}}  # type: ignore
 
         if bnet in db[MMBR][disc][BNET]:
-            await ctx.channel.send(f"{bnet} is already linked to your account!")
+            await ctx.channel.send(f"{bnet} is already linked to your account!")  # type: ignore
         elif bnet in db[BNET]:
-            await ctx.channel.send(f"{bnet} is already linked to another user!")
+            await ctx.channel.send(f"{bnet} is already linked to another user!")  # type: ignore
         else:
             battlenet.add(disc, bnet, platform)
             db[MMBR][disc][BNET][bnet][ROLE] = list(obwrole.find_battlenet_roles(disc, bnet))
-            guild = ctx.guild  # type: Guild
+            guild = ctx.guild  # type: ignore
             if guild is not None:
                 await obwrole.update(guild, disc, bnet)
-            await ctx.channel.send(f"Successfully linked {bnet} to your discord!")
+            await ctx.channel.send(f"Successfully linked {bnet} to your discord!")  # type: ignore
 
         database.dump()
 
@@ -290,16 +275,16 @@ def main():
             if bnet not in db[MMBR][disc][BNET]:
                 raise KeyError
         except KeyError:
-            await ctx.channel.send(f"{bnet} is not linked to your discord!")
+            await ctx.channel.send(f"{bnet} is not linked to your discord!")  # type: ignore
         else:
-            battlenet.deactivate(disc, bnet)
-            guild = ctx.guild  # type: Guild
+            battlenet.deactivate(bnet)
+            guild = ctx.guild  # type: ignore
             if guild is not None:
                 await obwrole.update(guild, disc, bnet)
             message = f"You have successfully unlinked {bnet} from your discord!"
             if prim := battlenet.remove(bnet, disc):
                 message += f"\n\nYour new primary account is {prim}"
-            await ctx.channel.send(message)
+            await ctx.channel.send(message)  # type: ignore
 
         database.dump()
 
@@ -312,20 +297,20 @@ def main():
             if bnet not in user_battlenets:
                 raise KeyError
         except KeyError:
-            await ctx.channel.send(f"{bnet} is not linked to your account!")
+            await ctx.channel.send(f"{bnet} is not linked to your account!")  # type: ignore
         else:
             if user_battlenets[bnet][PRIM]:
-                await ctx.channel.send(f"{bnet} is already your primary linked account!")
+                await ctx.channel.send(f"{bnet} is already your primary linked account!")  # type: ignore
             else:
                 for b in user_battlenets:
                     user_battlenets[b][PRIM] = False
                 user_battlenets[bnet][PRIM] = True
-                await ctx.channel.send(f"{bnet} is your new primary linked account!")
+                await ctx.channel.send(f"{bnet} is your new primary linked account!")  # type: ignore
 
         database.dump()
 
     # Log in to bot using token from replit env and run
-    bot.run(path_getenv('DISC_TOKEN'))
+    bot.run(getenv('DISC_TOKEN'))
 
 
 if __name__ == "__main__":

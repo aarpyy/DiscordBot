@@ -72,7 +72,7 @@ instance/
 docs/_build/
 
 # PyBuilder
-tarpath_get/
+tar/
 
 # Jupyter Notebook
 .ipynb_checkpoints
