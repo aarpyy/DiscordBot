@@ -12,14 +12,9 @@ from discord.ext.commands import Bot, Context
 from discord import (Intents, Member, DMChannel, Guild, Role, User, Forbidden, HTTPException,
                      NotFound, Reaction, Emoji, TextChannel)
 from discord.message import Message
-
-from os import system, chdir
-from pathlib import Path
-from asyncio import sleep
 from traceback import print_exc
 from functools import wraps
-from json import load
-import subprocess as sp
+import asyncio
 
 from . import obwrole
 from . import database
@@ -128,9 +123,9 @@ def main():
     @bot.event
     async def on_ready():
         print(f"Logged in as {bot.user}.")
-        # Uncomment these for testing
-        # database.refresh()
-        # await database.clean_roles(bot)
+
+        # Clear user data, only used for testing
+        database.clear_user_data()
 
         # Start loop for updated all users
         update_loop.start()
@@ -185,10 +180,12 @@ def main():
     async def on_guild_role_update(before: Role, after: Role):
         bname, aname = obwrole.format_role(before), obwrole.format_role(after)
 
+        # TODO: This might not need to be done like this, since role update might not mean user count changes!
+
         # If the role wasn't in db before, not a role we care about
         if bname in db[ROLE]:
             del db[ROLE][bname]
-            await sleep(5)  # Give some sleep time for after.members to be updated
+            await asyncio.sleep(5)      # Give some sleep time for after.members to be updated
             db[ROLE][aname] = {ID: after.id, MMBR: len(after.members)}
             obwrole.rename_role(bname, aname)
 
@@ -236,21 +233,24 @@ def main():
         :return: None
         """
         disc = str(ctx.author)
+        guild = str(ctx.guild)
+
+        if not isinstance(ctx.guild, Guild):
+            await ctx.channel.send("This command must be run on a server channel!")  # type: ignore
+            return
 
         # If user not in database, add them
-        if disc not in db[MMBR]:
-            db[MMBR][disc] = {ID: ctx.author.id, RXN: {}, SCORE: {}, BNET: {}}  # type: ignore
+        elif disc not in db[GLD][guild][MMBR]:
+            db[MMBR][disc] = {ID: ctx.author.id, RXN: {}, SCORE: {}, BNET: []}  # type: ignore
 
-        if bnet in db[MMBR][disc][BNET]:
+        if bnet in db[GLD][guild][MMBR][disc][BNET]:
             await ctx.channel.send(f"{bnet} is already linked to your account!")  # type: ignore
         elif bnet in db[BNET]:
             await ctx.channel.send(f"{bnet} is already linked to another user!")  # type: ignore
         else:
-            battlenet.add(disc, bnet, platform)
+            battlenet.add(guild, disc, bnet, platform)
             db[BNET][bnet][ROLE] = list(obwrole.generate_roles(bnet))
-            guild = ctx.guild  # type: ignore
-            if guild is not None:
-                await obwrole.update(guild, disc, bnet)
+            await obwrole.update(ctx.guild, disc, bnet)
             await ctx.channel.send(f"Successfully linked {bnet} to your discord!")  # type: ignore
 
         database.dump()

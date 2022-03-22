@@ -12,7 +12,7 @@ from sys import stderr
 from .tools import loudprint
 from .db_keys import *
 
-from typing import Union, Optional
+from typing import Optional
 
 
 async def dm(user: User) -> DMChannel:
@@ -38,47 +38,3 @@ async def get_user(bot: Bot, disc: str, guild: Guild = None):  # type: ignore
             if user is not None:
                 return user
         return None
-
-
-async def get_role_obj(guild: Guild, role: str) -> Optional[Role]:
-    """
-    Helper function that more sufficiently ensures that the Role is returned if it exists. First, it
-    checks if the Role is already in the db, ting the Role via Role.id if true. Otherwise,
-    it iterates through all Roles in Guild, attempting to match via string, returning None if no
-    matches were made.
-
-    :param guild: guild that role hopefully exists in
-    :param role: name of role
-    :return: Role object if it exists in the guild
-    """
-
-    if role in db[ROLE]:
-        return guild.get_role(db[ROLE][role][ID])
-    else:
-        try:
-            roles = await guild.fetch_roles()
-        except HTTPException:
-            return None
-        else:
-            role = role[2:]
-            role_obj = find(lambda r: r.name == role, roles)
-            if role_obj is not None:
-                db[ROLE][role] = {ID: role_obj.id, MMBR: len(role_obj.members)}
-            return role_obj
-
-
-async def force_role_obj(guild: Guild, role: str, **kwargs) -> Role:
-    """
-    Shell function for _role_obj() that, if unable to return Role, instead creates the role.
-
-    :param guild: guild that holds role
-    :param role: rolename
-    :return:
-    """
-
-    role_obj = await get_role_obj(guild, role)
-    if role_obj is None:
-        role_obj = await guild.create_role(**kwargs)
-        db[ROLE][role] = {ID: role_obj.id, MMBR: 0}
-
-    return role_obj

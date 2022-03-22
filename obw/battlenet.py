@@ -69,7 +69,7 @@ def create_index(bnet: str, pf: str) -> bool:
         return True
 
 
-def add(disc: str, bnet: str, pf: str) -> bool:
+def add(guild: str, disc: str, bnet: str, pf: str) -> bool:
     """
     Adds battlenet as index to user object with battlenet data as indices in battlenet object.
 
@@ -79,9 +79,9 @@ def add(disc: str, bnet: str, pf: str) -> bool:
     :return: if battlenet was added to user
     """
     if create_index(bnet, pf):
-        db[MMBR][disc][BNET].append(bnet)
-        if db[MMBR][disc][PRIM] is None:
-            db[MMBR][disc][PRIM] = bnet
+        db[GLD][guild][MMBR][disc][BNET].append(bnet)
+        if db[GLD][guild][MMBR][disc][PRIM] is None:
+            db[GLD][guild][MMBR][disc][PRIM] = bnet
         return True
     else:
         return False
@@ -118,7 +118,7 @@ def update(bnet: str) -> None:
         db[BNET][bnet][RANK] = ranks
 
 
-def remove(bnet: str, disc: str = "", gld: str = "") -> None:
+def remove(bnet: str, gld: str = "", disc: str = "") -> None:
     """
     Removes battlenet from replit database, returning flag of if the user's primary
     account was removed.
