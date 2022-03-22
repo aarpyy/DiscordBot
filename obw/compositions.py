@@ -1,4 +1,5 @@
 from enum import Enum, unique
+from typing import Iterable
 
 
 @unique
@@ -199,11 +200,11 @@ def round_name(args: list[str]) -> Round:
         return Round.All
 
 
-def get_map(args: list[str]) -> tuple[Map, Round]:
+def get_map(args: Iterable[str]) -> tuple[Map, Round]:
     """Returns map and round name of list of arguments
 
     :param args: command arguments
-    :type args: list[str]
+    :type args: Iterable[str]
     :return: map and round name
     :rtype: tuple[Map, Round]
     """

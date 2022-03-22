@@ -175,22 +175,22 @@ def main():
 
     @bot.event
     async def on_guild_role_delete(role: Role):
-        rname = obwrole.rolename(role)
+        rname = obwrole.format_role(role)
 
         # If the bot removed this role, then rname will already be deleted, this is just if another user deletes role
         if rname in db[ROLE]:
-            obwrole.globalrm(rname)
+            obwrole.remove_role(rname)
 
     @bot.event
     async def on_guild_role_update(before: Role, after: Role):
-        bname, aname = obwrole.rolename(before), obwrole.rolename(after)
+        bname, aname = obwrole.format_role(before), obwrole.format_role(after)
 
         # If the role wasn't in db before, not a role we care about
         if bname in db[ROLE]:
             del db[ROLE][bname]
             await sleep(5)  # Give some sleep time for after.members to be updated
             db[ROLE][aname] = {ID: after.id, MMBR: len(after.members)}
-            obwrole.global_rename(bname, aname)
+            obwrole.rename_role(bname, aname)
 
     # Commands
 
@@ -200,7 +200,7 @@ def main():
             await ctx.channel.send("Must provide a map!")  # type: ignore
             return
         else:
-            M, R = get_map(list(args))
+            M, R = get_map(args)
             if M == Map.NoMap:
                 await ctx.channel.send(f"{args[0]} is not a recognizable map!")  # type: ignore
                 return
@@ -247,7 +247,7 @@ def main():
             await ctx.channel.send(f"{bnet} is already linked to another user!")  # type: ignore
         else:
             battlenet.add(disc, bnet, platform)
-            db[MMBR][disc][BNET][bnet][ROLE] = list(obwrole.find_battlenet_roles(disc, bnet))
+            db[BNET][bnet][ROLE] = list(obwrole.generate_roles(bnet))
             guild = ctx.guild  # type: ignore
             if guild is not None:
                 await obwrole.update(guild, disc, bnet)

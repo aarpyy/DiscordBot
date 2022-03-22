@@ -28,27 +28,25 @@ def load_data_categories():
         lines = ps.stdout.split('\n')
         for line in lines:
             if (m := ctg_regex.match(line)) is not None:
-                ID, NAME = m.groups()
+                value, option_id = m.groups()
 
                 # id's that start with 0x are all category id's, but if it starts with 0x02 then its a hero, not general category, so we just want 0x08...
-                if ID.startswith("0x08"):   
-                    categories[ID] = unidecode(NAME)
+                if value.startswith("0x08"):   
+                    categories[value] = unidecode(option_id)
         return categories
     else:
         raise ValueError(f"Subprocess return code: {ps.returncode}")
 
 
 def load_map_compositions():
-    if db is not None:
-        from json import load
-        with open(str(root.joinpath("resources/maps.json")), "r") as maps:
-            db[MAP] = load(maps)
+    from json import load
+    with open(str(root.joinpath("resources/maps.json")), "r") as maps:
+        db[MAP] = load(maps)
 
 
 def dump():
-    if db is not None:
-        with open("userdata.json", "w") as outfile:
-            outfile.write(jsondump(db))
+    with open("userdata.json", "w") as outfile:
+        outfile.write(jsondump(db))
 
 
 def clear_user_data():

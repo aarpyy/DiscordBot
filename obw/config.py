@@ -8,13 +8,13 @@ root = Path(__file__).parent.parent.absolute()
 if system() == "Windows":
     sp = "split.exe"
     is_unix = False
-    cURL = "curl"
-    gcc = "gcc"
+    cURL = "C:\\cygwin64\\bin\\curl.exe" 
+    gcc = "C:\\cygwin64\\bin\\gcc.exe"
 else:
     sp = "split"
     is_unix = True
-    cURL = "C:\\cygwin64\\bin\\curl.exe" 
-    gcc = "C:\\cygwin64\\bin\\gcc.exe"
+    cURL = "curl"
+    gcc = "gcc"
 
 path_split = root.joinpath(f"split/{sp}")
 path_temp = root.joinpath("temp")
