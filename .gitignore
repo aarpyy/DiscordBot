@@ -133,3 +133,6 @@ dmypy.json
 
 # VSCode project settings
 .vscode/
+
+# Visual Studio project settings
+.vs/

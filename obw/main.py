@@ -197,7 +197,7 @@ def main():
             await ctx.channel.send("Must provide a map!")  # type: ignore
             return
         else:
-            M, R = get_map(args)
+            M, R = get_map(list(args))
             if M == Map.NoMap:
                 await ctx.channel.send(f"{args[0]} is not a recognizable map!")  # type: ignore
                 return
