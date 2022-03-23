@@ -50,7 +50,7 @@ def create_index(bnet, pf):
         return False
     else:
         db[BNET][bnet] = {
-            ACTIVE: True, PRIV: True, HID: False,
+            ACTIVE: True, PRIV: False, HID: False,
             PTFM: pf, RANK: rank, STAT: stats, ROLE: []
         }
         return True

@@ -1,12 +1,10 @@
 from replit import db
 
-from discord import Guild, Member, Role, Forbidden, HTTPException, Colour
+from discord import Member, Role, Forbidden, HTTPException, Colour
 from discord.utils import find
 from sys import stderr
 from datetime import timedelta
-from typing import Optional
 
-from .tools import print
 from .battlenet import is_active, is_hidden
 from .db_keys import *
 
@@ -15,28 +13,28 @@ categ_major = ("Win Percentage", "Time Played")
 
 mention_tag = "@m"
 no_tag = "--"
+tags = (mention_tag, no_tag)
 
 obw_color = Colour.from_rgb(143, 33, 23)
 
 
-def time(stat):
+def format_time(stat):
+    suffix = {3: "h", 2: "m", 1: "s"}
     t = stat.split(":")
-    if len(t) == 1:
+    if len(t) > 1:
+        a = int(t[0])
+        if int(t[1]) >= 30:
+            a += 1
+        return str(a) + suffix[len(t)]
+    elif t[0]:
         return t[0] + "s"
-    elif len(t) == 2:
-        return t[0] + "m"
     else:
-        h, m, s = t
-        delta = timedelta(hours=int(h), minutes=int(m), seconds=int(s))
-        if delta.days:
-            return str(delta.days) + "d"
-        else:
-            return str(delta.seconds // 3600) + "h"
+        return ""
 
 
 def format_stat(ctg, stat):
     if ctg == "Time Played":
-        return time(stat)
+        return format_time(stat)
     elif ctg == "Win Percentage":
         return stat + "%"
     else:

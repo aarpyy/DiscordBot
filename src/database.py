@@ -30,7 +30,8 @@ def load_data_categories():
             if (m := ctg_regex.match(line)) is not None:
                 value, option_id = m.groups()
 
-                # id's that start with 0x are all category id's, but if it starts with 0x02 then its a hero, not general category, so we just want 0x08...
+                # id's that start with 0x are all category id's, but if it starts with 0x02 then its a hero,
+                # not general category, so we just want 0x08...
                 if value.startswith("0x08"):   
                     categories[value] = unidecode(option_id)
         return categories
