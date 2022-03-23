@@ -1,12 +1,11 @@
 # File for handling general API requests
 
-from replit import db
-
 from discord.ext.commands import Bot
 from discord import NotFound, HTTPException, User, DMChannel, Guild
 from sys import stderr
 
 from .db_keys import *
+from .config import db
 
 
 async def get_dm(user: User) -> DMChannel:

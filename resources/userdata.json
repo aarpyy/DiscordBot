@@ -1,0 +1,445 @@
+{
+    "categories": {
+        "0x0860000000000021": "Time Played",
+        "0x0860000000000039": "Games Won",
+        "0x086000000000002F": "Weapon Accuracy",
+        "0x08600000000003D2": "Eliminations per Life",
+        "0x08600000000003E2": "Critical Hit Accuracy",
+        "0x0860000000000346": "Multikill - Best",
+        "0x086000000000031C": "Objective Kills",
+        "0x02E00000FFFFFFFF": "ALL HEROES",
+        "0x02E000000000013B": "Ana",
+        "0x02E0000000000200": "Ashe",
+        "0x02E0000000000221": "Baptiste",
+        "0x02E0000000000015": "Bastion",
+        "0x02E0000000000195": "Brigitte",
+        "0x02E0000000000042": "Cassidy",
+        "0x02E000000000007A": "D.Va",
+        "0x02E000000000012F": "Doomfist",
+        "0x02E0000000000206": "Echo",
+        "0x02E0000000000029": "Genji",
+        "0x02E0000000000005": "Hanzo",
+        "0x02E0000000000065": "Junkrat",
+        "0x02E0000000000079": "Lucio",
+        "0x02E00000000000DD": "Mei",
+        "0x02E0000000000004": "Mercy",
+        "0x02E00000000001A2": "Moira",
+        "0x02E000000000013E": "Orisa",
+        "0x02E0000000000008": "Pharah",
+        "0x02E0000000000002": "Reaper",
+        "0x02E0000000000007": "Reinhardt",
+        "0x02E0000000000040": "Roadhog",
+        "0x02E000000000023B": "Sigma",
+        "0x02E000000000006E": "Soldier: 76",
+        "0x02E000000000012E": "Sombra",
+        "0x02E0000000000016": "Symmetra",
+        "0x02E0000000000006": "Torbjorn",
+        "0x02E0000000000003": "Tracer",
+        "0x02E000000000000A": "Widowmaker",
+        "0x02E0000000000009": "Winston",
+        "0x02E00000000001CA": "Wrecking Ball",
+        "0x02E0000000000068": "Zarya",
+        "0x02E0000000000020": "Zenyatta",
+        "0x08600000000003D1": "Win Percentage"
+    },
+    "maps": {
+        "hanamura": {
+            "offense": [
+                "reinhardt",
+                "dva",
+                "symmetra",
+                "mei",
+                "baptiste",
+                "lucio"
+            ],
+            "defense": [
+                "orisa",
+                "sigma",
+                "hanzo",
+                "ashe",
+                "baptiste",
+                "zenyatta"
+            ]
+        },
+        "temple-of-anubis": {
+            "offense": [
+                "winston",
+                "dva",
+                "reaper",
+                "echo",
+                "moira",
+                "lucio"
+            ],
+            "defense": [
+                "orisa",
+                "sigma",
+                "hanzo",
+                "torbjorn",
+                "baptiste",
+                "zenyatta"
+            ]
+        },
+        "volskaya-industries": {
+            "offense": [
+                "reinhardt",
+                "dva",
+                "echo",
+                "tracer",
+                "ana",
+                "mercy"
+            ],
+            "defense": [
+                "orisa",
+                "sigma",
+                "torbjorn",
+                "ashe",
+                "baptiste",
+                "zenyatta"
+            ]
+        },
+        "busan": {
+            "downtown": [
+                "winston",
+                "dva",
+                "sombra",
+                "reaper",
+                "lucio",
+                "moira"
+            ],
+            "sanctuary": [
+                "wreckingball",
+                "sigma",
+                "echo",
+                "tracer",
+                "zenyatta",
+                "brigitte"
+            ],
+            "meka-base": [
+                "reinhardt",
+                "dva",
+                "cassidy",
+                "mei",
+                "lucio",
+                "baptiste"
+            ]
+        },
+        "ilios": {
+            "well": [
+                "orisa",
+                "roadhog",
+                "pharah",
+                "cassidy",
+                "baptiste",
+                "mercy"
+            ],
+            "ruins": [
+                "wreckingball",
+                "sigma",
+                "echo",
+                "tracer",
+                "zenyatta",
+                "brigitte"
+            ],
+            "lighthouse": [
+                "winston",
+                "dva",
+                "tracer",
+                "reaper",
+                "lucio",
+                "moira"
+            ]
+        },
+        "lijiang-tower": {
+            "garden": [
+                "winston",
+                "dva",
+                "sombra",
+                "reaper",
+                "lucio",
+                "moira"
+            ],
+            "control-center": [
+                "reinhardt",
+                "dva",
+                "symmetra",
+                "junkrat",
+                "baptiste",
+                "lucio"
+            ],
+            "night-market": [
+                "wreckingball",
+                "roadhog",
+                "tracer",
+                "pharah",
+                "zenyatta",
+                "mercy"
+            ]
+        },
+        "nepal": {
+            "village": [
+                "reinhardt",
+                "zarya",
+                "soldier76",
+                "hanzo",
+                "lucio",
+                "baptiste"
+            ],
+            "sanctum": [
+                "wreckingball",
+                "sigma",
+                "ashe",
+                "tracer",
+                "zenyatta",
+                "mercy"
+            ],
+            "shrine": [
+                "reinhardt",
+                "zarya",
+                "cassidy",
+                "symmetra",
+                "ana",
+                "brigitte"
+            ]
+        },
+        "oasis": {
+            "university": [
+                "reinhardt",
+                "dva",
+                "symmetra",
+                "reaper",
+                "lucio",
+                "baptiste"
+            ],
+            "garden": [
+                "wreckingball",
+                "dva",
+                "soldier76",
+                "tracer",
+                "zenyatta",
+                "brigitte"
+            ],
+            "city-center": [
+                "winston",
+                "dva",
+                "soldier76",
+                "tracer",
+                "ana",
+                "brigitte"
+            ]
+        },
+        "dorado": {
+            "offense": [
+                "winston",
+                "dva",
+                "echo",
+                "cassidy",
+                "ana",
+                "mercy"
+            ],
+            "defense": [
+                "reinhardt",
+                "dva",
+                "soldier76",
+                "echo",
+                "ana",
+                "brigitte"
+            ]
+        },
+        "havana": {
+            "offense": [
+                "orisa",
+                "sigma",
+                "soldier76",
+                "hanzo",
+                "baptiste",
+                "zenyatta"
+            ],
+            "defense": [
+                "orisa",
+                "sigma",
+                "soldier76",
+                "hanzo",
+                "baptiste",
+                "zenyatta"
+            ]
+        },
+        "junkertown": {
+            "offense": [
+                "orisa",
+                "roadhog",
+                "ashe",
+                "tracer",
+                "zenyatta",
+                "baptiste"
+            ],
+            "defense": [
+                "orisa",
+                "roadhog",
+                "ashe",
+                "tracer",
+                "zenyatta",
+                "baptiste"
+            ]
+        },
+        "rialto": {
+            "offense": [
+                "wreckingball",
+                "dva",
+                "pharah",
+                "ashe",
+                "zenyatta",
+                "mercy"
+            ],
+            "defense": [
+                "reinhardt",
+                "dva",
+                "torbjorn",
+                "ashe",
+                "baptiste",
+                "lucio"
+            ]
+        },
+        "watchpoint-gibraltar": {
+            "offense": [
+                "winston",
+                "dva",
+                "echo",
+                "soldier76",
+                "ana",
+                "mercy"
+            ],
+            "defense": [
+                "winston",
+                "dva",
+                "torbjorn",
+                "soldier76",
+                "brigitte",
+                "ana"
+            ]
+        },
+        "blizzard-world": {
+            "offense": [
+                "wreckingball",
+                "roadhog",
+                "ashe",
+                "tracer",
+                "zenyatta",
+                "mercy"
+            ],
+            "defense": [
+                "reinhardt",
+                "dva",
+                "torbjorn",
+                "ashe",
+                "baptiste",
+                "lucio"
+            ]
+        },
+        "eichenwalde": {
+            "offense": [
+                "winston",
+                "dva",
+                "echo",
+                "reaper",
+                "ana",
+                "lucio"
+            ],
+            "defense": [
+                "orisa",
+                "roadhog",
+                "hanzo",
+                "soldier76",
+                "baptiste",
+                "zenyatta"
+            ]
+        },
+        "hollywood": {
+            "offense": [
+                "reinhardt",
+                "dva",
+                "echo",
+                "tracer",
+                "baptiste",
+                "lucio"
+            ],
+            "defense": [
+                "reinhardt",
+                "dva",
+                "mei",
+                "tracer",
+                "baptiste",
+                "lucio"
+            ]
+        },
+        "kings-row": {
+            "offense": [
+                "reinhardt",
+                "dva",
+                "mei",
+                "cassidy",
+                "baptiste",
+                "lucio"
+            ],
+            "defense": [
+                "reinhardt",
+                "dva",
+                "mei",
+                "cassidy",
+                "baptiste",
+                "lucio"
+            ]
+        },
+        "numbani": {
+            "offense": [
+                "winston",
+                "dva",
+                "echo",
+                "cassidy",
+                "ana",
+                "mercy"
+            ],
+            "defense": [
+                "winston",
+                "dva",
+                "torbjorn",
+                "ashe",
+                "ana",
+                "brigitte"
+            ]
+        }
+    },
+    "roles": {
+        "@mAarpyy#1975": {
+            "id": 926913435483123712,
+            "members": 3
+        },
+        "--Tank-3813": {
+            "id": 926913440751169566,
+            "members": 2
+        },
+        "@mPC": {
+            "id": 926913442386935828,
+            "members": 3
+        },
+        "--Genji-36h": {
+            "id": 926913443435515945,
+            "members": 3
+        },
+        "--Tank-3818": {
+            "id": 935617578611638322,
+            "members": 1
+        },
+        "--Lucio-59h": {
+            "id": 935617774905069639,
+            "members": 0
+        },
+        "@mDragongale#1783": {
+            "id": 935617776742199427,
+            "members": 0
+        },
+        "--Support-2770": {
+            "id": 935617778315063367,
+            "members": 0
+        }
+    }
+}

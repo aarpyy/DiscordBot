@@ -2,6 +2,15 @@ from pathlib import Path
 from os import getenv
 from platform import system
 
+
+def getdb():
+    # This is a function instead of just importing and then assigning later because
+    # import needs to be delayed until .env has been confirmed loaded
+    import replit
+    db: replit.Database = replit.db
+    return db
+
+
 root = Path(__file__).parent.parent.absolute()
 
 # Based on OS, set path to split executable, cURL, and gcc
@@ -29,3 +38,6 @@ if not path_split.is_file():
 if not getenv("REPLIT_DB_URL"):
     from dotenv import load_dotenv
     load_dotenv(root.joinpath(".env"))
+
+# This is what everything else should import for db, since its logged in after loading .env
+db = getdb()

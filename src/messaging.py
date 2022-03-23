@@ -1,17 +1,10 @@
-from .config import *
-from replit import db, Database
-db: Database
-
-from discord import Message, TextChannel, User, Member, DMChannel, GroupChannel, Reaction, Emoji, Guild, abc
-from discord.ext.commands import Bot
-
-from .battlenet import _top
-from .request import get_user, get_role_obj, force_role_obj
-from .obwrole import give_role, donate_role, mention_tag, obw_color
+from .config import db
+from discord import Message, TextChannel, Member, Reaction, abc
+from .obwrole import mention_tag, obw_color, force_role_obj
 from .db_keys import *
 from . import database
 
-from typing import Union, List, Dict
+from typing import List, Dict
 
 # Constants relating to superlatives given to users as follows:
 # If a message is sent in one of the provided reaction channels in any guild and that message
@@ -125,7 +118,7 @@ async def log_reaction(author: Member, reaction: Reaction):
 
     # Member: {"shitpost": 5
 
-    top_user = _top(superlative)
+    top_user = None
     if db[MMBR][top_user][SCORE][superlative] < db[MMBR][disc][SCORE][superlative]:
         kwargs = dict(
             name=superlative,
@@ -136,9 +129,10 @@ async def log_reaction(author: Member, reaction: Reaction):
         donated = False
         for member in superlative_role.members:  # type: Member
             if str(member) == top_user:
-                await donate_role(author.guild, member, author, superlative_role)
+                # await donate_role(author.guild, member, author, superlative_role)
                 donated = True
                 break
 
         if not donated:
-            await give_role(author.guild, author, superlative_role)
+            # await give_role(author.guild, author, superlative_role)
+            pass

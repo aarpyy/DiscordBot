@@ -1,4 +1,48 @@
 from collections.abc import MutableMapping, MutableSequence
+from functools import wraps
+from discord.ext.commands import Context
+from sys import stderr
+
+
+su = "aarpyy#3360"
+
+
+def restrict(users=None):
+    """Given a list of users, returns a wrapper that restricts
+    the use of a discord command except for the given users.
+
+    :param users: List of users with permission to use function, defaults to super user (aarpyy)
+    :type users: list[str], optional
+    :return: wrapper, restricting bot.command()
+    :rtype: function
+    """
+    if users is None:
+        global su
+        users = [su]
+
+    def decorator(f):
+
+        global su
+
+        @wraps(f)
+        async def restricted(*args):
+
+            # Find the context arg, either first or second depending on if procedure or class method
+            ctx = None
+            for a in args:
+                if isinstance(a, Context):
+                    ctx = a
+                    break
+
+            if ctx is None or str(ctx.author) in users:
+                return await f(ctx, *args)
+            else:
+                print(f"{str(ctx.author)} ran {f.__name__} and was blocked.", file=stderr)
+                await ctx.channel.send(f"This command is currently disabled!")
+
+        return restricted
+
+    return decorator
 
 
 def jsonify(o):

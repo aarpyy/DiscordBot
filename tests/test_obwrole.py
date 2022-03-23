@@ -1,57 +1,51 @@
+import pytest
+from src.config import db
+from discord import Guild
 from src.obwrole import *
+from src.bot import Oberbot
+from cogs import all_cogs
+from os import getenv
 
 
-def test_format_time():
-    assert format_time("36:36:32") == "37h"
-    assert format_time("36:32") == "37m"
-    assert format_time("32") == "32s"
-    assert format_time("") == ""
+class TestRoles:
+    bot = Oberbot()
 
+    for cog in all_cogs:
+        bot.add_cog(cog(bot))
 
-def test_format_stat():
-    assert format_stat("Time Played", "36:36:32") == "37h"
-    assert format_stat("Win Percentage", "36") == "36%"
-    assert format_stat("random string", "random stat") == "random stat"
-
-
-async def test_format_role():
-    from dotenv import load_dotenv
-    from src.config import root
-    load_dotenv(root.joinpath(".env"))
-
-    from discord import Intents, Guild
-    from discord.ext.commands import Bot
-    from os import getenv
-
-    intents = Intents.default()
-    intents.members = True
-    bot = Bot(command_prefix='/', intents=intents, case_insensitive=True)
-
+    # Log in to bot using token from replit env and run
     bot.run(getenv('DISC_TOKEN'))
 
-    print(f"Logged in as Oberwatch bot")
+    def test_format_time(self):
+        assert format_time("36:36:32") == "37h"
+        assert format_time("36:32") == "37m"
+        assert format_time("32") == "32s"
+        assert format_time("") == ""
 
-    guild = None
-    gld: Guild
-    for gld in bot.guilds:
-        if str(gld).startswith("Oberwatch"):
-            guild = gld
-            break
+    def test_format_stat(self):
+        assert format_stat("Time Played", "36:36:32") == "37h"
+        assert format_stat("Win Percentage", "36") == "36%"
+        assert format_stat("random string", "random stat") == "random stat"
 
-    if not isinstance(guild, Guild):
-        print(f"Guilds: {bot.guilds}")
-    else:
+    def test_format_role(self):
+
+        assert TestRoles.bot is not None
+
+        guild = None
+        gld: Guild
+        for gld in TestRoles.bot.guilds:
+            if str(gld).startswith("Oberwatch"):
+                guild = gld
+                break
+
+        assert isinstance(guild, Guild)
+
         for role in guild.roles:
-            print(f"Role: {repr(role)}, {format_role(role)}")
-
-    await bot.logout()
-    return
+            if role.mentionable:
+                assert format_role(role) == f"@m{str(role)}"
+            else:
+                assert format_role(role) == f"--{str(role)}"
 
 
 if __name__ == "__main__":
-    import asyncio
-    loop = asyncio.new_event_loop()
-    # loop.call_soon(test_format_role)
-    # loop.run_forever()
-    loop.run_until_complete(test_format_role())
-    # loop.close()
+    pass
