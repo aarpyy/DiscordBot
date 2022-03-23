@@ -54,7 +54,7 @@ def restrict(users=None):
                 return await f(ctx, *args)
             else:
                 print(f"{str(ctx.author)} ran {f.__name__} and was blocked.", file=stderr)
-                await ctx.channel.send(f"This command is currently disabled!")  # type: ignore
+                await ctx.channel.send(f"This command is currently disabled!")  
 
         return restricted
 
@@ -106,9 +106,9 @@ def main():
                 # If battlenet is inactive, let user know it's removed
                 if not battlenet.is_active(bnet):
                     loudprint(f"Removing {disc}[{bnet}]...")
-                    user = await request.get_user(bot, disc)  # type: ignore
+                    user = await request.get_user(bot, disc)  
                     if user is not None:
-                        channel = await request.get_dm(user)  # type: ignore
+                        channel = await request.get_dm(user)  
                         message = f"Stats for {bnet} were unable to be updated and the account was unlinked " \
                                   f"from your discord."
 
@@ -194,19 +194,19 @@ def main():
     @bot.command()
     async def comp(ctx: Context, *args):
         if not args:
-            await ctx.channel.send("Must provide a map!")  # type: ignore
+            await ctx.channel.send("Must provide a map!")  
             return
         else:
             M, R = get_map(list(args))
             if M == Map.NoMap:
-                await ctx.channel.send(f"{args[0]} is not a recognizable map!")  # type: ignore
+                await ctx.channel.send(f"{args[0]} is not a recognizable map!")  
                 return
 
-            str_emoji = {emoji.name: str(emoji) for emoji in ctx.guild.emojis}  # type: ignore
+            str_emoji = {emoji.name: str(emoji) for emoji in ctx.guild.emojis}  
             if R != Round.All:
                 heroes = db[MAP][M.value][R.value]
                 composition = [str_emoji.get(e, '') for e in heroes]
-                await ctx.channel.send(", ".join(composition))  # type: ignore
+                await ctx.channel.send(", ".join(composition))  
             else:
                 message = ""
                 for r in db[MAP][M.value]:           # type: str
@@ -220,7 +220,7 @@ def main():
 
                     # Append to message
                     message += f"{round_name}:  " + " ".join(composition) + "\n"
-                await ctx.channel.send(message)  # type: ignore
+                await ctx.channel.send(message)  
 
     @restrict()
     async def account(ctx: Context, bnet: str, platform: str):
@@ -236,22 +236,22 @@ def main():
         guild = str(ctx.guild)
 
         if not isinstance(ctx.guild, Guild):
-            await ctx.channel.send("This command must be run on a server channel!")  # type: ignore
+            await ctx.channel.send("This command must be run on a server channel!")  
             return
 
         # If user not in database, add them
         elif disc not in db[GLD][guild][MMBR]:
-            db[MMBR][disc] = {ID: ctx.author.id, RXN: {}, SCORE: {}, BNET: []}  # type: ignore
+            db[MMBR][disc] = {ID: ctx.author.id, BNET: [], PRIM: None, RXN: {}, SCORE: {}}
 
         if bnet in db[GLD][guild][MMBR][disc][BNET]:
-            await ctx.channel.send(f"{bnet} is already linked to your account!")  # type: ignore
+            await ctx.channel.send(f"{bnet} is already linked to your account!")  
         elif bnet in db[BNET]:
-            await ctx.channel.send(f"{bnet} is already linked to another user!")  # type: ignore
+            await ctx.channel.send(f"{bnet} is already linked to another user!")  
         else:
             battlenet.add(guild, disc, bnet, platform)
             db[BNET][bnet][ROLE] = list(obwrole.generate_roles(bnet))
             await obwrole.update(ctx.guild, disc, bnet)
-            await ctx.channel.send(f"Successfully linked {bnet} to your discord!")  # type: ignore
+            await ctx.channel.send(f"Successfully linked {bnet} to your discord!")  
 
         database.dump()
 
@@ -275,16 +275,16 @@ def main():
             if bnet not in db[MMBR][disc][BNET]:
                 raise KeyError
         except KeyError:
-            await ctx.channel.send(f"{bnet} is not linked to your discord!")  # type: ignore
+            await ctx.channel.send(f"{bnet} is not linked to your discord!")  
         else:
             battlenet.deactivate(bnet)
-            guild = ctx.guild  # type: ignore
+            guild = ctx.guild  
             if guild is not None:
                 await obwrole.update(guild, disc, bnet)
             message = f"You have successfully unlinked {bnet} from your discord!"
             if prim := battlenet.remove(bnet, disc):
                 message += f"\n\nYour new primary account is {prim}"
-            await ctx.channel.send(message)  # type: ignore
+            await ctx.channel.send(message)  
 
         database.dump()
 
@@ -297,15 +297,15 @@ def main():
             if bnet not in user_battlenets:
                 raise KeyError
         except KeyError:
-            await ctx.channel.send(f"{bnet} is not linked to your account!")  # type: ignore
+            await ctx.channel.send(f"{bnet} is not linked to your account!")  
         else:
             if user_battlenets[bnet][PRIM]:
-                await ctx.channel.send(f"{bnet} is already your primary linked account!")  # type: ignore
+                await ctx.channel.send(f"{bnet} is already your primary linked account!")  
             else:
                 for b in user_battlenets:
                     user_battlenets[b][PRIM] = False
                 user_battlenets[bnet][PRIM] = True
-                await ctx.channel.send(f"{bnet} is your new primary linked account!")  # type: ignore
+                await ctx.channel.send(f"{bnet} is your new primary linked account!")  
 
         database.dump()
 

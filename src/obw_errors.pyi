@@ -1,0 +1,13 @@
+from typing import Union
+
+class PrivateProfileError(Exception):
+    _profile: Union[str, tuple[str, str]]
+    def __init__(self, message: str = ..., *, profile: Union[str, tuple[str, str]]  = ...) -> None: ...
+    @property
+    def profile(self) -> Union[str, tuple[str, str]]: ...
+
+class ProfileNotFoundError(Exception):
+    _profile: Union[str, tuple[str, str]]
+    def __init__(self, message: str = ..., *, profile: Union[str, tuple[str, str]] = ...) -> None: ...
+    @property
+    def profile(self) -> Union[str, tuple[str, str]]: ...

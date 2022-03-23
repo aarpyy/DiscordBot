@@ -2,6 +2,7 @@ from replit import db, Database
 db: Database
 
 from discord import Guild, Member, Role, Forbidden, HTTPException, Colour
+from discord.utils import find
 from sys import stderr
 from datetime import timedelta
 from typing import Optional
@@ -58,7 +59,7 @@ def format_role(role: Role) -> str:
         return no_tag + str(role)
 
 
-def escape_format(role: str) -> str:
+def escape_format(role):
     """Returns string name of role as it appears in discord
 
     :param role: role name
@@ -236,7 +237,7 @@ async def update_user_roles(guild: Guild, disc: str, bnet: str) -> None:
     except HTTPException as root:
         raise ValueError(f"Fetching user {disc} <id={user_id}> failed") from root
 
-    loudprint(f"Member fetched: {str(member)} ({member.id})")  # type: ignore
+    loudprint(f"Member fetched: {str(member)} ({member.id})")  
 
     db_roles = set(db[MMBR][disc][BNET][bnet][ROLE])
     new_roles = generate_roles(bnet)
@@ -277,7 +278,7 @@ async def update_user_roles(guild: Guild, disc: str, bnet: str) -> None:
 
         db[ROLE][role][MMBR] -= 1
 
-        role_obj = await get_role_obj(guild, role)  # type: ignore
+        role_obj = await get_role_obj(guild, role)  
 
         if role_obj is not None:
             await member.remove_roles(role_obj)

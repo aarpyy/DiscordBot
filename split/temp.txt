@@ -1,2 +1,0 @@
-sample text<make a newline here<and here
-and also<here but not >here

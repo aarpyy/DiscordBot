@@ -1,38 +1,35 @@
-from replit import db, Database
-db: Database
-
+from replit import db
 from .db_keys import *
 from .scrape import platform_url, scrape_play_ow
-from .tools import loudprint
 from .obw_errors import ProfileNotFoundError, PrivateProfileError
 
-# Accessors
 
-def is_active(bnet: str):
+# Accessors
+def is_active(bnet):
     return db[BNET][bnet][ACTIVE]
 
 
-def is_hidden(bnet: str):
+def is_hidden(bnet):
     return db[BNET][bnet][HID]
 
 
-def is_primary(disc: str, bnet: str):
-    return bnet == db[MMBR][disc][PRIM]
+def is_primary(guild, disc, bnet):
+    return bnet == db[GLD][guild][MMBR][disc][PRIM]
 
 
-def is_private(bnet: str):
+def is_private(bnet):
     return db[BNET][bnet][PRIV]
 
 
-def get_top(superlative: str):
+def get_top(superlative):
     return max(db[MMBR], key=lambda x: db[MMBR][x][SCORE].get(superlative, 0))
 
 
-def hide(bnet: str):
+def hide(bnet):
     db[BNET][bnet][HID] = True
 
 
-def deactivate(bnet: str):
+def deactivate(bnet):
     # Just used for deactivating account so that update roles removes roles, all active accounts are pending removal
     db[BNET][bnet][ACTIVE] = True
 
@@ -40,22 +37,12 @@ def deactivate(bnet: str):
 # Battlenet methods
 
 
-def create_index(bnet: str, pf: str) -> bool:
-    """
-    Creates and returns standard index for battlenet.
-
-    :param prim: whether or not battlenet is user's primary linked account
-    :param priv: battlenet's privacy status
-    :param platform: platform of battlenet
-    :param rank: battlenet's competitive ranks
-    :param stats: battlenet's general stats
-    :return: whether or not index was created
-    """
+def create_index(bnet, pf):
     try:
         rank, stats = scrape_play_ow(platform_url(pf)(bnet))
     except PrivateProfileError:
         db[BNET][bnet] = {
-            PRIV: True, ACTIVE: True,  HID: False, 
+            PRIV: True, ACTIVE: True, HID: False,
             PTFM: pf, RANK: {}, STAT: {}, ROLE: []
         }
         return True
@@ -63,16 +50,17 @@ def create_index(bnet: str, pf: str) -> bool:
         return False
     else:
         db[BNET][bnet] = {
-            PRIV: True, ACTIVE: True,  HID: False, 
+            ACTIVE: True, PRIV: True, HID: False,
             PTFM: pf, RANK: rank, STAT: stats, ROLE: []
         }
         return True
 
 
-def add(guild: str, disc: str, bnet: str, pf: str) -> bool:
+def add(guild, disc, bnet, pf):
     """
     Adds battlenet as index to user object with battlenet data as indices in battlenet object.
 
+    :param guild: name of guild
     :param disc: name of discord user
     :param bnet: name of battlenet
     :param pf: platform of battlenet
@@ -87,13 +75,12 @@ def add(guild: str, disc: str, bnet: str, pf: str) -> bool:
         return False
 
 
-def update(bnet: str) -> None:
+def update(bnet):
     """
     Requests data for battlenet, updating its stats and rank if request was successful. If account is private,
     it is marked as such and data is set to empty. If account DNE or is inaccessible, it is set to inactive
     to be deleted.
 
-    :param disc: discord user
     :param bnet: battlenet
     :return: None
     """
@@ -102,9 +89,13 @@ def update(bnet: str) -> None:
         # Try to scrape, 
         ranks, stats = scrape_play_ow(bnet, db[BNET][bnet][PTFM])
     except PrivateProfileError:
+
+        # If marked as private, still add the index, but set it to private
         db[BNET][bnet][PRIV] = True
         print(f"{bnet} marked as private")
     except ProfileNotFoundError as exc:
+
+        # If not found, just remove it
         print(f"{exc.profile} not found on playoverwatch.com")
         remove(bnet)
     except ValueError:
@@ -118,12 +109,14 @@ def update(bnet: str) -> None:
         db[BNET][bnet][RANK] = ranks
 
 
-def remove(bnet: str, gld: str = "", disc: str = "") -> None:
+def remove(bnet, gld="", disc=""):
     """
-    Removes battlenet from replit database, returning flag of if the user's primary
-    account was removed.
+    Removes battlenet from table of battlenets as well as all users
+    in database, unless guild and user are provided, in which case it just removes
+    from that index.
 
     :param bnet: battlenet to be removed
+    :param gld: guild that user belongs to
     :param disc: discord user associated with battlenet
     :return: None
     """
@@ -136,10 +129,10 @@ def remove(bnet: str, gld: str = "", disc: str = "") -> None:
             else:
                 db[GLD][g][MMBR][d][PRIM] = None
 
-
     # TODO: Remove user roles (maybe?)
 
-    del db[BNET][bnet]  # Remove battlenet from database
+    if bnet in db[BNET]:
+        del db[BNET][bnet]  # Remove battlenet from database
 
     # If guild and discord provided, remove directly
     if disc and gld:
@@ -150,4 +143,8 @@ def remove(bnet: str, gld: str = "", disc: str = "") -> None:
         for gld in db[GLD]:
             for disc in db[GLD][gld][MMBR]:
                 if bnet in db[GLD][gld][MMBR][disc][BNET]:
+
+                    # Technically battlenets are unique to a user, but it doesn't really hurt to
+                    # search through all after finding one since removing rarely happens and on
+                    # the off chance a bug allowed for a bnet to be shared it will now be removed
                     remove_from_user(gld, disc, bnet)

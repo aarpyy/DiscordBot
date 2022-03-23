@@ -19,7 +19,7 @@ async def dm(user: User) -> DMChannel:
     return user.dm_channel or await user.create_dm()
 
 
-async def get_user(bot: Bot, disc: str, guild: Guild = None):  # type: ignore
+async def get_user(bot: Bot, disc: str, guild: Guild = None):  
     if disc in db[MMBR]:
         try:
             return await bot.fetch_user(db[MMBR][disc][ID])
