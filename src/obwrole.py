@@ -1,9 +1,8 @@
-from replit import db
+from src.config import db
 
 from discord import Member, Role, Forbidden, HTTPException, Colour
 from discord.utils import find
 from sys import stderr
-from datetime import timedelta
 
 from .battlenet import is_active, is_hidden
 from .db_keys import *
@@ -88,7 +87,7 @@ async def get_role_obj(guild, role):
         except HTTPException:
             return None
         else:
-            role = role[2:]     # Get role name as it would appear in discord
+            role = escape_format(role)     # Get role name as it would appear in discord
             role_obj = find(lambda r: r.name == role, roles)
             if role_obj is not None:
                 db[ROLE][role] = {ID: role_obj.id, MMBR: len(role_obj.members)}
@@ -125,7 +124,6 @@ def remove_role(role) -> None:
     """
     Removes all instances of a role from discord user by searching through all linked battlenets.
 
-    :param disc: username
     :param role: role to be removed
     :return: None
     """
@@ -138,7 +136,7 @@ def remove_role(role) -> None:
     del db[ROLE][role]
 
 
-def rename_role(before, after) -> None:
+def rename_role(before, after):
     """
     Renames all instances of role by searching through all linked battlenets of all users.
 
@@ -147,7 +145,7 @@ def rename_role(before, after) -> None:
     :return: None
     """
 
-    for bnet in db[BNET]:
+    for bnet in db[BNET]:   # type: str
         db[BNET][bnet][ROLE] = list(after if role == before else role for role in db[BNET][bnet][ROLE])
 
 
@@ -178,7 +176,6 @@ def generate_roles(bnet):
     """
     Gets all roles associated with given battlenet based on stats.
 
-    :param disc: discord username
     :param bnet: battlenet
     :return: set of roles as strings
     """
@@ -189,7 +186,7 @@ def generate_roles(bnet):
     table = db[BNET][bnet][STAT].get("quickplay", {})
 
     # For each stat associated with battlenet, add that stat if it is an important one
-    for ctg in table:
+    for ctg in table:   # type: str
         if ctg in categ_major:
             hero = max(table[ctg], key=lambda x: table[ctg][x])
             roles.add(no_tag + hero + "-" + format_stat(ctg, table[ctg][hero]) + categ_short.get(ctg, ""))
@@ -217,8 +214,6 @@ async def update_user_roles(guild, disc, bnet):
     :return: None
     """
 
-    print(f"Updating roles for [{bnet}]...")
-
     if is_hidden(bnet):
         print(f"[{bnet}] is hidden. No roles given")
         return
@@ -235,11 +230,15 @@ async def update_user_roles(guild, disc, bnet):
 
     print(f"Member fetched: {str(member)} ({member.id})")  
 
-    db_roles = set(db[MMBR][disc][BNET][bnet][ROLE])
+    db_roles = set(db[BNET][bnet][ROLE])
     new_roles = generate_roles(bnet)
 
     # Remove role tag before sending into function so that it gets actual role name
-    to_add, to_remove = refactor_roles(set(r[2:] for r in db_roles), set(r[2:] for r in new_roles), set(format_role(role) for role in member.roles))
+    to_add, to_remove = refactor_roles(
+        set(escape_format(r) for r in db_roles),
+        set(escape_format(r)for r in new_roles),
+        set(str(r) for r in member.roles)
+    )
 
     # 'Refresh' role counts, by just subtracting member count for all current db roles
     for role in to_add:

@@ -47,12 +47,12 @@ class Oberbot(commands.Bot):
             battlenet.update(bnet)
 
         # Update all roles for people in guilds
-        for guild in self.guilds:  # type: Guild
-            for mmbr in guild.members:  # type: Member
-                disc = str(mmbr)
-                if disc in db[MMBR]:
-                    for bnet in db[MMBR][disc][BNET]:
-                        await obwrole.update(guild, disc, bnet)
+        # for guild in self.guilds:  # type: Guild
+        #     for mmbr in guild.members:  # type: Member
+        #         disc = str(mmbr)
+        #         if disc in db[MMBR]:
+        #             for bnet in db[MMBR][disc][BNET]:
+        #                 await obwrole.update(guild, disc, bnet)
 
         # If any accounts were marked for removal, re-run through them and remove them
         for disc in db[MMBR]:
@@ -77,7 +77,8 @@ class Oberbot(commands.Bot):
         print(f"Logged in as {self.user}.")
 
         # Clear user data, only used for testing
-        database.clear_user_data()
+        # database.clear_user_data()
+        self.update_loop.start()
         dump_loop.start()
 
     async def on_error(self, event: str, *args, **kwargs):
@@ -89,11 +90,7 @@ class Oberbot(commands.Bot):
 
     @staticmethod
     async def on_member_join(member: Member):
-        # If new guild member is a bot, ignore them
-        if not member.bot:
-            disc = str(member)
-            if disc not in db[MMBR]:
-                db[MMBR][disc] = {ID: member.id, RXN: {}, SCORE: {}, BNET: {}}
+        pass
 
     @staticmethod
     async def on_guild_role_delete(role: Role):

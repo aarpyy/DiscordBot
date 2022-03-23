@@ -1,7 +1,6 @@
-from discord import Reaction, User, Member, Guild, Message, Role
+from discord import Member, Guild, Message
 from discord.ext import commands
 
-from typing import Union
 import asyncio
 
 from src import messaging, obwrole
@@ -15,7 +14,7 @@ class ReactionHandler(commands.Cog):
         self.bot = bot
 
     @staticmethod
-    async def on_reaction_add(reaction: Reaction, user: Union[User, Member]):
+    async def on_reaction_add(reaction, user):
         message = reaction.message  # type: Message
         channel = message.channel
         guild = message.guild
@@ -32,7 +31,7 @@ class ReactionHandler(commands.Cog):
         print("Database dumped")
 
     @staticmethod
-    async def on_member_join(member: User):
+    async def on_member_join(member):
         # If new guild member is a bot, ignore them
         if not member.bot:
             disc = str(member)
@@ -40,7 +39,7 @@ class ReactionHandler(commands.Cog):
                 db[MMBR][disc] = {ID: member.id, RXN: {}, SCORE: {}, BNET: {}}
 
     @staticmethod
-    async def on_guild_role_delete(role: Role):
+    async def on_guild_role_delete(role):
         rname = obwrole.format_role(role)
 
         # If the bot removed this role, then rname will already be deleted, this is just if another user deletes role
@@ -48,7 +47,7 @@ class ReactionHandler(commands.Cog):
             obwrole.remove_role(rname)
 
     @staticmethod
-    async def on_guild_role_update(before: Role, after: Role):
+    async def on_guild_role_update(before, after):
         bname, aname = obwrole.format_role(before), obwrole.format_role(after)
 
         # TODO: This might not need to be done like this, since role update might not mean user count changes!

@@ -1,4 +1,4 @@
-from replit import db
+from src.config import db
 from discord import Guild, Member, Role
 from discord.ext.commands import Bot
 from typing import MutableMapping, MutableSequence
@@ -32,7 +32,7 @@ class Session:
                 self._roles[role.id] = role.members
 
     async def clear(self):
-        from replit import db
+        from src.config import db
         for key, value in self._db.items():
             db[key] = value
 

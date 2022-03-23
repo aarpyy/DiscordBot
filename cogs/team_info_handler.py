@@ -1,6 +1,4 @@
 from discord.ext import commands
-from discord.ext.commands import Context
-
 from src.config import db
 from src.compositions import get_map, Map, Round
 from src.db_keys import *
@@ -11,8 +9,8 @@ class TeamInfoHandler(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @staticmethod
-    async def comp(ctx: Context, *args):
+    @commands.command()
+    async def comp(self, ctx, *args):
         if not args:
             await ctx.channel.send("Must provide a map!")
             return

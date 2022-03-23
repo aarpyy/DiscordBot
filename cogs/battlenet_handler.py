@@ -1,6 +1,4 @@
 from discord.ext import commands
-from discord.ext.commands import Context
-
 from src import battlenet, obwrole
 from src.tools import restrict
 from src.db_keys import *
@@ -13,7 +11,7 @@ class BattlenetHandler(commands.Cog):
         self.bot = bot
 
     @restrict()
-    async def account(self, ctx: Context, bnet: str, platform: str):
+    async def account(self, ctx, bnet, platform):
         """
         Attempts to link battlenet account to user's discord.
 
@@ -39,20 +37,20 @@ class BattlenetHandler(commands.Cog):
             await ctx.channel.send(f"Successfully linked {bnet} to your discord!")
 
     @commands.command(name="battlenet")
-    async def _battlenet(self, ctx: Context, bnet: str):
+    async def _battlenet(self, ctx, bnet):
         await BattlenetHandler.account(ctx, bnet, "PC")
 
     @commands.command()
-    async def xbox(self, ctx: Context, bnet: str):
+    async def xbox(self, ctx, bnet):
         await BattlenetHandler.account(ctx, bnet, "Xbox")
 
     @commands.command()
-    async def playstation(self, ctx: Context, bnet: str):
+    async def playstation(self, ctx, bnet):
         await BattlenetHandler.account(ctx, bnet, "Playstation")
 
     @commands.command()
     @restrict()
-    async def remove(self, ctx: Context, bnet: str):
+    async def remove(self, ctx, bnet):
         disc = str(ctx.author)
         try:
             if bnet not in db[MMBR][disc][BNET]:
@@ -71,7 +69,7 @@ class BattlenetHandler(commands.Cog):
 
     @commands.command()
     @restrict()
-    async def setprimary(self, ctx: Context, bnet: str):
+    async def setprimary(self, ctx, bnet):
         disc = str(ctx.author)
         if disc not in db or bnet not in db[MMBR][disc][BNET]:
             await ctx.channel.send(f"{bnet} is not linked to your account!")
@@ -83,7 +81,7 @@ class BattlenetHandler(commands.Cog):
 
     @commands.command()
     @restrict()
-    async def accounts(self, ctx: Context):
+    async def accounts(self, ctx):
         disc = str(ctx.author)
         if disc not in db[MMBR] or not db[MMBR][disc][BNET]:
             await ctx.channel.send("You don't have any linked battlenets!")

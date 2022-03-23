@@ -35,7 +35,7 @@ def restrict(users=None):
                     break
 
             if ctx is None or str(ctx.author) in users:
-                return await f(ctx, *args)
+                return await f(*args)
             else:
                 print(f"{str(ctx.author)} ran {f.__name__} and was blocked.", file=stderr)
                 await ctx.channel.send(f"This command is currently disabled!")
