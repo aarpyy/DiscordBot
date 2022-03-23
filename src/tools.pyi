@@ -1,0 +1,6 @@
+from collections.abc import MutableMapping, MutableSequence
+from typing import Union
+
+def jsonify(o: object) -> str: ...
+def jsondump(obj: Union[MutableMapping, MutableSequence], indent: int = ...) -> str: ...
+

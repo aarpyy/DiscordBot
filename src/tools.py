@@ -1,40 +1,29 @@
 from collections.abc import MutableMapping, MutableSequence
 
-from typing import Union
 
-
-loud = False
-
-
-def loudprint(*args, **kwargs):
-    global loud
-    if loud:
-        print(*args, **kwargs)
-
-
-def loudinput(*args, **kwargs):
-    global loud
-    if loud:
-        input(*args, **kwargs)
-
-
-def jsonify(o: object) -> str:
+def jsonify(o):
     """
     Attempts to convert object into JSON readable format.
 
     :param o: object to be converted
-    :return: string hopefully recognizable by JSON
+    :return: JSON acceptable data type
     """
 
     if isinstance(o, bool):
+
+        # JSON booleans are lowercase
         return str(o).lower()
     elif isinstance(o, (int, float)):
+
+        # JSON recognizes ints and floats
         return str(o)
     else:
+
+        # Otherwise just wrap it in quotes since JSON can handle normal strings
         return f'"{str(o)}"'
 
 
-def jsondump(obj: Union[MutableMapping, MutableSequence], indent: int = 4) -> str:
+def jsondump(obj, indent=4):
     """
     Converts a MutableMapping or MutableSequence object into a JSON string.
 

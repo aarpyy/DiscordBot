@@ -1,16 +1,13 @@
 from .config import *
-from replit import db, Database
-from sys import exit, exc_info, stderr
+from replit import db
+from sys import exit, stderr
 if db is None:
     print(f"Database failed to load", file=stderr)
     exit(1)
 
-db: Database
-
 from discord.ext import tasks
 from discord.ext.commands import Bot, Context
-from discord import (Intents, Member, DMChannel, Guild, Role, User, Forbidden, HTTPException,
-                     NotFound, Reaction, Emoji, TextChannel)
+from discord import Intents, Member, Guild, Role, User, Reaction
 from discord.message import Message
 from traceback import print_exc
 from functools import wraps
@@ -23,7 +20,6 @@ from . import request
 from . import messaging
 
 from .db_keys import *
-from .tools import loudprint, loudinput
 from .compositions import Map, Round, get_map
 
 from typing import Union
@@ -85,8 +81,6 @@ def main():
 
         database.dump()
 
-        loudinput("All user data should now be updated")
-
         # Update all roles for people in guilds
         for guild in bot.guilds:  # type: Guild
             for mmbr in guild.members:  # type: Member
@@ -97,15 +91,13 @@ def main():
 
         database.dump()
 
-        loudinput("All roles should now be updated")
-
         # If any accounts were marked for removal, re-run through them and remove them
         for disc in db[MMBR]:
             for bnet in db[MMBR][disc][BNET]:
 
                 # If battlenet is inactive, let user know it's removed
                 if not battlenet.is_active(bnet):
-                    loudprint(f"Removing {disc}[{bnet}]...")
+                    print(f"Removing {disc}[{bnet}]...")
                     user = await request.get_user(bot, disc)  
                     if user is not None:
                         channel = await request.get_dm(user)  
@@ -116,7 +108,7 @@ def main():
                             message += f"\n\nYour new primary account is {prim}"
                         await channel.send(message)
 
-        loudprint("Update loop complete")
+        print("Update loop complete")
 
     # Events
 
@@ -150,13 +142,13 @@ def main():
         if isinstance(author, Member) and isinstance(guild, Guild) and messaging.valid_reaction(reaction) and \
                 messaging.valid_channel(channel):
             emoji = reaction.emoji
-            loudprint(f"Emoji: {repr(emoji)} (is custom: {reaction.custom_emoji})")
-            loudprint(f"Reaction: {repr(reaction)}")
+            print(f"Emoji: {repr(emoji)} (is custom: {reaction.custom_emoji})")
+            print(f"Reaction: {repr(reaction)}")
             await messaging.log_reaction(author, reaction)
 
         database.dump()
 
-        loudprint("Database dumped")
+        print("Database dumped")
 
     @bot.event
     async def on_member_join(member: User):
@@ -233,27 +225,20 @@ def main():
         :return: None
         """
         disc = str(ctx.author)
-        guild = str(ctx.guild)
-
-        if not isinstance(ctx.guild, Guild):
-            await ctx.channel.send("This command must be run on a server channel!")  
-            return
 
         # If user not in database, add them
-        elif disc not in db[GLD][guild][MMBR]:
+        if disc not in db[MMBR]:
             db[MMBR][disc] = {ID: ctx.author.id, BNET: [], PRIM: None, RXN: {}, SCORE: {}}
 
-        if bnet in db[GLD][guild][MMBR][disc][BNET]:
+        if bnet in db[MMBR][disc][BNET]:
             await ctx.channel.send(f"{bnet} is already linked to your account!")  
         elif bnet in db[BNET]:
             await ctx.channel.send(f"{bnet} is already linked to another user!")  
         else:
-            battlenet.add(guild, disc, bnet, platform)
+            battlenet.add(disc, bnet, platform)
             db[BNET][bnet][ROLE] = list(obwrole.generate_roles(bnet))
             await obwrole.update(ctx.guild, disc, bnet)
-            await ctx.channel.send(f"Successfully linked {bnet} to your discord!")  
-
-        database.dump()
+            await ctx.channel.send(f"Successfully linked {bnet} to your discord!")
 
     @bot.command(name="battlenet")
     async def _battlenet(ctx: Context, bnet: str):
@@ -284,13 +269,11 @@ def main():
             message = f"You have successfully unlinked {bnet} from your discord!"
             if prim := battlenet.remove(bnet, disc):
                 message += f"\n\nYour new primary account is {prim}"
-            await ctx.channel.send(message)  
-
-        database.dump()
+            await ctx.channel.send(message)
 
     @bot.command()
     @restrict()
-    async def primary(ctx: Context, bnet: str):
+    async def setprimary(ctx: Context, bnet: str):
         disc = str(ctx.author)
         try:
             user_battlenets = db[MMBR][disc][BNET]
@@ -305,9 +288,17 @@ def main():
                 for b in user_battlenets:
                     user_battlenets[b][PRIM] = False
                 user_battlenets[bnet][PRIM] = True
-                await ctx.channel.send(f"{bnet} is your new primary linked account!")  
+                await ctx.channel.send(f"{bnet} is your new primary linked account!")
 
-        database.dump()
+    @bot.command()
+    @restrict()
+    async def accounts(ctx: Context):
+        disc = str(ctx.author)
+        if disc not in db[MMBR] or not db[MMBR][disc][BNET]:
+            await ctx.channel.send("You don't have any linked battlenets!")
+        else:
+            message = ", ".join(b + " (primary) " if db[MMBR][disc][PRIM] == b else b for b in db[MMBR][disc][BNET])
+            await ctx.channel.send("Linked accounts:\n" + message)
 
     # Log in to bot using token from replit env and run
     bot.run(getenv('DISC_TOKEN'))

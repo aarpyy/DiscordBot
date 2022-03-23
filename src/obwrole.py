@@ -1,5 +1,4 @@
-from replit import db, Database
-db: Database
+from replit import db
 
 from discord import Guild, Member, Role, Forbidden, HTTPException, Colour
 from discord.utils import find
@@ -7,8 +6,7 @@ from sys import stderr
 from datetime import timedelta
 from typing import Optional
 
-from .config import *
-from .tools import loudprint
+from .tools import print
 from .battlenet import is_active, is_hidden
 from .db_keys import *
 
@@ -21,7 +19,7 @@ no_tag = "--"
 obw_color = Colour.from_rgb(143, 33, 23)
 
 
-def time(stat: str) -> str:
+def time(stat):
     t = stat.split(":")
     if len(t) == 1:
         return t[0] + "s"
@@ -36,7 +34,7 @@ def time(stat: str) -> str:
             return str(delta.seconds // 3600) + "h"
 
 
-def format_stat(ctg: str, stat: str) -> str:
+def format_stat(ctg, stat):
     if ctg == "Time Played":
         return time(stat)
     elif ctg == "Win Percentage":
@@ -45,7 +43,7 @@ def format_stat(ctg: str, stat: str) -> str:
         return stat
 
 
-def format_role(role: Role) -> str:
+def format_role(role):
     """Returns string name of role as it appears in database
 
     :param role: discord role
@@ -70,7 +68,7 @@ def escape_format(role):
     return role[2:]
 
 
-async def get_role_obj(guild: Guild, role: str) -> Optional[Role]:
+async def get_role_obj(guild, role):
     """
     Helper function that more sufficiently ensures that the Role is returned if it exists. First, it
     checks if the Role is already in the db, ting the Role via Role.id if true. Otherwise,
@@ -99,7 +97,7 @@ async def get_role_obj(guild: Guild, role: str) -> Optional[Role]:
             return role_obj
 
 
-async def force_role_obj(guild: Guild, role: str, **kwargs) -> Role:
+async def force_role_obj(guild, role, **kwargs):
     """
     Shell function for get_role_obj() that, if unable to return Role, instead creates the role.
 
@@ -117,15 +115,15 @@ async def force_role_obj(guild: Guild, role: str, **kwargs) -> Role:
     return role_obj
 
 
-async def delete_role(role: Role, rname: str = "") -> None:
-    if not rname:
-        rname = format_role(role)
+async def delete_role(role, name=""):
+    if not name:
+        name = format_role(role)
 
-    remove_role(rname)
+    remove_role(name)
     await role.delete()
 
 
-def remove_role(role: str) -> None:
+def remove_role(role) -> None:
     """
     Removes all instances of a role from discord user by searching through all linked battlenets.
 
@@ -142,7 +140,7 @@ def remove_role(role: str) -> None:
     del db[ROLE][role]
 
 
-def rename_role(before: str, after: str) -> None:
+def rename_role(before, after) -> None:
     """
     Renames all instances of role by searching through all linked battlenets of all users.
 
@@ -155,7 +153,7 @@ def rename_role(before: str, after: str) -> None:
         db[BNET][bnet][ROLE] = list(after if role == before else role for role in db[BNET][bnet][ROLE])
 
 
-def refactor_roles(db_roles: set[str], new_roles: set[str], disc_roles: set[str]):
+def refactor_roles(db_roles, new_roles, disc_roles):
     """Given a set of roles currently given to user from stats, a set of roles
     newly given to user from stats, and a set of roles actually held by user in 
     discord guild, return the list of roles to be added to user in guild
@@ -178,7 +176,7 @@ def refactor_roles(db_roles: set[str], new_roles: set[str], disc_roles: set[str]
     return disc_add, disc_remove
 
 
-def generate_roles(bnet: str) -> set[str]:
+def generate_roles(bnet):
     """
     Gets all roles associated with given battlenet based on stats.
 
@@ -209,7 +207,7 @@ def generate_roles(bnet: str) -> set[str]:
     return roles
 
 
-async def update_user_roles(guild: Guild, disc: str, bnet: str) -> None:
+async def update_user_roles(guild, disc, bnet):
     """
     Gives Guild Member Role objects based off of the stats retrieved from connected battlenet.
 
@@ -221,23 +219,23 @@ async def update_user_roles(guild: Guild, disc: str, bnet: str) -> None:
     :return: None
     """
 
-    loudprint(f"Updating roles for [{bnet}]...")
+    print(f"Updating roles for [{bnet}]...")
 
     if is_hidden(bnet):
-        loudprint(f"[{bnet}] is hidden. No roles given")
+        print(f"[{bnet}] is hidden. No roles given")
         return
 
     user_id = db[MMBR][disc][ID]
 
     # Use Guild.fetch_member() to ensure that even if member not in cache they are retrieved
     try:
-        member = await guild.fetch_member(user_id)  # type: Member
+        member: Member = await guild.fetch_member(user_id)
     except Forbidden as root:
         raise AttributeError(f"Unable to access Guild {str(guild)}") from root
     except HTTPException as root:
         raise ValueError(f"Fetching user {disc} <id={user_id}> failed") from root
 
-    loudprint(f"Member fetched: {str(member)} ({member.id})")  
+    print(f"Member fetched: {str(member)} ({member.id})")  
 
     db_roles = set(db[MMBR][disc][BNET][bnet][ROLE])
     new_roles = generate_roles(bnet)
@@ -290,7 +288,7 @@ async def update_user_roles(guild: Guild, disc: str, bnet: str) -> None:
     db[BNET][bnet][ROLE] = list(new_roles)
 
 
-async def update(guild: Guild, disc: str, bnet: str):
+async def update(guild, disc, bnet):
     """
     Shell function for main update_bnet_roles() function that handles possible errors.
 
@@ -303,6 +301,6 @@ async def update(guild: Guild, disc: str, bnet: str):
         await update_user_roles(guild, disc, bnet)
     except Forbidden:
         await guild.leave()
-        loudprint(f"Left {str(guild)} guild because inaccessible", file=stderr)
+        print(f"Left {str(guild)} guild because inaccessible", file=stderr)
     except HTTPException as exc:
-        loudprint(f"Failed {update_user_roles.__name__}(): {str(exc)}", file=stderr)
+        print(f"Failed {update_user_roles.__name__}(): {str(exc)}", file=stderr)

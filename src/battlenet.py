@@ -13,8 +13,8 @@ def is_hidden(bnet):
     return db[BNET][bnet][HID]
 
 
-def is_primary(guild, disc, bnet):
-    return bnet == db[GLD][guild][MMBR][disc][PRIM]
+def is_primary(disc, bnet):
+    return bnet == db[MMBR][disc][PRIM]
 
 
 def is_private(bnet):
@@ -56,20 +56,19 @@ def create_index(bnet, pf):
         return True
 
 
-def add(guild, disc, bnet, pf):
+def add(disc, bnet, pf):
     """
     Adds battlenet as index to user object with battlenet data as indices in battlenet object.
 
-    :param guild: name of guild
     :param disc: name of discord user
     :param bnet: name of battlenet
     :param pf: platform of battlenet
     :return: if battlenet was added to user
     """
     if create_index(bnet, pf):
-        db[GLD][guild][MMBR][disc][BNET].append(bnet)
-        if db[GLD][guild][MMBR][disc][PRIM] is None:
-            db[GLD][guild][MMBR][disc][PRIM] = bnet
+        db[MMBR][disc][BNET].append(bnet)
+        if db[MMBR][disc][PRIM] is None:
+            db[MMBR][disc][PRIM] = bnet
         return True
     else:
         return False
@@ -122,12 +121,12 @@ def remove(bnet, gld="", disc=""):
     """
 
     def remove_from_user(g, d, b):
-        db[GLD][g][MMBR][d][BNET].remove(b)
-        if bnet == db[GLD][g][MMBR][d][PRIM]:
-            if db[GLD][g][MMBR][d][BNET]:
-                db[GLD][g][MMBR][d][PRIM] = db[GLD][g][MMBR][d][BNET][0]
+        db[MMBR][d][BNET].remove(b)
+        if bnet == db[MMBR][d][PRIM]:
+            if db[MMBR][d][BNET]:
+                db[MMBR][d][PRIM] = db[MMBR][d][BNET][0]
             else:
-                db[GLD][g][MMBR][d][PRIM] = None
+                db[MMBR][d][PRIM] = None
 
     # TODO: Remove user roles (maybe?)
 
@@ -141,8 +140,8 @@ def remove(bnet, gld="", disc=""):
     # Otherwise, just search through all guilds and users, removing from everyone
     else:
         for gld in db[GLD]:
-            for disc in db[GLD][gld][MMBR]:
-                if bnet in db[GLD][gld][MMBR][disc][BNET]:
+            for disc in db[MMBR]:
+                if bnet in db[MMBR][disc][BNET]:
 
                     # Technically battlenets are unique to a user, but it doesn't really hurt to
                     # search through all after finding one since removing rarely happens and on
