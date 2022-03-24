@@ -103,7 +103,7 @@ async def force_role_obj(guild, role, **kwargs):
     Shell function for get_role_obj() that, if unable to return Role, instead creates the role.
 
     :param guild: guild that holds role
-    :param role: rolename
+    :param role: role name
     :return:
     """
 
@@ -237,7 +237,7 @@ async def update_user_roles(guild, disc, bnet):
         print(f"No member {disc} with id={db[MMBR][disc][ID]} in {str(guild)}")
     else:
 
-        def rm_role(r):
+        async def rm_role(r):
             role_obj = await get_role_obj(guild, r)
 
             if role_obj is not None:
@@ -247,7 +247,7 @@ async def update_user_roles(guild, disc, bnet):
                     print(f"Deleting {str(role_obj)}")
                     await delete_role(role_obj, role)
 
-        def add_role(r):
+        async def add_role(r):
             kwargs = dict(
                 name=escape_format(r),
                 color=obw_color,

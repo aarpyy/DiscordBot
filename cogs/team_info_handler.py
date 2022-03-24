@@ -2,6 +2,7 @@ from discord.ext import commands
 from src.config import db
 from src.compositions import get_map, Map, Round
 from src.db_keys import *
+from src.bot import Oberbot
 
 
 class TeamInfoHandler(commands.Cog):

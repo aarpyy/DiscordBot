@@ -1,8 +1,10 @@
 from discord.ext import commands
+from discord_slash import SlashCommand, SlashContext
 from src import battlenet, roles
 from src.utils import restrict
 from src.db_keys import *
 from src.config import db
+from src.bot import Oberbot
 
 
 class BattlenetHandler(commands.Cog):
@@ -33,7 +35,7 @@ class BattlenetHandler(commands.Cog):
         else:
             battlenet.add(disc, bnet, platform)
             db[BNET][bnet][ROLE] = list(roles.generate_roles(bnet))
-            await roles.update(ctx.guild, disc, bnet)
+            await roles.update_user_roles(ctx.guild, disc, bnet)
             await ctx.channel.send(f"Successfully linked {bnet} to your discord!")
 
     @commands.command(name="battlenet")

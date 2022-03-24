@@ -1,5 +1,6 @@
 from discord.ext import commands, tasks
 from discord import Intents, Member, Role, NotFound, HTTPException, Guild
+from discord_slash import SlashCommand, SlashContext
 
 from sys import stderr
 import asyncio
@@ -7,7 +8,7 @@ import asyncio
 from . import database
 from . import roles
 from . import battlenet
-from . import request
+from .compositions import get_map, Map, Round
 from .db_keys import *
 from .config import db
 
@@ -21,6 +22,11 @@ async def dump_loop():
 
 
 class Oberbot(commands.Bot):
+
+    # List of guilds that Oberbot is in. Slash commands can be used in this server
+    guild_ids = [
+        895713807618416651  # Oberwatch server
+    ]
 
     def __init__(
             self,
@@ -62,9 +68,9 @@ class Oberbot(commands.Bot):
                 # If battlenet is inactive, let user know it's removed
                 if not battlenet.is_active(bnet):
                     print(f"Removing {disc}[{bnet}]...")
-                    user = await request.get_user(self, disc)
+                    user = await self.get_user_named(disc)
                     if user is not None:
-                        channel = await request.get_dm(user)
+                        channel = await self.get_dm(user)
                         message = f"Stats for {bnet} were unable to be updated and the account was unlinked " \
                                   f"from your discord."
 

@@ -7,8 +7,8 @@ def getdb():
     # This is a function instead of just importing and then assigning later because
     # import needs to be delayed until .env has been confirmed loaded
     import replit
-    db: replit.Database = replit.db
-    return db
+    d: replit.Database = replit.db
+    return d
 
 
 root = Path(__file__).parent.parent.absolute()
