@@ -1,7 +1,7 @@
 from .config import db
 from .db_keys import *
 from .scrape import platform_url, scrape_play_ow
-from .obw_errors import ProfileNotFoundError, PrivateProfileError
+from .utils import ProfileNotFoundError, PrivateProfileError
 
 
 # Accessors

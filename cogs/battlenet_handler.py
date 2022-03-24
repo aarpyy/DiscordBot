@@ -1,6 +1,6 @@
 from discord.ext import commands
-from src import battlenet, obwrole
-from src.tools import restrict
+from src import battlenet, roles
+from src.utils import restrict
 from src.db_keys import *
 from src.config import db
 
@@ -32,8 +32,8 @@ class BattlenetHandler(commands.Cog):
             await ctx.channel.send(f"{bnet} is already linked to another user!")
         else:
             battlenet.add(disc, bnet, platform)
-            db[BNET][bnet][ROLE] = list(obwrole.generate_roles(bnet))
-            await obwrole.update(ctx.guild, disc, bnet)
+            db[BNET][bnet][ROLE] = list(roles.generate_roles(bnet))
+            await roles.update(ctx.guild, disc, bnet)
             await ctx.channel.send(f"Successfully linked {bnet} to your discord!")
 
     @commands.command(name="battlenet")
@@ -61,7 +61,7 @@ class BattlenetHandler(commands.Cog):
             battlenet.deactivate(bnet)
             guild = ctx.guild
             if guild is not None:
-                await obwrole.update(guild, disc, bnet)
+                await roles.update(guild, disc, bnet)
             message = f"You have successfully unlinked {bnet} from your discord!"
             if prim := battlenet.remove(bnet, disc):
                 message += f"\n\nYour new primary account is {prim}"

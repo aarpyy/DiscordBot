@@ -1,6 +1,6 @@
 from .config import db
 from discord import Message, TextChannel, Member, Reaction, abc
-from .obwrole import mention_tag, obw_color, force_role_obj
+from .roles import mention_tag, obw_color, force_role_obj
 from .db_keys import *
 from . import database
 

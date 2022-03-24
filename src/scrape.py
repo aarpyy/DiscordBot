@@ -4,7 +4,7 @@ import re
 from typing import Dict, Tuple, Callable
 
 from .config import path_split, cURL
-from .obw_errors import PrivateProfileError, ProfileNotFoundError
+from .utils import PrivateProfileError, ProfileNotFoundError
 
 
 # Given a platform of overwatch, returns a function that accepts a username of that platform

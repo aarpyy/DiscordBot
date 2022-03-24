@@ -7,6 +7,28 @@ from sys import stderr
 su = "aarpyy#3360"
 
 
+class PrivateProfileError(Exception):
+
+    def __init__(self, message="", *, profile=None):
+        super().__init__(message)
+        self._profile = profile
+
+    @property
+    def profile(self):
+        return self._profile
+
+
+class ProfileNotFoundError(Exception):
+
+    def __init__(self, message="", *, profile=None):
+        super().__init__(message)
+        self._profile = profile
+
+    @property
+    def profile(self):
+        return self._profile
+
+
 def restrict(users=None):
     """Given a list of users, returns a wrapper that restricts
     the use of a discord command except for the given users.

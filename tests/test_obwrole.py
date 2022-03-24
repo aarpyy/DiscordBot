@@ -1,7 +1,7 @@
 import pytest
 from src.config import db
 from discord import Guild
-from src.obwrole import *
+from src.roles import *
 from src.bot import Oberbot
 from cogs import all_cogs
 from os import getenv

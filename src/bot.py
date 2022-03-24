@@ -1,11 +1,11 @@
 from discord.ext import commands, tasks
-from discord import Intents, Member, Role
+from discord import Intents, Member, Role, NotFound, HTTPException, Guild
 
 from sys import stderr
 import asyncio
 
 from . import database
-from . import obwrole
+from . import roles
 from . import battlenet
 from . import request
 from .db_keys import *
@@ -53,7 +53,7 @@ class Oberbot(commands.Bot):
         #         disc = str(mmbr)
         #         if disc in db[MMBR]:
         #             for bnet in db[MMBR][disc][BNET]:
-        #                 await obwrole.update(guild, disc, bnet)
+        #                 await roles.update(guild, disc, bnet)
 
         # If any accounts were marked for removal, re-run through them and remove them
         for disc in db[MMBR]:
@@ -95,15 +95,15 @@ class Oberbot(commands.Bot):
 
     @staticmethod
     async def on_guild_role_delete(role: Role):
-        rname = obwrole.format_role(role)
+        rname = roles.format_role(role)
 
         # If the bot removed this role, then rname will already be deleted, this is just if another user deletes role
         if rname in db[ROLE]:
-            obwrole.remove_role(rname)
+            roles.remove_role(rname)
 
     @staticmethod
     async def on_guild_role_update(before: Role, after: Role):
-        bname, aname = obwrole.format_role(before), obwrole.format_role(after)
+        bname, aname = roles.format_role(before), roles.format_role(after)
 
         # TODO: This might not need to be done like this, since role update might not mean user count changes!
 
@@ -112,4 +112,32 @@ class Oberbot(commands.Bot):
             del db[ROLE][bname]
             await asyncio.sleep(5)  # Give some sleep time for after.members to be updated
             db[ROLE][aname] = {ID: after.id, MMBR: len(after.members)}
-            obwrole.rename_role(bname, aname)
+            roles.rename_role(bname, aname)
+
+    @staticmethod
+    async def get_dm(user):
+        return user.dm_channel or await user.create_dm()
+
+    async def get_user_named(self, disc, guild=None):
+        if disc in db[MMBR]:
+            try:
+                user = await self.fetch_user(db[MMBR][disc][ID])
+            except NotFound:
+                print(f"User {disc} <id={db[MMBR][disc][ID]}> does not exist")
+
+                # If unable to find user for whatever reason, remove all of their battlenets
+                db[BNET] = [k for k in db[BNET] if k not in set(db[MMBR][disc][BNET])]
+                del db[MMBR][disc]  # If not real user no roles to remove anyway so just delete
+            except HTTPException:
+                print(f"HTTPException raised while retrieving {disc}")
+                return None
+            else:
+                return user
+        elif isinstance(guild, Guild):
+            return guild.get_member_named(disc)
+        else:
+            for guild in self.guilds:  # type: Guild
+                user = guild.get_member_named(disc)
+                if user is not None:
+                    return user
+            return None

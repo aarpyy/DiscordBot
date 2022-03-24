@@ -1,7 +1,7 @@
 from . import battlenet
-from . import obwrole
+from . import roles
 
 
 __all__ = [
-    "battlenet", "obwrole"
+    "battlenet", "roles.pyi"
 ]

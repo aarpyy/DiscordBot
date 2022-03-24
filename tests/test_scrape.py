@@ -1,6 +1,6 @@
 from src.config import *
 from src.scrape import scrape_play_ow
-from src.obw_errors import PrivateProfileError, ProfileNotFoundError
+from src.utils import PrivateProfileError, ProfileNotFoundError
 from sys import stderr
 from src.config import db
 

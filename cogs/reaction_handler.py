@@ -3,7 +3,7 @@ from discord.ext import commands
 
 import asyncio
 
-from src import messaging, obwrole
+from src import messaging, roles
 from src.db_keys import *
 from src.config import db
 
@@ -40,15 +40,15 @@ class ReactionHandler(commands.Cog):
 
     @staticmethod
     async def on_guild_role_delete(role):
-        rname = obwrole.format_role(role)
+        rname = roles.format_role(role)
 
         # If the bot removed this role, then rname will already be deleted, this is just if another user deletes role
         if rname in db[ROLE]:
-            obwrole.remove_role(rname)
+            roles.remove_role(rname)
 
     @staticmethod
     async def on_guild_role_update(before, after):
-        bname, aname = obwrole.format_role(before), obwrole.format_role(after)
+        bname, aname = roles.format_role(before), roles.format_role(after)
 
         # TODO: This might not need to be done like this, since role update might not mean user count changes!
 
@@ -57,4 +57,4 @@ class ReactionHandler(commands.Cog):
             del db[ROLE][bname]
             await asyncio.sleep(5)  # Give some sleep time for after.members to be updated
             db[ROLE][aname] = {ID: after.id, MMBR: len(after.members)}
-            obwrole.rename_role(bname, aname)
+            roles.rename_role(bname, aname)

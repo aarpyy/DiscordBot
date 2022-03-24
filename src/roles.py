@@ -17,6 +17,8 @@ tags = (mention_tag, no_tag)
 obw_color = Colour.from_rgb(143, 33, 23)
 
 
+# Functions for formatting data
+
 def format_time(stat):
     suffix = {3: "h", 2: "m", 1: "s"}
     t = stat.split(":")
@@ -64,6 +66,8 @@ def escape_format(role):
     """
     return role[2:]
 
+
+# Functions for dealing with Role objects
 
 async def get_role_obj(guild, role):
     """
@@ -120,7 +124,7 @@ async def delete_role(role, name=""):
     await role.delete()
 
 
-def remove_role(role) -> None:
+def remove_role(role):
     """
     Removes all instances of a role from discord user by searching through all linked battlenets.
 
@@ -149,7 +153,7 @@ def rename_role(before, after):
         db[BNET][bnet][ROLE] = list(after if role == before else role for role in db[BNET][bnet][ROLE])
 
 
-def refactor_roles(db_roles, new_roles, disc_roles):
+def adjust_roles(db_roles, new_roles, disc_roles):
     """Given a set of roles currently given to user from stats, a set of roles
     newly given to user from stats, and a set of roles actually held by user in 
     discord guild, return the list of roles to be added to user in guild
@@ -166,7 +170,7 @@ def refactor_roles(db_roles, new_roles, disc_roles):
     """
 
     db_removed = db_roles - new_roles                   # Roles removed from database
-    disc_remove = db_removed.intersection(disc_roles)   # Roles removed from database that were also discord roles
+    disc_remove = db_removed & disc_roles               # Roles removed from database that were also discord roles
     disc_add = new_roles - disc_roles                   # Roles currently in database that are not discord roles
 
     return disc_add, disc_remove
@@ -222,86 +226,99 @@ async def update_user_roles(guild, disc, bnet):
     #     print(f"[{bnet}] is hidden. No roles given")
     #     return
 
-    user_id = db[MMBR][disc][ID]
-
     # Use Guild.fetch_member() to ensure that even if member not in cache they are retrieved
     try:
-        member: Member = await guild.fetch_member(user_id)
-    except Forbidden as root:
-        raise AttributeError(f"Unable to access Guild {str(guild)}") from root
-    except HTTPException as root:
-        raise ValueError(f"Fetching user {disc} <id={user_id}> failed") from root
-
-    print(f"Member fetched: {str(member)} ({member.id})")  
-
-    # Get all roles user has in database, regardless of which battlenet it's coming from
-    db_roles = set()
-    for b in db[MMBR][disc][BNET]:
-        for r in db[BNET][b][ROLE]:
-            db_roles.add(r)
-    new_roles = generate_roles(bnet)
-
-    # Remove role tag before sending into function so that it gets actual role name
-    to_add, to_remove = refactor_roles(
-        set(db_roles),
-        set(new_roles),
-        set(format_role(r) for r in member.roles)
-    )
-
-    print(f"Adding roles: {to_add}\nRemoving roles: {to_remove}")
-
-    role: str
-    for role in to_add:
-
-        if role in db[ROLE]:
-            db[ROLE][role][MMBR] += 1
-        else:
-            db[ROLE][role] = {
-                MMBR: 1,
-                ID: None
-            }
-
-        continue    # For now, don't actually add roles in discord
-        kwargs = dict(
-            name=role[2:],
-            color=obw_color,
-            mentionable=role.startswith(mention_tag)
-        )
-        role_obj = await force_role_obj(guild, role, **kwargs)
-        await member.add_roles(role_obj)
-
-    for role in to_remove:
-
-        # Don't worry about this reaching 0 here, we check later if its 0 and delete
-        db[ROLE][role][MMBR] -= 1
-
-        continue    # Same as above, don't deal with discord roles yet
-
-        role_obj = await get_role_obj(guild, role)  
-
-        if role_obj is not None:
-            await member.remove_roles(role_obj)
-            if not db[ROLE][role][MMBR]:  # If just removed last member, delete the Role
-                print(f"Deleting {str(role_obj)}; Role.members: {[str(m) for m in role_obj.members]}; "
-                      f"db: {db[ROLE][role][MMBR]}")
-                await delete_role(role_obj, role)
-
-    db[BNET][bnet][ROLE] = list(new_roles)
-
-
-async def update(guild, disc, bnet):
-    """
-    Shell function for main update_bnet_roles() function that handles possible errors.
-
-    :param guild: Guild object user is a part of
-    :param disc: username
-    :param bnet: battlenet to be updated
-    :return: None
-    """
-    try:
-        await update_user_roles(guild, disc, bnet)
+        member: Member = await guild.fetch_member(db[MMBR][disc][ID])
     except Forbidden:
-        await guild.leave()
-        print(f"Left {str(guild)} guild because inaccessible", file=stderr)
-    except HTTPException as exc:
-        print(f"Failed {update_user_roles.__name__}(): {str(exc)}", file=stderr)
+        print(f"Unable to access Guild {str(guild)}")
+    except HTTPException:
+        print(f"Fetching user {disc} <id={db[MMBR][disc][ID]}> failed")
+    except ValueError:
+        print(f"No member {disc} with id={db[MMBR][disc][ID]} in {str(guild)}")
+    else:
+
+        def rm_role(r):
+            role_obj = await get_role_obj(guild, r)
+
+            if role_obj is not None:
+                await member.remove_roles(role_obj)
+
+                if db[ROLE][role][MMBR] == 0:  # If just removed last member, delete the Role
+                    print(f"Deleting {str(role_obj)}")
+                    await delete_role(role_obj, role)
+
+        def add_role(r):
+            kwargs = dict(
+                name=escape_format(r),
+                color=obw_color,
+                mentionable=r.startswith(mention_tag)
+            )
+            role_obj = await force_role_obj(guild, role, **kwargs)
+            await member.add_roles(role_obj)
+
+        # Current roles member has in discord server
+        discord_roles = set(format_role(r) for r in member.roles)
+
+        # Roles that the user should have based on battlenet stats
+        new_roles = generate_roles(bnet)
+
+        if not is_active(bnet):
+            db_roles = []  # All roles given to user by all battlenets, including duplicates
+            for b in db[MMBR][disc][BNET]:
+                db_roles.extend(r for r in db[BNET][b][ROLE])
+
+            bnet_roles = set(db[BNET][bnet][ROLE])  # Roles given to user by inactive battlenet
+            for role in bnet_roles:
+                db_roles.remove(role)
+
+            # We want to remove all of the roles UNIQUELY given to user by this battlenet
+            # so we remove all of roles given by battlenet from list of all roles, then
+            # any roles that are given by battlenet and still not found in total roles
+            # were UNIQUE to this battlenet and therefore should be removed
+            to_remove = set(r for r in bnet_roles if r not in db_roles)
+            db[BNET][bnet][ROLE] = []
+            for role in to_remove:
+                db[ROLE][role][MMBR] -= 1
+
+                # Uncomment this to start working with actual roles
+                # if role in discord_roles:
+                #     rm_role(role)
+
+            return
+
+        # Get all roles user has in database, regardless of which battlenet it's coming from
+        db_roles = set()
+        for b in db[MMBR][disc][BNET]:
+            for r in db[BNET][b][ROLE]:
+                db_roles.add(r)
+
+        # Remove role tag before sending into function so that it gets actual role name
+        to_add, to_remove = adjust_roles(db_roles, new_roles, discord_roles)
+
+        print(f"Adding roles: {to_add}\nRemoving roles: {to_remove}")
+
+        db[BNET][bnet][ROLE] = list(new_roles)
+
+        role: str
+        for role in to_add:
+
+            if role in db[ROLE]:
+                db[ROLE][role][MMBR] += 1
+            else:
+                db[ROLE][role] = {
+                    MMBR: 1,
+                    ID: len(db[ROLE][role])     # Replace with actual role id
+                }
+
+            # For now, don't actually add roles in discord
+            # if not is_hidden(bnet):
+            #     add_role(role)
+
+        for role in to_remove:
+
+            # Don't worry about this reaching 0 here, we check later if its 0 and delete
+            db[ROLE][role][MMBR] -= 1
+
+            # Same as above, don't deal with discord roles yet
+            # if not is_hidden(bnet):
+            #     rm_role(role)
