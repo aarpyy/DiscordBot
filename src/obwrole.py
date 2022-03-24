@@ -214,9 +214,13 @@ async def update_user_roles(guild, disc, bnet):
     :return: None
     """
 
-    if is_hidden(bnet):
-        print(f"[{bnet}] is hidden. No roles given")
-        return
+    # We need to not give discord roles to hidden people, but still keep track in db maybe?
+    # What happens if hidden user removes their account, this method is called to remove all roles
+    # so they shouldn't have any so maybe this is safe?
+
+    # if is_hidden(bnet):
+    #     print(f"[{bnet}] is hidden. No roles given")
+    #     return
 
     user_id = db[MMBR][disc][ID]
 
@@ -230,28 +234,21 @@ async def update_user_roles(guild, disc, bnet):
 
     print(f"Member fetched: {str(member)} ({member.id})")  
 
-    db_roles = set(db[BNET][bnet][ROLE])
+    # Get all roles user has in database, regardless of which battlenet it's coming from
+    db_roles = set()
+    for b in db[MMBR][disc][BNET]:
+        for r in db[BNET][b][ROLE]:
+            db_roles.add(r)
     new_roles = generate_roles(bnet)
 
     # Remove role tag before sending into function so that it gets actual role name
     to_add, to_remove = refactor_roles(
-        set(escape_format(r) for r in db_roles),
-        set(escape_format(r)for r in new_roles),
-        set(str(r) for r in member.roles)
+        set(db_roles),
+        set(new_roles),
+        set(format_role(r) for r in member.roles)
     )
 
-    # 'Refresh' role counts, by just subtracting member count for all current db roles
-    for role in to_add:
-
-        # Don't worry about this reaching 0 here, we check later if its 0 and delete
-        db[ROLE][role][MMBR] -= 1
-
-    # And then adding 1 for all roles they will have after
-    for role in to_remove:
-        if role in db[ROLE]:
-            db[ROLE][role][MMBR] += 1
-        else:
-            db[ROLE][role][MMBR] = 1
+    print(f"Adding roles: {to_add}\nRemoving roles: {to_remove}")
 
     role: str
     for role in to_add:
@@ -259,8 +256,12 @@ async def update_user_roles(guild, disc, bnet):
         if role in db[ROLE]:
             db[ROLE][role][MMBR] += 1
         else:
-            db[ROLE][role][MMBR] = 1
+            db[ROLE][role] = {
+                MMBR: 1,
+                ID: None
+            }
 
+        continue    # For now, don't actually add roles in discord
         kwargs = dict(
             name=role[2:],
             color=obw_color,
@@ -271,7 +272,10 @@ async def update_user_roles(guild, disc, bnet):
 
     for role in to_remove:
 
+        # Don't worry about this reaching 0 here, we check later if its 0 and delete
         db[ROLE][role][MMBR] -= 1
+
+        continue    # Same as above, don't deal with discord roles yet
 
         role_obj = await get_role_obj(guild, role)  
 

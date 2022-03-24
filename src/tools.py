@@ -53,7 +53,9 @@ def jsonify(o):
     :return: JSON acceptable data type
     """
 
-    if isinstance(o, bool):
+    if o is None:
+        return "null"
+    elif isinstance(o, bool):
 
         # JSON booleans are lowercase
         return str(o).lower()

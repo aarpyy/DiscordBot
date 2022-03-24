@@ -38,15 +38,15 @@ class BattlenetHandler(commands.Cog):
 
     @commands.command(name="battlenet")
     async def _battlenet(self, ctx, bnet):
-        await BattlenetHandler.account(ctx, bnet, "PC")
+        await self.account(ctx, bnet, "PC")
 
     @commands.command()
     async def xbox(self, ctx, bnet):
-        await BattlenetHandler.account(ctx, bnet, "Xbox")
+        await self.account(ctx, bnet, "Xbox")
 
     @commands.command()
     async def playstation(self, ctx, bnet):
-        await BattlenetHandler.account(ctx, bnet, "Playstation")
+        await self.account(ctx, bnet, "Playstation")
 
     @commands.command()
     @restrict()
@@ -88,3 +88,15 @@ class BattlenetHandler(commands.Cog):
         else:
             message = ", ".join(b + " (primary) " if db[MMBR][disc][PRIM] == b else b for b in db[MMBR][disc][BNET])
             await ctx.channel.send("Linked accounts:\n" + message)
+
+    # Temp commands
+
+    @commands.command()
+    async def clearroles(self, *args):
+        for r in db[ROLE]:
+            del db[ROLE][r]
+
+    @commands.command()
+    async def clearmembers(self, *args):
+        for a in db[MMBR]:
+            del db[MMBR][a]

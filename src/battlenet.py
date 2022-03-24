@@ -31,7 +31,7 @@ def hide(bnet):
 
 def deactivate(bnet):
     # Just used for deactivating account so that update roles removes roles, all active accounts are pending removal
-    db[BNET][bnet][ACTIVE] = True
+    db[BNET][bnet][ACTIVE] = False
 
 
 # Battlenet methods
@@ -120,9 +120,11 @@ def remove(bnet, gld="", disc=""):
     :return: None
     """
 
-    def remove_from_user(g, d, b):
+    def remove_from_user(d, b):
         db[MMBR][d][BNET].remove(b)
         if bnet == db[MMBR][d][PRIM]:
+
+            # If user has any other battlenets, make one of them their primary, otherwise set primary to None
             if db[MMBR][d][BNET]:
                 db[MMBR][d][PRIM] = db[MMBR][d][BNET][0]
             else:
@@ -135,15 +137,14 @@ def remove(bnet, gld="", disc=""):
 
     # If guild and discord provided, remove directly
     if disc and gld:
-        remove_from_user(gld, disc, bnet)
+        remove_from_user(disc, bnet)
 
     # Otherwise, just search through all guilds and users, removing from everyone
     else:
-        for gld in db[GLD]:
-            for disc in db[MMBR]:
-                if bnet in db[MMBR][disc][BNET]:
+        for disc in db[MMBR]:
+            if bnet in db[MMBR][disc][BNET]:
 
-                    # Technically battlenets are unique to a user, but it doesn't really hurt to
-                    # search through all after finding one since removing rarely happens and on
-                    # the off chance a bug allowed for a bnet to be shared it will now be removed
-                    remove_from_user(gld, disc, bnet)
+                # Technically battlenets are unique to a user, but it doesn't really hurt to
+                # search through all after finding one since removing rarely happens and on
+                # the off chance a bug allowed for a bnet to be shared it will now be removed
+                remove_from_user(disc, bnet)

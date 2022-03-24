@@ -1,5 +1,5 @@
 from discord.ext import commands, tasks
-from discord import Intents, Member, Role, Guild
+from discord import Intents, Member, Role
 
 from sys import stderr
 import asyncio
@@ -17,6 +17,7 @@ async def dump_loop():
 
     # Print contents of db to userdata.json, only used for testing
     database.dump()
+    print(f"Database dumped")
 
 
 class Oberbot(commands.Bot):
