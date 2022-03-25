@@ -41,3 +41,7 @@ if not getenv("REPLIT_DB_URL"):
 
 # This is what everything else should import for db, since its logged in after loading .env
 db = getdb()
+
+guild_ids = [
+    895713807618416651  # Oberwatch server
+]

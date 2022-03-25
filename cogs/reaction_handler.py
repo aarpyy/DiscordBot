@@ -3,7 +3,6 @@ from discord.ext import commands
 
 import asyncio
 
-from src.bot import Oberbot
 from src import messaging, roles
 from src.db_keys import *
 from src.config import db

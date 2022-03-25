@@ -1,7 +1,6 @@
 from collections.abc import MutableMapping, MutableSequence
 from functools import wraps
-from discord.ext.commands import Context
-from discord_slash import SlashContext
+from discord.commands import ApplicationContext
 from sys import stderr
 
 
@@ -48,20 +47,20 @@ def restrict(users=None):
         global su
 
         @wraps(f)
-        async def restricted(*args):
+        async def restricted(*args, **kwargs):
 
             # Find the context arg, either first or second depending on if procedure or class method
             ctx = None
             for a in args:
-                if isinstance(a, (Context, SlashContext)):
+                if isinstance(a, ApplicationContext):
                     ctx = a
                     break
 
             if ctx is None or str(ctx.author) in users:
-                return await f(*args)
+                await f(*args, **kwargs)
             else:
                 print(f"{str(ctx.author)} ran {f.__name__} and was blocked.", file=stderr)
-                await ctx.channel.send(f"This command is currently disabled!")
+                await ctx.respond(f"This command is currently disabled!")
 
         return restricted
 

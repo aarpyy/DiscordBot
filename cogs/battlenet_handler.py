@@ -1,10 +1,10 @@
+from discord.commands import slash_command, command
 from discord.ext import commands
-from discord_slash import SlashCommand, SlashContext, cog_ext
 from src import battlenet, roles
 from src.utils import restrict
 from src.db_keys import *
-from src.config import db
-from src.bot import Oberbot
+from src.config import db, guild_ids
+from src.ranks import rank_names, Rank, get_rank
 
 
 class BattlenetHandler(commands.Cog):
@@ -29,40 +29,40 @@ class BattlenetHandler(commands.Cog):
             db[MMBR][disc] = {ID: ctx.author.id, BNET: [], PRIM: None, RXN: {}, SCORE: {}}
 
         if bnet in db[MMBR][disc][BNET]:
-            await ctx.channel.send(f"{bnet} is already linked to your account!")
+            await ctx.respond(f"{bnet} is already linked to your account!")
         elif bnet in db[BNET]:
-            await ctx.channel.send(f"{bnet} is already linked to another user!")
+            await ctx.respond(f"{bnet} is already linked to another user!")
         else:
             battlenet.add(disc, bnet, platform)
             db[BNET][bnet][ROLE] = list(roles.generate_roles(bnet))
             await roles.update_user_roles(ctx.guild, disc, bnet)
-            await ctx.channel.send(f"Successfully linked {bnet} to your discord!")
+            await ctx.respond(f"Successfully linked {bnet} to your discord!")
 
-    @cog_ext.cog_slash(
+    @slash_command(
         name="battlenet",
         description="Links Battlenet account to your discord",
-        guild_ids=Oberbot.guild_ids
+        guild_ids=guild_ids
     )
     async def _battlenet(self, ctx, bnet):
         await self.account(ctx, bnet, "PC")
 
-    @cog_ext.cog_slash(
+    @slash_command(
         description="Links Xbox Overwatch account to your discord",
-        guild_ids=Oberbot.guild_ids
+        guild_ids=guild_ids
     )
     async def xbox(self, ctx, xblive):
         await self.account(ctx, xblive, "Xbox")
 
-    @cog_ext.cog_slash(
+    @slash_command(
         description="Links Playstation Overwatch account to your discord",
-        guild_ids=Oberbot.guild_ids
+        guild_ids=guild_ids
     )
     async def playstation(self, ctx, psn):
         await self.account(ctx, psn, "Playstation")
 
-    @cog_ext.cog_slash(
+    @slash_command(
         description="Unlinks account from your discord",
-        guild_ids=Oberbot.guild_ids
+        guild_ids=guild_ids
     )
     @restrict()
     async def remove(self, ctx, acc):
@@ -71,7 +71,7 @@ class BattlenetHandler(commands.Cog):
             if acc not in db[MMBR][disc][BNET]:
                 raise KeyError
         except KeyError:
-            await ctx.channel.send(f"{acc} is not linked to your discord!")
+            await ctx.respond(f"{acc} is not linked to your discord!")
         else:
             battlenet.deactivate(acc)
             guild = ctx.guild
@@ -80,40 +80,77 @@ class BattlenetHandler(commands.Cog):
             message = f"You have successfully unlinked {acc} from your discord!"
             if prim := battlenet.remove(acc, disc):
                 message += f"\n\nYour new primary account is {prim}"
-            await ctx.channel.send(message)
+            await ctx.respond(message)
 
-    @cog_ext.cog_slash(
+    @slash_command(
         description="Sets a alt account to your primary",
-        guild_ids=Oberbot.guild_ids
+        guild_ids=guild_ids
     )
     @restrict()
     async def setprimary(self, ctx, acc):
         disc = str(ctx.author)
         if disc not in db or acc not in db[MMBR][disc][BNET]:
-            await ctx.channel.send(f"{acc} is not linked to your account!")
+            await ctx.respond(f"{acc} is not linked to your account!")
         elif acc == db[MMBR][disc][PRIM]:
-            await ctx.channel.send(f"{acc} is already your primary linked account!")
+            await ctx.respond(f"{acc} is already your primary linked account!")
         else:
             db[MMBR][disc][PRIM] = acc
-            await ctx.channel.send(f"{acc} is your new primary linked account!")
+            await ctx.respond(f"{acc} is your new primary linked account!")
 
-    @commands.command()
+    @slash_command(
+        description="Lists all linked accounts for discord user",
+        guild_ids=guild_ids
+    )
     async def accounts(self, ctx):
         disc = str(ctx.author)
         if disc not in db[MMBR] or not db[MMBR][disc][BNET]:
-            await ctx.channel.send("You don't have any linked battlenets!")
+            await ctx.respond("You don't have any linked battlenets!")
         else:
             message = ", ".join(b + " (primary) " if db[MMBR][disc][PRIM] == b else b for b in db[MMBR][disc][BNET])
-            await ctx.channel.send("Linked accounts:\n" + message)
+            await ctx.respond("Linked accounts:\n" + message)
+
+    @slash_command(
+        description="Show roles a user has",
+        guild_ids=guild_ids
+    )
+    @restrict()
+    async def showroles(self, ctx):
+        disc = str(ctx.author)
+        if disc not in db[MMBR] or not any(db[BNET][b][ROLE] for b in db[MMBR][disc][BNET]):
+            await ctx.respond("You don't have any roles!")
+        else:
+            message = "\n".join(f"{b}: {[r for r in db[BNET][b][ROLE]]}" for b in db[MMBR][disc][BNET])
+            await ctx.respond("Roles:\n" + message)
+
+    @slash_command(
+        description="Shows stats for overwatch account",
+        guild_ids=guild_ids
+    )
+    @restrict()
+    async def rank(self, ctx, bnet):
+        print("rank called")
+        if bnet in db[BNET]:
+            if ctx.guild is not None:
+                rank_emojis = {e.name: str(e) for e in ctx.guild.emojis if e.name in rank_names}
+            else:
+                rank_emojis = {}
+            message = "\n".join((
+                f"{r.capitalize()}: "
+                f"{db[BNET][bnet][RANK][r]}" + rank_emojis.get(get_rank(int(db[BNET][bnet][RANK][r])).value, "")
+                for r in db[BNET][bnet][RANK]
+            ))
+            await ctx.respond(message)
+        else:
+            await ctx.respond("Battlenet not in database!")
 
     # Temp commands
 
-    @commands.command()
-    async def clearroles(self, *args):
+    @command()
+    async def clearroles(self, ctx):
         for r in db[ROLE]:
             del db[ROLE][r]
 
-    @commands.command()
-    async def clearmembers(self, *args):
+    @command()
+    async def clearmembers(self, ctx):
         for a in db[MMBR]:
             del db[MMBR][a]
