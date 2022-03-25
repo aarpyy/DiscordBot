@@ -1,17 +1,16 @@
 from os import getenv
 from src.bot import Oberbot
-from cogs import all_cogs
-from discord_slash import SlashCommand
+from cogs import *
+from discord import Bot
 
 
 def main():
 
     bot = Oberbot()
 
-    for cog in all_cogs:
-        bot.add_cog(cog(bot))
+    bot.add_cog(BattlenetHandler(bot))
+    bot.add_cog(TeamInfoHandler(bot))
 
-    SlashCommand(bot, sync_commands=True)
 
     # print(f"cogs: {bot.cogs}")
 

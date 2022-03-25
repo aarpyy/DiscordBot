@@ -1,6 +1,4 @@
-from discord.ext import commands, tasks
-from discord import Intents, Member, Role, NotFound, HTTPException, Guild
-from discord_slash import SlashCommand, SlashContext
+from discord import Bot
 
 from sys import stderr
 import asyncio
@@ -21,7 +19,7 @@ async def dump_loop():
     print(f"Database dumped")
 
 
-class Oberbot(commands.Bot):
+class Oberbot(Bot):
 
     # List of guilds that Oberbot is in. Slash commands can be used in this server
     guild_ids = [
