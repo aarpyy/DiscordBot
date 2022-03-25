@@ -1,6 +1,7 @@
 from collections.abc import MutableMapping, MutableSequence
 from functools import wraps
 from discord.ext.commands import Context
+from discord_slash import SlashContext
 from sys import stderr
 
 
@@ -52,7 +53,7 @@ def restrict(users=None):
             # Find the context arg, either first or second depending on if procedure or class method
             ctx = None
             for a in args:
-                if isinstance(a, Context):
+                if isinstance(a, (Context, SlashContext)):
                     ctx = a
                     break
 

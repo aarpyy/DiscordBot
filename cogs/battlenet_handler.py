@@ -1,5 +1,5 @@
 from discord.ext import commands
-from discord_slash import SlashCommand, SlashContext
+from discord_slash import SlashCommand, SlashContext, cog_ext
 from src import battlenet, roles
 from src.utils import restrict
 from src.db_keys import *
@@ -38,51 +38,66 @@ class BattlenetHandler(commands.Cog):
             await roles.update_user_roles(ctx.guild, disc, bnet)
             await ctx.channel.send(f"Successfully linked {bnet} to your discord!")
 
-    @commands.command(name="battlenet")
+    @cog_ext.cog_slash(
+        name="battlenet",
+        description="Links Battlenet account to your discord",
+        guild_ids=Oberbot.guild_ids
+    )
     async def _battlenet(self, ctx, bnet):
         await self.account(ctx, bnet, "PC")
 
-    @commands.command()
-    async def xbox(self, ctx, bnet):
-        await self.account(ctx, bnet, "Xbox")
+    @cog_ext.cog_slash(
+        description="Links Xbox Overwatch account to your discord",
+        guild_ids=Oberbot.guild_ids
+    )
+    async def xbox(self, ctx, xblive):
+        await self.account(ctx, xblive, "Xbox")
 
-    @commands.command()
-    async def playstation(self, ctx, bnet):
-        await self.account(ctx, bnet, "Playstation")
+    @cog_ext.cog_slash(
+        description="Links Playstation Overwatch account to your discord",
+        guild_ids=Oberbot.guild_ids
+    )
+    async def playstation(self, ctx, psn):
+        await self.account(ctx, psn, "Playstation")
 
-    @commands.command()
+    @cog_ext.cog_slash(
+        description="Unlinks account from your discord",
+        guild_ids=Oberbot.guild_ids
+    )
     @restrict()
-    async def remove(self, ctx, bnet):
+    async def remove(self, ctx, acc):
         disc = str(ctx.author)
         try:
-            if bnet not in db[MMBR][disc][BNET]:
+            if acc not in db[MMBR][disc][BNET]:
                 raise KeyError
         except KeyError:
-            await ctx.channel.send(f"{bnet} is not linked to your discord!")
+            await ctx.channel.send(f"{acc} is not linked to your discord!")
         else:
-            battlenet.deactivate(bnet)
+            battlenet.deactivate(acc)
             guild = ctx.guild
             if guild is not None:
-                await roles.update(guild, disc, bnet)
-            message = f"You have successfully unlinked {bnet} from your discord!"
-            if prim := battlenet.remove(bnet, disc):
+                await roles.update_user_roles(guild, disc, acc)
+            message = f"You have successfully unlinked {acc} from your discord!"
+            if prim := battlenet.remove(acc, disc):
                 message += f"\n\nYour new primary account is {prim}"
             await ctx.channel.send(message)
 
-    @commands.command()
+    @cog_ext.cog_slash(
+        description="Sets a alt account to your primary",
+        guild_ids=Oberbot.guild_ids
+    )
     @restrict()
-    async def setprimary(self, ctx, bnet):
+    async def setprimary(self, ctx, acc):
         disc = str(ctx.author)
-        if disc not in db or bnet not in db[MMBR][disc][BNET]:
-            await ctx.channel.send(f"{bnet} is not linked to your account!")
-        elif bnet == db[MMBR][disc][PRIM]:
-            await ctx.channel.send(f"{bnet} is already your primary linked account!")
+        if disc not in db or acc not in db[MMBR][disc][BNET]:
+            await ctx.channel.send(f"{acc} is not linked to your account!")
+        elif acc == db[MMBR][disc][PRIM]:
+            await ctx.channel.send(f"{acc} is already your primary linked account!")
         else:
-            db[MMBR][disc][PRIM] = bnet
-            await ctx.channel.send(f"{bnet} is your new primary linked account!")
+            db[MMBR][disc][PRIM] = acc
+            await ctx.channel.send(f"{acc} is your new primary linked account!")
 
     @commands.command()
-    @restrict()
     async def accounts(self, ctx):
         disc = str(ctx.author)
         if disc not in db[MMBR] or not db[MMBR][disc][BNET]:
