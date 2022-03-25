@@ -4,7 +4,7 @@ from src import battlenet, roles
 from src.utils import restrict
 from src.db_keys import *
 from src.config import db, guild_ids
-from src.ranks import rank_names, Rank, get_rank
+from src.ranks import rank_names, get_rank
 
 
 class BattlenetHandler(commands.Cog):
@@ -12,8 +12,9 @@ class BattlenetHandler(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @restrict()
-    async def account(self, ctx, bnet, platform):
+    # @restrict()
+    @staticmethod
+    async def account(ctx, bnet, platform):
         """
         Attempts to link battlenet account to user's discord.
 
@@ -23,6 +24,7 @@ class BattlenetHandler(commands.Cog):
         :return: None
         """
         disc = str(ctx.author)
+        bnet = bnet.strip()
 
         # If user not in database, add them
         if disc not in db[MMBR]:
@@ -123,20 +125,26 @@ class BattlenetHandler(commands.Cog):
             await ctx.respond("Roles:\n" + message)
 
     @slash_command(
-        description="Shows stats for overwatch account",
+        description="Shows stats for Overwatch account",
         guild_ids=guild_ids
     )
     @restrict()
-    async def rank(self, ctx, bnet):
-        print("rank called")
+    async def rank(self, ctx, bnet="PRIMARY"):
+        if bnet == "PRIMARY":
+            disc = str(ctx.author)
+            if disc not in db[MMBR] or db[MMBR][disc][PRIM] is None:
+                await ctx.respond("You haven't linked any battlenets yet!")
+            else:
+                bnet = db[MMBR][disc][PRIM]
         if bnet in db[BNET]:
             if ctx.guild is not None:
                 rank_emojis = {e.name: str(e) for e in ctx.guild.emojis if e.name in rank_names}
             else:
                 rank_emojis = {}
             message = "\n".join((
-                f"{r.capitalize()}: "
-                f"{db[BNET][bnet][RANK][r]}" + rank_emojis.get(get_rank(int(db[BNET][bnet][RANK][r])).value, "")
+                f"{r.capitalize()}: " +
+                rank_emojis.get(get_rank(int(db[BNET][bnet][RANK][r])).value, " ") +
+                f"{db[BNET][bnet][RANK][r]}"
                 for r in db[BNET][bnet][RANK]
             ))
             await ctx.respond(message)

@@ -39,7 +39,7 @@ def deactivate(bnet):
 
 def create_index(bnet, pf):
     try:
-        rank, stats = scrape_play_ow(platform_url(pf)(bnet))
+        rank, stats = scrape_play_ow(bnet, pf)
     except PrivateProfileError:
         db[BNET][bnet] = {
             PRIV: True, ACTIVE: True, HID: False,
@@ -49,6 +49,8 @@ def create_index(bnet, pf):
     except ProfileNotFoundError:
         return False
     else:
+        print(f"Creating index for {bnet}")
+        print(f"Stats:\n{stats}")
         db[BNET][bnet] = {
             ACTIVE: True, PRIV: False, HID: False,
             PTFM: pf, RANK: rank, STAT: stats, ROLE: []

@@ -87,7 +87,7 @@ def scrape_play_ow(bnet: str, pf: str = "PC") -> Tuple[Dict, Dict]:
         player_ranks = {}
 
         lines = ps.stdout.split('\n')
-        hero = value = id0x = gamemode = role = rank = ""
+        hero = id0x = gamemode = role = ""
         for line in lines:
             if (m := comp_name.match(line)) is not None:
                 role = m.groups()[0].split(url_prefix)[1].split('-')[0]
