@@ -136,6 +136,3 @@ dmypy.json
 
 # Visual Studio project settings
 .vs/
-
-
-pycord/

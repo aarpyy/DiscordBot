@@ -33,30 +33,8 @@ def main():
         for bnet in db[BNET]:
             battlenet.update(bnet)
 
-        # Update all roles for people in guilds
-        # for guild in bot.guilds:  # type: Guild
-        #     for mmbr in guild.members:  # type: Member
-        #         disc = str(mmbr)
-        #         if disc in db[MMBR]:
-        #             for bnet in db[MMBR][disc][BNET]:
-        #                 await roles.update(guild, disc, bnet)
-
-        # If any accounts were marked for removal, re-run through them and remove them
-        for disc in db[MMBR]:
-            for bnet in db[MMBR][disc][BNET]:
-
-                # If battlenet is inactive, let user know it's removed
-                if not battlenet.is_active(bnet):
-                    print(f"Removing {disc}[{bnet}]...")
-                    user = await get_user_named(disc)
-                    if user is not None:
-                        channel = await get_dm(user)
-                        message = f"Stats for {bnet} were unable to be updated and the account was unlinked " \
-                                  f"from your discord."
-
-                        if prim := battlenet.remove(bnet, disc):
-                            message += f"\n\nYour new primary account is {prim}"
-                        await channel.send(message)
+            if not battlenet.is_active(bnet):
+                battlenet.remove(bnet)
 
         print("Update loop complete")
 

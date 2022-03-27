@@ -137,10 +137,14 @@ class BattlenetHandler(commands.Cog):
             else:
                 bnet = db[MMBR][disc][PRIM]
         if bnet in db[BNET]:
+
+            # If can find emojis that correspond to ranks, load them into dict
             if ctx.guild is not None:
                 rank_emojis = {e.name: str(e) for e in ctx.guild.emojis if e.name in rank_names}
             else:
                 rank_emojis = {}
+
+            # Send back message containing "Rank name, rank, rank emoji" for each role
             message = "\n".join((
                 f"{r.capitalize()}: " +
                 rank_emojis.get(get_rank(int(db[BNET][bnet][RANK][r])).value, " ") +
